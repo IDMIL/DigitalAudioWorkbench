@@ -15,11 +15,17 @@
 ## References
 
 https://github.com/sebpiq/WebPd
+
 https://github.com/nexus-js/ui
+
 http://webaudiohaptics.github.io/#/6/6
+
 https://twitter.com/NiallEM/status/1159065381564309504
+
 https://www.springer.com/gp/book/9780387745343
+
 https://twitter.com/NiallEM/status/1159065381564309504
+
 https://link-springer-com.proxy3.library.mcgill.ca/book/10.1007%2F978-0-387-74535-0
 
 
