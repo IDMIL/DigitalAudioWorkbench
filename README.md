@@ -25,7 +25,7 @@
 - parameters
     - time/frequency representation (both on screen)
     - sample rate
-    - bit depth rate
+    - bit depth
     - FFT block size (hidden)
     - FFT overlapping (hidden)
 
@@ -44,5 +44,15 @@ https://www.springer.com/gp/book/9780387745343
 https://twitter.com/NiallEM/status/1159065381564309504
 
 https://link-springer-com.proxy3.library.mcgill.ca/book/10.1007%2F978-0-387-74535-0
+
+https://demonstrations.wolfram.com/FromContinuousToDiscreteTimeFourierTransformBySamplingMethod/
+
+https://demonstrations.wolfram.com/AliasingInPendulumWaves/
+
+https://demonstrations.wolfram.com/topic.html?topic=Signal+Processing&limit=20
+
+https://demonstrations.wolfram.com/AliasingInPendulumWaves/
+
+
 
 
