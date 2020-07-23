@@ -11,6 +11,23 @@
 - Slide #47 (Quantization level - bit depth)
 - Slide #59 (Quantization error)
 
+## Parameters
+
+- Input 
+    - sine wave
+        - frequency
+        - amplitude 
+    - square wave
+        - frequency
+        - amplitude
+    - complex sound
+        - amplitude
+- parameters
+    - time/frequency representation (both on screen)
+    - sample rate
+    - bit depth rate
+    - FFT block size (hidden)
+    - FFT overlapping (hidden)
 
 ## References
 
