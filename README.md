@@ -9,6 +9,7 @@
     - video 2 (Aliasing and Folding)
     - video 3 (Aliasing - undersampling)
 - Slide #47 (Quantization level - bit depth)
+    - https://editor.p5js.org/jorp11/full/doPkiztUw (started visualization stuff - needs audio/frequency stuff and fine tuning still)
 - Slide #59 (Quantization error)
 
 ## Parameters
