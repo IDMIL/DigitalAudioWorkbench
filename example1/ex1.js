@@ -232,8 +232,11 @@ function drawSampFreqBuffer() {
     sampFreqBuffer.line(xpos, p.height / numPanels / 8, xpos, p.height / numPanels / 8);
     //Draw harmonics
     for (let harm = 1; harm <= numHarm; harm++) {
-      sampFreqBuffer.line(xpos + fundamentalFrequency * harm * panelWidth / 2 / 20000, ypos, xpos + fundamentalFrequency * harm * panelWidth / 2 / 20000, ypos * (1 - amplitude * .6 / harm));
-      sampFreqBuffer.line(xpos - fundamentalFrequency * harm * panelWidth / 2 / 20000, ypos, xpos - fundamentalFrequency * harm * panelWidth / 2 / 20000, ypos * (1 - amplitude * .6 / harm));
+      let xPositive = xpos + fundamentalFrequency * harm * panelWidth / 2 / 20000;
+      let xNegative = xpos - fundamentalFrequency * harm * panelWidth / 2 / 20000;
+      let yEnd = ypos * (1 - amplitude * .6 / harm);
+      sampFreqBuffer.line(xPositive, ypos, xPositive, yEnd);
+      sampFreqBuffer.line(xNegative, ypos, xNegative, yEnd);
     }
   }
 }
