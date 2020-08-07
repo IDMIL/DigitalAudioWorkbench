@@ -19,6 +19,54 @@ const numHarm = 2; // number of harmonics in signal
 const HALF_PANEL_HEIGHT = totalHeight / numPanels / 2;
 let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider;
 
+p.setup = function () {
+
+  p.createCanvas(totalWidth, totalHeight);
+  dx = (p.TWO_PI * freq / 20000 / period) //* xspacing;
+  yvalues = new Array(p.floor(w)); // xspacing));
+  let panelHeight = totalHeight / numPanels;
+  // Create all of your off-screen graphics buffers
+  inputSigBuffer = p.createGraphics(w, panelHeight);
+  inputSigFreqBuffer = p.createGraphics(w, panelHeight);
+  waveBuffer = p.createGraphics(w, panelHeight);
+  impulseBuffer = p.createGraphics(w, panelHeight);
+  sliderBuffer = p.createGraphics(totalWidth, panelHeight);
+  impFreqBuffer = p.createGraphics(w, panelHeight);
+  sampFreqBuffer = p.createGraphics(w, panelHeight);
+
+  inputSigBuffer.strokeWeight(3); // Thicker
+  inputSigFreqBuffer.strokeWeight(3); // Thicker
+  waveBuffer.strokeWeight(3); // Thicker
+  impulseBuffer.strokeWeight(3); // Thicker
+  impFreqBuffer.strokeWeight(3); // Thicker
+  sampFreqBuffer.strokeWeight(3); // Thicker
+
+  sliderSetup();
+  // osc = new p5.Oscillator('sine');
+  // osc.freq(freq, 0.1);
+  // osc.amp(amplitude, 0.1);
+  // osc.start();
+  updateGraphics();
+
+}
+
+p.draw = function() {
+
+  // Paint the off-screen buffers onto the main canvas
+  p.image(waveBuffer, 0, 0);
+  p.image(impulseBuffer, 0, totalHeight / numPanels);
+  p.image(inputSigBuffer, 0, totalHeight / numPanels * 2);
+  p.image(waveBuffer, 0, totalHeight / numPanels * 3); // "reconstructed signal"
+  p.image(inputSigFreqBuffer, w, 0);
+  p.image(impFreqBuffer, w, totalHeight / numPanels);
+  p.image(sampFreqBuffer, w, totalHeight / numPanels * 2);
+  p.image(sliderBuffer, 0, totalHeight / 2);
+
+  //Update the audio parameters
+  //osc.freq(freq, 0.1);
+  // osc.amp(amplitude * .95, 0.1);
+}
+
 function sliderSetup() {
   freqSlider = p.createSlider(200, sampleRate / 8, 1250);
   freqSlider.position(10, p.height - p.height / numPanels + 10);
@@ -52,35 +100,14 @@ function sliderSetup() {
   sampleRateDisplayer.position(sampleRateSlider.x + sampleRateSlider.width * 1.1, p.height - p.height / numPanels);
 }
 
-p.setup = function () {
-
-  p.createCanvas(totalWidth, totalHeight);
-  dx = (p.TWO_PI * freq / 20000 / period) //* xspacing;
-  yvalues = new Array(p.floor(w)); // xspacing));
-  let panelHeight = totalHeight / numPanels;
-  // Create all of your off-screen graphics buffers
-  inputSigBuffer = p.createGraphics(w, panelHeight);
-  inputSigFreqBuffer = p.createGraphics(w, panelHeight);
-  waveBuffer = p.createGraphics(w, panelHeight);
-  impulseBuffer = p.createGraphics(w, panelHeight);
-  sliderBuffer = p.createGraphics(totalWidth, panelHeight);
-  impFreqBuffer = p.createGraphics(w, panelHeight);
-  sampFreqBuffer = p.createGraphics(w, panelHeight);
-
-  inputSigBuffer.strokeWeight(3); // Thicker
-  inputSigFreqBuffer.strokeWeight(3); // Thicker
-  waveBuffer.strokeWeight(3); // Thicker
-  impulseBuffer.strokeWeight(3); // Thicker
-  impFreqBuffer.strokeWeight(3); // Thicker
-  sampFreqBuffer.strokeWeight(3); // Thicker
-
-  sliderSetup();
-  // osc = new p5.Oscillator('sine');
-  // osc.freq(freq, 0.1);
-  // osc.amp(amplitude, 0.1);
-  // osc.start();
-  updateGraphics();
-
+function updateGraphics() {
+  drawSliderBuffer();
+  drawWaveBuffer();
+  drawImpulseBuffer();
+  drawSampledBuffer();
+  drawFreqBuffer();
+  drawImpFreqBuffer();
+  drawSampFreqBuffer();
 }
 
 function calcWave(quantize = false) {
@@ -119,23 +146,6 @@ function renderContWave() {
     waveBuffer.line(x - 1, yvalues[x - 1] + HALF_PANEL_HEIGHT, x, yvalues[x] + HALF_PANEL_HEIGHT);
     waveBuffer.ellipse(x, HALF_PANEL_HEIGHT + yvalues[x], 1, 1);
   }
-}
-
-p.draw = function() {
-
-  // Paint the off-screen buffers onto the main canvas
-  p.image(waveBuffer, 0, 0);
-  p.image(impulseBuffer, 0, totalHeight / numPanels);
-  p.image(inputSigBuffer, 0, totalHeight / numPanels * 2);
-  p.image(waveBuffer, 0, totalHeight / numPanels * 3); // "reconstructed signal"
-  p.image(inputSigFreqBuffer, w, 0);
-  p.image(impFreqBuffer, w, totalHeight / numPanels);
-  p.image(sampFreqBuffer, w, totalHeight / numPanels * 2);
-  p.image(sliderBuffer, 0, totalHeight / 2);
-
-  //Update the audio parameters
-  //osc.freq(freq, 0.1);
-  // osc.amp(amplitude * .95, 0.1);
 }
 
 function drawSampledBuffer() {
@@ -238,16 +248,6 @@ function drawSliderBuffer() {
   ampDisplayer.html('Amplitude: ' + ampSlider.value())
   // bitDepthDisplayer.html('Bit Depth: ' + bitDepthSlider.value())
   sampleRateDisplayer.html('Sample Rate: ' + sampleRateSlider.value() / 1000 + " kHz")
-}
-
-function updateGraphics() {
-  drawSliderBuffer();
-  drawWaveBuffer();
-  drawImpulseBuffer();
-  drawSampledBuffer();
-  drawFreqBuffer();
-  drawImpFreqBuffer();
-  drawSampFreqBuffer();
 }
 
 }; return sketch; } // end function new_widget() { var sketch = p => {
