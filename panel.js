@@ -1,17 +1,16 @@
 //Panel class. should be extended with a drawPanel method
 class Panel {
-  constructor(name,height,width,signal) {
-    this.name = name;
-    this.height = height;
-    this.width = width;
-    this.signal = signal;
+  constructor(background = "white", stroke = "black", strokeWeight = 3, fill = "white") {
     this.background =  "white";
     this.stroke = "black";
-    this.stroke = "3";
+    this.strokeWeight = "3";
     this.fill = "white";
   }
 
-  setup(p) {
+  setup(p, height, width, signal) {
+    this.height = height;
+    this.width = width;
+    this.signal = signal;
     this.buffer = p.createGraphics(this.width, this.height);
     this.buffer.strokeWeight(this.strokeWeight);
     this.buffer.background(this.background);

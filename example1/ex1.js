@@ -1,17 +1,13 @@
-function new_widget(/* future args, e.g. en/dis-able panes */) { const sketch = p => {
+function new_widget(totalHeight, totalWidth, numColumns, panels) { const sketch = p => {
 
-var inputSigBuffer, inputSigFreqBuffer, impulseBuffer, impFreqBuffer, sampFreqBuffer, sliderBuffer;
 let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider;
 
-var totalHeight = 600; //canvas height
-var totalWidth = 900; //canvas width
-var numPanels = 5;
-let panelWidth = totalWidth / 2;;
-let panelHeight = totalHeight / numPanels;
-const HALF_PANEL_HEIGHT = panelHeight / 2;
+var numPanels = panels.length;
+let panelHeight = totalHeight / Math.ceil((numPanels+1)/numColumns);
+let panelWidth = totalWidth / numColumns;
 
 let phaseOffset = 3.1415 / 2;
-let phaseOffsetIncrement = 0.0; // Not used
+let phaseOffsetIncrement = 0.0; // Not used currently
 let amplitude = 1.0;
 let fundamentalFrequency = 1250;
 let phaseIncrement;
@@ -24,51 +20,21 @@ let bitDepth;
 const BIT_DEPTH_MAX = 16;
 
 p.setup = function () {
-
   p.createCanvas(totalWidth, totalHeight);
-  phaseIncrement = (p.TWO_PI * fundamentalFrequency / 20000 / imagePeriod) //* xspacing;
-  yvalues = new Array(p.floor(panelWidth)); // xspacing));
-  // Create all of your off-screen graphics buffers
-  inputSigBuffer = p.createGraphics(panelWidth, panelHeight);
-  inputSigFreqBuffer = p.createGraphics(panelWidth, panelHeight);
-  impulseBuffer = p.createGraphics(panelWidth, panelHeight);
-  sliderBuffer = p.createGraphics(p.width, panelHeight);
-  impFreqBuffer = p.createGraphics(panelWidth, panelHeight);
-  sampFreqBuffer = p.createGraphics(panelWidth, panelHeight);
-
-  inputSigBuffer.strokeWeight(3); // Thicker
-  inputSigFreqBuffer.strokeWeight(3); // Thicker
-  impulseBuffer.strokeWeight(3); // Thicker
-  impFreqBuffer.strokeWeight(3); // Thicker
-  sampFreqBuffer.strokeWeight(3); // Thicker
-
-  inputSignalPanel = new inputSigPanel("input sig", panelHeight, panelWidth, yvalues);
-  inputSignalPanel.setup(p);
+  phaseIncrement = (p.TWO_PI * fundamentalFrequency / 20000 / imagePeriod);
+  yvalues = new Array(p.floor(panelWidth));
+  panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, yvalues));
 
   sliderSetup();
-  // osc = new p5.Oscillator('sine');
-  // osc.fundamentalFrequency(fundamentalFrequency, 0.1);
-  // osc.amp(amplitude, 0.1);
-  // osc.start();
   updateGraphics();
-
 }
 
 p.draw = function() {
-
-  // Paint the off-screen buffers onto the main canvas
-  p.image(inputSignalPanel.buffer, 0, 0);
-  p.image(impulseBuffer, 0, p.height / numPanels);
-  p.image(inputSigBuffer, 0, p.height / numPanels * 2);
-  p.image(inputSignalPanel.buffer, 0, p.height / numPanels * 3); // "reconstructed signal"
-  p.image(inputSigFreqBuffer, panelWidth, 0);
-  p.image(impFreqBuffer, panelWidth, p.height / numPanels);
-  p.image(sampFreqBuffer, panelWidth, p.height / numPanels * 2);
-  p.image(sliderBuffer, 0, p.height / 2);
-
-  //Update the audio parameters
-  //osc.fundamentalFrequency(fundamentalFrequency, 0.1);
-  // osc.amp(amplitude * .95, 0.1);
+  panels.forEach( (panel, index) => {
+    let y = p.floor(index / numColumns) * panelHeight;
+    let x = p.floor(index % numColumns) * panelWidth;
+    p.image(panel.buffer, x, y);
+  });
 }
 
 function sliderSetup() {
@@ -106,13 +72,8 @@ function sliderSetup() {
 
 function updateGraphics() {
   calcWave();
+  panels.forEach(panel => panel.drawPanel());
   drawSliderBuffer();
-  drawImpulseBuffer();
-  drawSampledBuffer();
-  drawFreqBuffer();
-  drawImpFreqBuffer();
-  drawSampFreqBuffer();
-  inputSignalPanel.drawPanel();
 }
 
 function calcWave(quantize = false) {
@@ -228,8 +189,6 @@ function drawSampFreqBuffer() {
 }
 
 function drawSliderBuffer() {
-  sliderBuffer.fill(0, 0, 0);
-  sliderBuffer.textSize(32);
   fundamentalFrequency = freqSlider.value();
   amplitude = ampSlider.value();
   sampleRate = sampleRateSlider.value();
@@ -243,4 +202,11 @@ function drawSliderBuffer() {
 
 }; return new p5(sketch); } // end function new_widget() { var sketch = p => {
 
-const widget = new_widget();
+const widget = new_widget(600,900,2,
+  [ new inputSigPanel()
+  , new inputSigPanel() // TODO: instantiate other panels
+  , new inputSigPanel()
+  , new inputSigPanel()
+  , new inputSigPanel()
+  , new inputSigPanel()
+  ]);
