@@ -7,7 +7,7 @@ class Panel {
     this.signal = signal;
     this.background =  "white";
     this.stroke = "black";
-    this.stroke = "3";
+    this.strokeWeight = 3;
     this.fill = "white";
   }
 
