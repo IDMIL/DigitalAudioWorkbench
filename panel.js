@@ -1,3 +1,8 @@
+const background = "white";
+const stroke = "black";
+const strokeWeight = 3;
+const fill = "white";
+
 //Panel class. should be extended with a drawPanel method
 class Panel {
   constructor(name,height, width, position,colour1,colour2) {
@@ -5,12 +10,16 @@ class Panel {
     this.height = height;
     this.width = width;
     this.position = position;
-    this.colour1 = "white";
-    this.colour2 = "black";
-    this.buffer = createGraphics(this.width, this.height);
-    this.strokeWeight = 3;
   }
-  drawPanel(x,y){}
+  setup(p) {
+    this.buffer = p.createGraphics(this.width, this.height);
+    this.buffer.strokeWeight(strokeWeight);
+    this.buffer.background(background);
+    this.buffer.stroke(stroke);
+    this.buffer.fill(fill);
+  }
+  drawPanel(x,y){
+  }
 
 }
 //Container class for panels
