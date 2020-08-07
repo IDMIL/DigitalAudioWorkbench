@@ -1,6 +1,6 @@
 function new_widget(/* future args, e.g. en/dis-able panes */) { const sketch = p => {
 
-var inputSigBuffer, inputSigFreqBuffer, waveBuffer, impulseBuffer, impFreqBuffer, sampFreqBuffer, sliderBuffer;
+var inputSigBuffer, inputSigFreqBuffer, impulseBuffer, impFreqBuffer, sampFreqBuffer, sliderBuffer;
 let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider;
 
 var totalHeight = 600; //canvas height
@@ -13,7 +13,7 @@ const HALF_PANEL_HEIGHT = panelHeight / 2;
 let phaseOffset = 3.1415 / 2;
 let phaseOffsetIncrement = 0.0; // Not used
 let amplitude = 1.0;
-let fundamentalFrequency = 200;
+let fundamentalFrequency = 1250;
 let phaseIncrement;
 let sampleRate = 20000;
 const numHarm = 2; // number of harmonics in signal
@@ -31,7 +31,6 @@ p.setup = function () {
   // Create all of your off-screen graphics buffers
   inputSigBuffer = p.createGraphics(panelWidth, panelHeight);
   inputSigFreqBuffer = p.createGraphics(panelWidth, panelHeight);
-  waveBuffer = p.createGraphics(panelWidth, panelHeight);
   impulseBuffer = p.createGraphics(panelWidth, panelHeight);
   sliderBuffer = p.createGraphics(p.width, panelHeight);
   impFreqBuffer = p.createGraphics(panelWidth, panelHeight);
@@ -39,10 +38,12 @@ p.setup = function () {
 
   inputSigBuffer.strokeWeight(3); // Thicker
   inputSigFreqBuffer.strokeWeight(3); // Thicker
-  waveBuffer.strokeWeight(3); // Thicker
   impulseBuffer.strokeWeight(3); // Thicker
   impFreqBuffer.strokeWeight(3); // Thicker
   sampFreqBuffer.strokeWeight(3); // Thicker
+
+  inputSignalPanel = new inputSigPanel("input sig", panelHeight, panelWidth, yvalues);
+  inputSignalPanel.setup(p);
 
   sliderSetup();
   // osc = new p5.Oscillator('sine');
@@ -56,10 +57,10 @@ p.setup = function () {
 p.draw = function() {
 
   // Paint the off-screen buffers onto the main canvas
-  p.image(waveBuffer, 0, 0);
+  p.image(inputSignalPanel.buffer, 0, 0);
   p.image(impulseBuffer, 0, p.height / numPanels);
   p.image(inputSigBuffer, 0, p.height / numPanels * 2);
-  p.image(waveBuffer, 0, p.height / numPanels * 3); // "reconstructed signal"
+  p.image(inputSignalPanel.buffer, 0, p.height / numPanels * 3); // "reconstructed signal"
   p.image(inputSigFreqBuffer, panelWidth, 0);
   p.image(impFreqBuffer, panelWidth, p.height / numPanels);
   p.image(sampFreqBuffer, panelWidth, p.height / numPanels * 2);
@@ -71,7 +72,7 @@ p.draw = function() {
 }
 
 function sliderSetup() {
-  freqSlider = p.createSlider(200, sampleRate / 8, 1250);
+  freqSlider = p.createSlider(200, sampleRate / 8, fundamentalFrequency);
   freqSlider.position(10, p.height - p.height / numPanels + 10);
   freqSlider.style('width', '200px');
   freqSlider.input(updateGraphics);
@@ -104,13 +105,14 @@ function sliderSetup() {
 }
 
 function updateGraphics() {
+  calcWave();
   drawSliderBuffer();
-  drawWaveBuffer();
   drawImpulseBuffer();
   drawSampledBuffer();
   drawFreqBuffer();
   drawImpFreqBuffer();
   drawSampFreqBuffer();
+  inputSignalPanel.drawPanel();
 }
 
 function calcWave(quantize = false) {
@@ -142,14 +144,6 @@ function calcWave(quantize = false) {
 }
 
 
-function renderContWave() {
-  waveBuffer.line(0, HALF_PANEL_HEIGHT, p.width / 2, HALF_PANEL_HEIGHT);
-  for (let x = 0; x < yvalues.length; x++) {
-    waveBuffer.line(x - 1, yvalues[x - 1] + HALF_PANEL_HEIGHT, x, yvalues[x] + HALF_PANEL_HEIGHT);
-    waveBuffer.ellipse(x, HALF_PANEL_HEIGHT + yvalues[x], 1, 1);
-  }
-}
-
 function drawSampledBuffer() {
 
   inputSigBuffer.background("black");
@@ -175,14 +169,6 @@ function drawImpulseBuffer() {
     impulseBuffer.line(xpos, p.height / numPanels * .75, xpos, p.height / numPanels / 4);
     impulseBuffer.ellipse(xpos, p.height / numPanels / 4, 10, 10);
   }
-}
-
-function drawWaveBuffer() {
-  waveBuffer.background("black");
-  waveBuffer.stroke(255, 125, 125);
-  waveBuffer.line(0, HALF_PANEL_HEIGHT, p.width, HALF_PANEL_HEIGHT);
-  calcWave();
-  renderContWave();
 }
 
 function drawFreqBuffer() {
