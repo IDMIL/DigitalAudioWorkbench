@@ -1,38 +1,41 @@
 function new_widget(/* future args, e.g. en/dis-able panes */) { const sketch = p => {
 
 var inputSigBuffer, inputSigFreqBuffer, waveBuffer, impulseBuffer, impFreqBuffer, sampFreqBuffer, sliderBuffer;
+let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider;
+
 var totalHeight = 600; //canvas height
 var totalWidth = 900; //canvas width
-var numPanels = 5; // number of "panels" high
-let w = totalWidth / 2;; // Width of 1 panel
-let theta = 3.1415 / 2; // Start angle at PI/2
-let amplitude = 1.0; // Height of wave
-let dx; // Value for incrementing x
-let freq = 200; // signal fundamental freq
+var numPanels = 5;
+let panelWidth = totalWidth / 2;;
+let panelHeight = totalHeight / numPanels;
+const HALF_PANEL_HEIGHT = panelHeight / 2;
+
+let phaseOffset = 3.1415 / 2;
+let phaseOffsetIncrement = 0.0; // Not used
+let amplitude = 1.0;
+let fundamentalFrequency = 200;
+let phaseIncrement;
 let sampleRate = 20000;
-let period = sampleRate / totalWidth; // How many pixels before the wave repeats
-let ang_vel = 0.0; // Not used
+const numHarm = 2; // number of harmonics in signal
 let yvalues; // Using an array to store height values for the wave
+let imagePeriod = sampleRate / totalWidth; // How many pixels before the wave repeats
+
 let bitDepth;
 const BIT_DEPTH_MAX = 16;
-const numHarm = 2; // number of harmonics in signal
-const HALF_PANEL_HEIGHT = totalHeight / numPanels / 2;
-let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider;
 
 p.setup = function () {
 
   p.createCanvas(totalWidth, totalHeight);
-  dx = (p.TWO_PI * freq / 20000 / period) //* xspacing;
-  yvalues = new Array(p.floor(w)); // xspacing));
-  let panelHeight = p.height / numPanels;
+  phaseIncrement = (p.TWO_PI * fundamentalFrequency / 20000 / imagePeriod) //* xspacing;
+  yvalues = new Array(p.floor(panelWidth)); // xspacing));
   // Create all of your off-screen graphics buffers
-  inputSigBuffer = p.createGraphics(w, panelHeight);
-  inputSigFreqBuffer = p.createGraphics(w, panelHeight);
-  waveBuffer = p.createGraphics(w, panelHeight);
-  impulseBuffer = p.createGraphics(w, panelHeight);
+  inputSigBuffer = p.createGraphics(panelWidth, panelHeight);
+  inputSigFreqBuffer = p.createGraphics(panelWidth, panelHeight);
+  waveBuffer = p.createGraphics(panelWidth, panelHeight);
+  impulseBuffer = p.createGraphics(panelWidth, panelHeight);
   sliderBuffer = p.createGraphics(p.width, panelHeight);
-  impFreqBuffer = p.createGraphics(w, panelHeight);
-  sampFreqBuffer = p.createGraphics(w, panelHeight);
+  impFreqBuffer = p.createGraphics(panelWidth, panelHeight);
+  sampFreqBuffer = p.createGraphics(panelWidth, panelHeight);
 
   inputSigBuffer.strokeWeight(3); // Thicker
   inputSigFreqBuffer.strokeWeight(3); // Thicker
@@ -43,7 +46,7 @@ p.setup = function () {
 
   sliderSetup();
   // osc = new p5.Oscillator('sine');
-  // osc.freq(freq, 0.1);
+  // osc.fundamentalFrequency(fundamentalFrequency, 0.1);
   // osc.amp(amplitude, 0.1);
   // osc.start();
   updateGraphics();
@@ -57,13 +60,13 @@ p.draw = function() {
   p.image(impulseBuffer, 0, p.height / numPanels);
   p.image(inputSigBuffer, 0, p.height / numPanels * 2);
   p.image(waveBuffer, 0, p.height / numPanels * 3); // "reconstructed signal"
-  p.image(inputSigFreqBuffer, w, 0);
-  p.image(impFreqBuffer, w, p.height / numPanels);
-  p.image(sampFreqBuffer, w, p.height / numPanels * 2);
+  p.image(inputSigFreqBuffer, panelWidth, 0);
+  p.image(impFreqBuffer, panelWidth, p.height / numPanels);
+  p.image(sampFreqBuffer, panelWidth, p.height / numPanels * 2);
   p.image(sliderBuffer, 0, p.height / 2);
 
   //Update the audio parameters
-  //osc.freq(freq, 0.1);
+  //osc.fundamentalFrequency(fundamentalFrequency, 0.1);
   // osc.amp(amplitude * .95, 0.1);
 }
 
@@ -111,16 +114,15 @@ function updateGraphics() {
 }
 
 function calcWave(quantize = false) {
-  // Increment theta (try different values for
-  // 'angular velocity' here)
-  theta += ang_vel;
+  // if phaseOffsetIncrement is not 0.0, the waveform will scroll gradually
+  phaseOffset += phaseOffsetIncrement;
   let max = p.pow(2, bitDepth - 1);
   // For every x value, calculate a y value with sine function
-  let x = theta;
+  let phase = phaseOffset;
   for (let i = 0; i < yvalues.length; i++) {
     yvalues[i] = 0;
-    for (let j = 1; j <= numHarm; j++) {
-      yvalues[i] += p.sin(x * j) / j // + sin(j * x) / j + sin(5 * x) / 5 + sin(7 * x) / 7;
+    for (let harmonic = 1; harmonic <= numHarm; harmonic++) {
+      yvalues[i] += p.sin(phase * harmonic) / harmonic;
     }
     // scale height < 1 because of multiple harmonics
     yvalues[i] *= .66 * amplitude;
@@ -135,7 +137,7 @@ function calcWave(quantize = false) {
     //Scale to window size with a little bit of a buffer for max amp
     yvalues[i] *= -p.height / numPanels / 2.2;
 
-    x += dx;
+    phase += phaseIncrement;
   }
 }
 
@@ -155,8 +157,8 @@ function drawSampledBuffer() {
   inputSigBuffer.stroke(255, 125, 125);
   inputSigBuffer.line(0, HALF_PANEL_HEIGHT, p.width, HALF_PANEL_HEIGHT);
   //calcWave();
-  for (let x = 0; x < w / period; x++) {
-    let xpos = p.round(x * 20000 / sampleRate * period);
+  for (let x = 0; x < panelWidth / imagePeriod; x++) {
+    let xpos = p.round(x * 20000 / sampleRate * imagePeriod);
     inputSigBuffer.line(xpos, HALF_PANEL_HEIGHT, xpos, yvalues[xpos] + HALF_PANEL_HEIGHT);
     inputSigBuffer.ellipse(xpos, yvalues[xpos] + HALF_PANEL_HEIGHT, 10);
   }
@@ -168,8 +170,8 @@ function drawImpulseBuffer() {
   impulseBuffer.stroke(255, 125, 125);
   impulseBuffer.line(0, p.height / numPanels * .75, p.width, p.height / numPanels * .75);
 
-  for (let x = 0; x < w / period; x++) {
-    let xpos = x * 20000 / sampleRate * period;
+  for (let x = 0; x < panelWidth / imagePeriod; x++) {
+    let xpos = x * 20000 / sampleRate * imagePeriod;
     impulseBuffer.line(xpos, p.height / numPanels * .75, xpos, p.height / numPanels / 4);
     impulseBuffer.ellipse(xpos, p.height / numPanels / 4, 10, 10);
   }
@@ -191,10 +193,10 @@ function drawFreqBuffer() {
   let ypos = HALF_PANEL_HEIGHT;
 
   for (let x = 1; x <= numHarm; x++) {
-    let xpos = freq / 20000 * x * w / 2 - 1;
+    let xpos = fundamentalFrequency / 20000 * x * panelWidth / 2 - 1;
     inputSigFreqBuffer.line(xpos, HALF_PANEL_HEIGHT, xpos, ypos * (1 - amplitude * .8 / x));
   }
-  let xpos = sampleRate / 20000 * w / 4;
+  let xpos = sampleRate / 20000 * panelWidth / 4;
 
   inputSigFreqBuffer.line(0, ypos * .1, xpos, ypos * .1)
   inputSigFreqBuffer.line(xpos, ypos * .1, xpos + 1, ypos)
@@ -208,7 +210,7 @@ function drawImpFreqBuffer() {
   let ypos = HALF_PANEL_HEIGHT;
 
   for (let x = 0; x <= 4; x++) {
-    let xpos = sampleRate / 20000 * x * w / 2;
+    let xpos = sampleRate / 20000 * x * panelWidth / 2;
     impFreqBuffer.line(xpos, p.height / numPanels * .75, xpos, p.height / numPanels / 4);
     if (x > 0) {
       impFreqBuffer.text((x) + "FS", xpos - 5, p.height / numPanels - 10)
@@ -224,14 +226,14 @@ function drawSampFreqBuffer() {
   sampFreqBuffer.line(0, ypos, p.width, ypos);
 
   for (let x = 0; x <= 4; x++) {
-    let xpos = sampleRate / 20000 * x * w / 2;
+    let xpos = sampleRate / 20000 * x * panelWidth / 2;
     //Draw impulse resp
     sampFreqBuffer.line(xpos, ypos, xpos, p.height / numPanels / 8);
     sampFreqBuffer.line(xpos, p.height / numPanels / 8, xpos, p.height / numPanels / 8);
     //Draw harmonics
     for (let harm = 1; harm <= numHarm; harm++) {
-      sampFreqBuffer.line(xpos + freq * harm * w / 2 / 20000, ypos, xpos + freq * harm * w / 2 / 20000, ypos * (1 - amplitude * .6 / harm));
-      sampFreqBuffer.line(xpos - freq * harm * w / 2 / 20000, ypos, xpos - freq * harm * w / 2 / 20000, ypos * (1 - amplitude * .6 / harm));
+      sampFreqBuffer.line(xpos + fundamentalFrequency * harm * panelWidth / 2 / 20000, ypos, xpos + fundamentalFrequency * harm * panelWidth / 2 / 20000, ypos * (1 - amplitude * .6 / harm));
+      sampFreqBuffer.line(xpos - fundamentalFrequency * harm * panelWidth / 2 / 20000, ypos, xpos - fundamentalFrequency * harm * panelWidth / 2 / 20000, ypos * (1 - amplitude * .6 / harm));
     }
   }
 }
@@ -239,11 +241,11 @@ function drawSampFreqBuffer() {
 function drawSliderBuffer() {
   sliderBuffer.fill(0, 0, 0);
   sliderBuffer.textSize(32);
-  freq = freqSlider.value();
+  fundamentalFrequency = freqSlider.value();
   amplitude = ampSlider.value();
   sampleRate = sampleRateSlider.value();
   //bitDepth = bitDepthSlider.value();
-  dx = (p.TWO_PI * freq / 20000 / period) //* xspacing;
+  phaseIncrement = (p.TWO_PI * fundamentalFrequency / 20000 / imagePeriod) //* xspacing;
   freqDisplayer.html('Frequency: ' + freqSlider.value() + " Hz")
   ampDisplayer.html('Amplitude: ' + ampSlider.value())
   // bitDepthDisplayer.html('Bit Depth: ' + bitDepthSlider.value())
