@@ -10,6 +10,9 @@ class Panel {
     this.height = height;
     this.width = width;
     this.position = position;
+    this.background =  "white";
+    this.stroke = "black";
+    this.fill = "white";
   }
   setup(p) {
     this.buffer = p.createGraphics(this.width, this.height);
@@ -19,6 +22,15 @@ class Panel {
     this.buffer.fill(fill);
   }
   drawPanel(x,y){
+  }
+  setbackground(backgroundClr){
+    this.background = backgroundClr;
+  }
+  setStroke(strokeClr){
+    this.stroke = strokeClr;
+  }
+  setFill(fillClr){
+    this.fill = fillClr;
   }
 
 }
