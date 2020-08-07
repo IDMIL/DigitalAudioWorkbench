@@ -11,6 +11,8 @@
 - Slide #47 (Quantization level - bit depth)
 - Slide #59 (Quantization error)
 
+I have started a template we can work from for all the examples. It pretty much covers slider 23 and slide 47 already.
+    - https://editor.p5js.org/jorp11/full/doPkiztUw 
 ## Parameters
 
 - Input 
