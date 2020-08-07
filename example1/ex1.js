@@ -250,7 +250,6 @@ function drawSliderBuffer() {
   sampleRateDisplayer.html('Sample Rate: ' + sampleRateSlider.value() / 1000 + " kHz")
 }
 
-}; return sketch; } // end function new_widget() { var sketch = p => {
+}; return new p5(sketch); } // end function new_widget() { var sketch = p => {
 
 const widget = new_widget();
-new p5(widget);
