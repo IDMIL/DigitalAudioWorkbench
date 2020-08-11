@@ -9,10 +9,8 @@ class Panel {
   }
 
   setup(p, height, width, settings) {
-    this.height = height;
-    this.width = width;
     this.settings = settings;
-    this.buffer = p.createGraphics(this.width, this.height);
+    this.buffer = p.createGraphics(width, height);
     this.buffer.strokeWeight(this.strokeWeight);
     this.buffer.background(this.background);
     this.buffer.stroke(this.stroke);
@@ -29,12 +27,13 @@ class Panel {
 
 class inputSigPanel extends Panel {
   drawPanel(){
-    this.buffer.background(this.background);
     let halfh = this.buffer.height/2;
+    let gain = halfh * 0.9;
+    this.buffer.background(this.background);
     this.buffer.line(0, halfh, this.buffer.width, halfh);
-    for (let x = 0; x < this.settings.signal.length; x++) {
-      this.buffer.line(x - 1, this.settings.signal[x - 1] + halfh,
-                       x, this.settings.signal[x] + halfh);
+    for (let x = 0; x < this.buffer.width; x++) {
+      this.buffer.line(x - 1, gain * this.settings.original[x - 1] + halfh,
+                       x, gain * this.settings.original[x] + halfh);
     }
   }
 }
@@ -46,10 +45,10 @@ class inputSigFreqPanel extends Panel {
     this.buffer.line(0, halfh, this.buffer.width, halfh);
 
   for (let x = 1; x <= this.settings.numHarm; x++) {
-    let xpos = this.settings.fundFreq / 20000 * x * this.width / 2 - 1;
+    let xpos = this.settings.fundFreq / 20000 * x * this.buffer.width / 2 - 1;
     this.buffer.line(xpos, halfh, xpos, halfh * (1 - this.settings.amplitude * .8 / x));
   }
-  let xpos = this.settings.sampleRate / 20000 * this.width / 4;
+  let xpos = this.settings.sampleRate / 20000 * this.buffer.width / 4;
   this.buffer.line(0, halfh * .1, xpos, halfh * .1)
   this.buffer.line(xpos, halfh * .1, xpos + 1, halfh)
   }
@@ -57,17 +56,15 @@ class inputSigFreqPanel extends Panel {
 
 class impulsePanel extends Panel {
   drawPanel(){
+    let base = this.buffer.height * 0.75;
+    let height = this.buffer.height * 0.25;
     this.buffer.background(this.background);
+    this.buffer.line(0, base, this.buffer.width, base)
 
-    let imagePeriod = 20000 / this.buffer.width; // How many pixels before the wave repeats
-
-    this.buffer.line(0,this.height*.75,this.width,this.height*.75)
-
-    for (let x = 0; x < this.buffer.width / imagePeriod; x++) {
-      console.log(this.buffer.width/imagePeriod)
-      let xpos = x * 20000 / this.settings.sampleRate * imagePeriod;
-        this.buffer.line(xpos, this.buffer.height * .75, xpos, this.buffer.height / 4);
-        this.buffer.ellipse(xpos, this.buffer.height / 4, 10, 10);
+    for (let x = 0; x < Math.round(this.buffer.width / this.settings.downsamplingFactor); x++) {
+      let xpos = x * this.settings.downsamplingFactor;
+        this.buffer.line(xpos, base, xpos, height);
+        this.buffer.ellipse(xpos, height, 10, 10);
     }
 
   }
@@ -91,15 +88,16 @@ class impulseFreqPanel extends Panel {
 
 class sampledInputPanel extends Panel{
   drawPanel(){
-
+    let halfh = this.buffer.height/2;
+    let gain = halfh * 0.9;
     this.buffer.background(this.background);
-    this.buffer.line(0, this.buffer.height/2 , this.buffer.width, this.buffer.height/2);
-    let imagePeriod = 20000 / this.buffer.width; // How many pixels before the wave repeats
-      for (let x = 0; x < this.buffer.width / imagePeriod; x++) {
-        let xpos = Math.round(x * 20000 / this.settings.sampleRate * imagePeriod);
-        this.buffer.line(xpos, this.buffer.height/2, xpos, this.settings.signal[xpos] + this.buffer.height/2);
-        this.buffer.ellipse(xpos, this.settings.signal[xpos] + this.buffer.height/2, 10);
-      }
+    this.buffer.line(0, halfh, this.buffer.width, halfh);
+    for (let x = 0; x < Math.round(this.buffer.width / this.settings.downsamplingFactor); x++) {
+      let xpos = Math.round(x * this.settings.downsamplingFactor);
+      let ypos = gain * this.settings.downsampled[x] + halfh;
+      this.buffer.line(xpos, halfh, xpos, ypos);
+      this.buffer.ellipse(xpos, ypos, 10);
+    }
   }
 }
 

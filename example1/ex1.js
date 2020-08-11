@@ -1,18 +1,25 @@
 const BIT_DEPTH_MAX = 16;
+const WEBAUDIO_MAX_SAMPLERATE = 96000;
 
 function new_widget(totalHeight, totalWidth, numColumns, panels) { const sketch = p => {
-let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider;
+let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider, originalButton, reconstructedButton;
+
+let snd;
 
 var numPanels = panels.length;
 let panelHeight = totalHeight / Math.ceil((numPanels+1)/numColumns);
 let panelWidth = totalWidth / numColumns;
-var settings = {signal: new Array(p.floor(panelWidth)),
-                amplitude : 1.0,
-                fundFreq : 1250,
-                sampleRate : 20000,
-                numHarm : 2,
-
-};
+var settings = 
+    { signal: new Array(44100)
+    , amplitude : 1.0
+    , fundFreq : 1250
+    , sampleRate : 44100
+    , downsamplingFactor : 24
+    , numHarm : 2
+    , original: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
+    , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4))
+    , reconstructed: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
+    };
 
 let phaseOffset = 3.1415 / 2;
 let phaseOffsetIncrement = 0.0; // Not used currently
@@ -69,12 +76,26 @@ function sliderSetup() {
 
   sampleRateDisplayer = p.createP()
   sampleRateDisplayer.position(sampleRateSlider.x + sampleRateSlider.width * 1.1, p.height - p.height / numPanels);
+
+  originalButton = p.createButton("play original");
+  originalButton.position(sampleRateSlider.x, ampSlider.y);
+  originalButton.mousePressed( () => {
+    if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
+    playWave(settings.original, snd);
+  });
+  reconstructedButton = p.createButton("play reconstructed");
+  reconstructedButton.position(sampleRateSlider.x + originalButton.width * 1.1, ampSlider.y);
+  reconstructedButton.mousePressed( () => {
+    if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
+    playWave(settings.reconstructed, snd);
+  });
 }
 
 function updateGraphics() {
-  calcWave();
-  panels.forEach(panel => panel.drawPanel());
   drawSliderBuffer();
+  calcWave();
+  renderWaves();
+  panels.forEach(panel => panel.drawPanel());
 }
 
 function calcWave(quantize = false) {
@@ -105,7 +126,32 @@ function calcWave(quantize = false) {
   }
 }
 
+function renderWaves() {
+  // render original wave
+  // TODO: configurable additive synthesis
+  settings.original.forEach( (_, i, arr) => arr[i] = Math.sin(2 * Math.PI * 440 * i / WEBAUDIO_MAX_SAMPLERATE));
 
+  // render "sampled" wave (actually just downsampled original)
+  // TODO: quantization and dither
+  settings.downsampled.forEach( (_, i, arr) => arr[i] = settings.original[i * settings.downsamplingFactor]);
+
+  // render reconstructed wave using an OfflineAudioContext for upsampling
+  offlineSnd = new OfflineAudioContext(1, WEBAUDIO_MAX_SAMPLERATE, WEBAUDIO_MAX_SAMPLERATE); 
+  playWave(settings.downsampled, offlineSnd);
+  offlineSnd.startRendering()
+    .then( buffer => settings.reconstructed = buffer.getChannelData(0) );
+}
+
+function playWave(wave, audioctx) {
+  // it is assumed that all waves are one second in duration, and that the size
+  // in samples and sampling rate are thus both equal to wave.length
+  var buffer = audioctx.createBuffer(1, wave.length, wave.length);
+  buffer.copyToChannel(wave, 0, 0);
+  var source = audioctx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(audioctx.destination);
+  source.start();
+}
 
 function drawSampFreqBuffer() {
   let ypos = p.height / numPanels * .75;
