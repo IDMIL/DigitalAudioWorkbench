@@ -1,5 +1,5 @@
 const BIT_DEPTH_MAX = 16;
-
+const NUM_COLUMNS = 2;
 function new_widget(totalHeight, totalWidth, numColumns, panels) { const sketch = p => {
 let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider;
 
@@ -10,7 +10,7 @@ var settings = {signal: new Array(p.floor(panelWidth)),
                 amplitude : 1.0,
                 fundFreq : 1250,
                 sampleRate : 20000,
-                numHarm : 2,
+                numHarm : 1,
 
 };
 
@@ -25,9 +25,10 @@ p.setup = function () {
   phaseIncrement = (p.TWO_PI * settings.fundFreq / 20000 / imagePeriod);
   //signal = new Array(p.floor(panelWidth));
   panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, settings));
-
   sliderSetup();
   updateGraphics();
+  p.noLoop();
+
 }
 
 p.draw = function() {
@@ -39,10 +40,11 @@ p.draw = function() {
 }
 
 function sliderSetup() {
-  freqSlider = p.createSlider(200, settings.sampleRate / 8, settings.fundFreq);
+  freqSlider = p.createSlider(200, settings.sampleRate / 2, settings.fundFreq);
   freqSlider.position(10, p.height - p.height / numPanels + 10);
   freqSlider.style('width', '200px');
   freqSlider.input(updateGraphics);
+  // freqSlider.mouseMoved(updateGraphics);
 
   freqDisplayer = p.createP()
   freqDisplayer.position(freqSlider.x * 2 + freqSlider.width, p.height - p.height / numPanels - 5);
@@ -50,6 +52,7 @@ function sliderSetup() {
   ampSlider.position(10, p.height - p.height / numPanels + 50);
   ampSlider.style('width', '200px');
   ampSlider.input(updateGraphics);
+  // ampSlider.mouseMoved(updateGraphics);
 
   ampDisplayer = p.createP()
   ampDisplayer.position(ampSlider.x * 2 + ampSlider.width, p.height - p.height / numPanels + 35);
@@ -75,6 +78,7 @@ function updateGraphics() {
   calcWave();
   panels.forEach(panel => panel.drawPanel());
   drawSliderBuffer();
+  p.draw();
 }
 
 function calcWave(quantize = false) {
@@ -89,7 +93,7 @@ function calcWave(quantize = false) {
       settings.signal[i] += p.sin(phase * harmonic) / harmonic;
     }
     // scale height < 1 because of multiple harmonics
-    settings.signal[i] *= .66 * settings.amplitude;
+    settings.signal[i] *=  0.75*settings.amplitude/settings.numHarm;
     // if (quantize == true) {
     //   if (bitDepth >= BIT_DEPTH_MAX) {
     //     //  do no quantization
@@ -99,34 +103,9 @@ function calcWave(quantize = false) {
     //   }
     // }
     //Scale to window size with a little bit of a buffer for max amp
-    settings.signal[i] *= -p.height / numPanels / 2.2;
+    // settings.signal[i] *= -p.height / (numPanels/NUM_COLUMNS) / 2.2;
 
     phase += phaseIncrement;
-  }
-}
-
-
-
-function drawSampFreqBuffer() {
-  let ypos = p.height / numPanels * .75;
-  sampFreqBuffer.background(255, 125, 125);
-  sampFreqBuffer.fill("white");
-  sampFreqBuffer.stroke("black");
-  sampFreqBuffer.line(0, ypos, p.width, ypos);
-
-  for (let x = 0; x <= 4; x++) {
-    let xpos = settings.sampleRate / 20000 * x * panelWidth / 2;
-    //Draw impulse resp
-    sampFreqBuffer.line(xpos, ypos, xpos, p.height / numPanels / 8);
-    sampFreqBuffer.line(xpos, p.height / numPanels / 8, xpos, p.height / numPanels / 8);
-    //Draw harmonics
-    for (let harm = 1; harm <= settings.numHarm; harm++) {
-      let xPositive = xpos + settings.fundFreq * harm * panelWidth / 2 / 20000;
-      let xNegative = xpos - settings.fundFreq * harm * panelWidth / 2 / 20000;
-      let yEnd = ypos * (1 - settings.amplitude * .6 / harm);
-      sampFreqBuffer.line(xPositive, ypos, xPositive, yEnd);
-      sampFreqBuffer.line(xNegative, ypos, xNegative, yEnd);
-    }
   }
 }
 
@@ -135,7 +114,7 @@ function drawSliderBuffer() {
   settings.amplitude = ampSlider.value();
   settings.sampleRate = sampleRateSlider.value();
   //bitDepth = bitDepthSlider.value();
-  phaseIncrement = (p.TWO_PI * settings.fundFreq / 20000 / imagePeriod) //* xspacing;
+  phaseIncrement = (p.TWO_PI * settings.fundFreq / 20000 / imagePeriod)
   freqDisplayer.html('Frequency: ' + freqSlider.value() + " Hz")
   ampDisplayer.html('Amplitude: ' + ampSlider.value())
   // bitDepthDisplayer.html('Bit Depth: ' + bitDepthSlider.value())
@@ -144,7 +123,7 @@ function drawSliderBuffer() {
 
 }; return new p5(sketch); } // end function new_widget() { var sketch = p => {
 
-const widget = new_widget(600,900,2,
+const widget = new_widget(900,1200,NUM_COLUMNS,
   [ new inputSigPanel()
   , new inputSigFreqPanel()
   , new impulsePanel()
