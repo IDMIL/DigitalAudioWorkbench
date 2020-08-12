@@ -9,16 +9,22 @@ let snd;
 var numPanels = panels.length;
 let panelHeight = totalHeight / Math.ceil((numPanels+1)/numColumns);
 let panelWidth = totalWidth / numColumns;
+// set fftSize to the largest power of two that will approximately fill the panel
+let fftSize = p.pow(2, p.round(p.log(panelWidth) / p.log(2)));
+let fft = new FFTJS(fftSize);
 var settings = 
     { signal: new Array(44100)
     , amplitude : 1.0
     , fundFreq : 1250
     , sampleRate : 44100
-    , downsamplingFactor : 24
+    , downsamplingFactor : 12
     , numHarm : 2
+    , fftSize : fftSize
     , original: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
     , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4))
     , reconstructed: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
+    , originalFreq : fft.createComplexArray()
+    , reconstructedFreq : fft.createComplexArray()
     };
 
 let phaseOffset = 3.1415 / 2;
@@ -35,7 +41,6 @@ p.setup = function () {
   sliderSetup();
   updateGraphics();
   p.noLoop();
-
 }
 
 p.draw = function() {
@@ -97,9 +102,11 @@ function sliderSetup() {
 function updateGraphics() {
   drawSliderBuffer();
   calcWave();
-  renderWaves();
-  panels.forEach(panel => panel.drawPanel());
-  p.draw();
+  renderWaves()
+  .then( _ => {
+    panels.forEach(panel => panel.drawPanel());
+    p.draw();
+  });
 }
 
 function calcWave(quantize = false) {
@@ -131,9 +138,19 @@ function calcWave(quantize = false) {
 }
 
 function renderWaves() {
+  var offlineSnd, fftNode;
+  var fftOptions = 
+      { fftSize: settings.fftSize
+      , maxDecibels: 0
+      , minDecibels: -100
+      , smoothingTimeConstant: 0
+      };
   // render original wave
   // TODO: configurable additive synthesis
   settings.original.forEach( (_, i, arr) => arr[i] = Math.sin(2 * Math.PI * 440 * i / WEBAUDIO_MAX_SAMPLERATE));
+
+  // render original wave FFT
+  fft.realTransform(settings.originalFreq, settings.original);
 
   // render "sampled" wave (actually just downsampled original)
   // TODO: quantization and dither
@@ -142,19 +159,27 @@ function renderWaves() {
   // render reconstructed wave using an OfflineAudioContext for upsampling
   offlineSnd = new OfflineAudioContext(1, WEBAUDIO_MAX_SAMPLERATE, WEBAUDIO_MAX_SAMPLERATE); 
   playWave(settings.downsampled, offlineSnd);
-  offlineSnd.startRendering()
-    .then( buffer => settings.reconstructed = buffer.getChannelData(0) );
+  return offlineSnd.startRendering()
+    .then( buffer => settings.reconstructed = buffer.getChannelData(0) )
+    .then( _ => fft.realTransform(settings.reconstructedFreq, settings.reconstructed));
 }
 
-function playWave(wave, audioctx) {
+function playWave(wave, audioctx, fft) {
   // it is assumed that all waves are one second in duration, and that the size
   // in samples and sampling rate are thus both equal to wave.length
   var buffer = audioctx.createBuffer(1, wave.length, wave.length);
   buffer.copyToChannel(wave, 0, 0);
   var source = audioctx.createBufferSource();
   source.buffer = buffer;
-  source.connect(audioctx.destination);
+  if (fft) {
+    source.connect(fft);
+    fft.connect(audioctx.destination);
+  }
+  else {
+    source.connect(audioctx.destination);
+  }
   source.start();
+
 }
 
 function drawSampFreqBuffer() {
@@ -196,9 +221,9 @@ function drawSliderBuffer() {
 
 const widget = new_widget(900,1200,NUM_COLUMNS,
   [ new inputSigPanel()
-  , new inputSigFreqPanel()
+  , new inputSigFFTPanel()
   , new impulsePanel()
   , new impulseFreqPanel()
   , new sampledInputPanel()
-  , new sampledInputFreqPanel()]
+  , new sampledSigFFTPanel()]
 );

@@ -75,6 +75,38 @@ class inputSigFreqPanel extends Panel {
 
 }
 
+function magnitude(real, cplx) {
+  return Math.sqrt(real * real + cplx * cplx);
+}
+
+function drawFFT(panel, fft) {
+  let base = panel.buffer.height - panel.bezel;
+  let gain = (panel.buffer.height - 2 * panel.bezel) * 0.9;
+  let offset = 100;
+  let normalize = 2/fft.length;
+  panel.buffer.background(panel.background);
+  panel.buffer.strokeWeight(1);
+  for (let x = 0; x <= Math.min(panel.buffer.width - 2*panel.bezel, fft.length/2); x++) {
+    let xpos = x + panel.bezel;
+    let ypos = base - gain * normalize * magnitude(fft[2*x], fft[2*x+1]);
+    panel.buffer.line(xpos, base, xpos, ypos);
+  }
+  panel.buffer.strokeWeight(panel.strokeWeight);
+  panel.drawBorder();
+}
+
+class inputSigFFTPanel extends Panel {
+  drawPanel() {
+    drawFFT(this, this.settings.originalFreq);
+  }
+}
+
+class sampledSigFFTPanel extends Panel {
+  drawPanel() {
+    drawFFT(this, this.settings.reconstructedFreq);
+  }
+}
+
 class impulsePanel extends Panel {
   drawPanel(){
     let base = this.buffer.height * 0.75;
