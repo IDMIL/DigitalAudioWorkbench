@@ -13,6 +13,9 @@
 
 I have started a template we can work from for all the examples. It pretty much covers slider 23 and slide 47 already.
     - https://editor.p5js.org/jorp11/full/doPkiztUw 
+
+    Adding the sound: https://editor.p5js.org/Erivan/full/K24nqUmNJ 
+    The amplitude control is partially working.
 ## Parameters
 
 - Input 
