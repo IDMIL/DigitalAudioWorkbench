@@ -2,7 +2,7 @@ const BIT_DEPTH_MAX = 16;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
 function new_widget(totalHeight, totalWidth, numColumns, panels) { const sketch = p => {
-let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider, originalButton, reconstructedButton;
+let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider, originalButton, reconstructedButton, numHarmSlider;
 
 let snd;
 
@@ -52,24 +52,30 @@ p.draw = function() {
 
 function sliderSetup() {
   freqSlider = p.createSlider((p.log(200)/p.log(2))*1000, 
-                              (p.log(settings.sampleRate / 2)/p.log(2))*1000, 
+                              (p.log(settings.sampleRate / 2 / 5)/p.log(2))*1000, 
                               (p.log(settings.fundFreq)/p.log(2))*1000);
   freqSlider.position(10, p.height - p.height / numPanels + 10);
   freqSlider.style('width', '200px');
   freqSlider.input(updateGraphics);
-  // freqSlider.mouseMoved(updateGraphics);
 
-  freqDisplayer = p.createP()
-  freqDisplayer.position(freqSlider.x * 2 + freqSlider.width, p.height - p.height / numPanels - 5);
+  freqDisplayer = p.createP();
+  freqDisplayer.position(freqSlider.x * 2 + freqSlider.width, freqSlider.y - 15);
+
+  numHarmSlider = p.createSlider(1, 5, 1);
+  numHarmSlider.position(10, p.height - p.height / numPanels + 50);
+  numHarmSlider.style('width', '200px');
+  numHarmSlider.input(updateGraphics);
+
+  numHarmDisplayer = p.createP();
+  numHarmDisplayer.position(numHarmSlider.x * 2 + numHarmSlider.width, numHarmSlider.y - 15);
+
   ampSlider = p.createSlider(0.0, 1.0, 1.0, .01);
-  ampSlider.position(10, p.height - p.height / numPanels + 50);
+  ampSlider.position(10, p.height - p.height / numPanels + 90);
   ampSlider.style('width', '200px');
   ampSlider.input(updateGraphics);
-  // ampSlider.mouseMoved(updateGraphics);
 
   ampDisplayer = p.createP()
-  ampDisplayer.position(ampSlider.x * 2 + ampSlider.width, p.height - p.height / numPanels + 35);
-  ampSlider.input(updateGraphics);
+  ampDisplayer.position(ampSlider.x * 2 + ampSlider.width, ampSlider.y - 15);
 
   // bitDepthSlider = p.createSlider(1, BIT_DEPTH_MAX, BIT_DEPTH_MAX, 1);
   // bitDepthSlider.position(10, p.height - p.height / numPanels + 100);
@@ -86,7 +92,7 @@ function sliderSetup() {
   sampleRateSlider.input(updateGraphics);
 
   sampleRateDisplayer = p.createP()
-  sampleRateDisplayer.position(sampleRateSlider.x + sampleRateSlider.width * 1.1, p.height - p.height / numPanels);
+  sampleRateDisplayer.position(sampleRateSlider.x + sampleRateSlider.width * 1.1, sampleRateSlider.y - 15);
 
   originalButton = p.createButton("play original");
   originalButton.position(sampleRateSlider.x, ampSlider.y);
@@ -151,13 +157,16 @@ function renderWaves() {
   // TODO: configurable additive synthesis
   settings.original.fill(0);
   settings.original.forEach( (_, i, arr) => {
-    for (let harmonic = 1; harmonic < settings.numHarm; harmonic++) {
+    for (let harmonic = 1; harmonic <= settings.numHarm; harmonic++) {
       let omega = 2 * Math.PI * settings.fundFreq * harmonic;
-      arr[i] += settings.amplitude * Math.sin(omega * i / settings.sampleRate)
+      arr[i] += settings.amplitude * Math.sin(omega * i / settings.sampleRate) / harmonic;
     }
   });
+  let max = Math.max.apply(Math, settings.original);
+  settings.original.forEach( (samp, i, arr) => arr[i] = samp / max );
 
   // render original wave FFT
+  // TODO: window the input
   fft.realTransform(settings.originalFreq, settings.original);
   fft.completeSpectrum(settings.originalFreq);
 
@@ -172,6 +181,8 @@ function renderWaves() {
   return offlineSnd.startRendering()
     .then( buffer => settings.reconstructed = buffer.getChannelData(0) )
     .then( _ => {
+      // render the reconstructed wave FFT
+      // TODO: window the input
       fft.realTransform(settings.reconstructedFreq, settings.reconstructed)
       fft.completeSpectrum(settings.reconstructedFreq);
     });
@@ -211,11 +222,13 @@ function drawSampFreqBuffer() {
 
 function drawSliderBuffer() {
   settings.fundFreq = p.pow(2,freqSlider.value()/1000);
+  settings.numHarm = numHarmSlider.value();
   settings.amplitude = ampSlider.value();
   settings.downsamplingFactor = p.round(96000/p.pow(2, sampleRateSlider.value()/1000));
   //bitDepth = bitDepthSlider.value();
   phaseIncrement = (p.TWO_PI * settings.fundFreq / 20000 / imagePeriod)
-  freqDisplayer.html('Frequency: ' + p.round(settings.fundFreq) + " Hz")
+  freqDisplayer.html('Fundamental: ' + p.round(settings.fundFreq) + " Hz")
+  numHarmDisplayer.html('Bandwidth: ' + p.round(settings.fundFreq * settings.numHarm) + " Hz")
   ampDisplayer.html('Amplitude: ' + ampSlider.value())
   // bitDepthDisplayer.html('Bit Depth: ' + bitDepthSlider.value())
   sampleRateDisplayer.html('Sample Rate: ' + p.round(settings.sampleRate / settings.downsamplingFactor / 1000, 3) + " kHz")
