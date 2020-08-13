@@ -203,7 +203,7 @@ function readSliders() {
 
 }; return new p5(sketch); } // end function new_widget() { var sketch = p => {
 
-const widget = new_widget(900,1200,NUM_COLUMNS,
+const widget = new_widget(900,1000,NUM_COLUMNS,
   [ new inputSigPanel()
   , new inputSigFFTPanel()
   , new impulsePanel()

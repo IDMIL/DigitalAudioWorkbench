@@ -1,12 +1,12 @@
 //Panel class. should be extended with a drawPanel method
 class Panel {
-  constructor(background = "white", stroke = "black", strokeWeight = 3, fill = "white") {
-    this.background =  "white";
-    this.stroke = "black";
-    this.strokeWeight = 3;
-    this.bezel = 20;
-    this.fill = "white";
-    this.strokeClr = ["black","grey","pink","blue","green"];
+  constructor(background = "white", stroke = "black", strokeWeight = 3, fill = "black",bezel =20) {
+    this.background =  background;
+    this.stroke = stroke;
+    this.strokeWeight = strokeWeight;
+    this.bezel = bezel;
+    this.fill = fill;
+    this.strokeClr = ["black",[28,48,65],'#B2ABF2',"blue","green"];//TODO - update these to less ugly colours
 
   }
 
@@ -221,8 +221,54 @@ class sampledInputFreqPanel extends Panel{
 }
 
 
-class quantizedInputSignal extends Panel{
+class quantizedSignalPanel extends Panel{
+  constructor(){
+    super();
+    this.bezel=30;
+  }
   drawPanel(){
+    //Draw quantized bit stem plot
+    let max = Math.pow(2, this.settings.bitDepth - 1);
+
+    let halfh = this.buffer.height/2;
+    this.buffer.background(this.background);
+    this.buffer.line(this.bezel, halfh , this.buffer.width-this.bezel, halfh);
+    this.drawBorder();
+    let xpos = 0; // first
+    let ypos = 0;
+    let imagePeriod = 20000 / this.buffer.width; // How many pixels before the wave repeats
+    while (xpos<this.buffer.width-2*this.bezel){
+
+      let sig = this.settings.signal[Math.round(xpos)];
+//      ypos = Math.floor(sig*max+.5)/max;
+      ypos = (Math.floor(sig*max)+.5)/max;
+      console.log(sig +" is rounded to " +ypos);
+      let noise = sig - ypos;
+      this.buffer.fill(this.fill);
+      this.buffer.line(xpos+this.bezel, halfh, xpos+this.bezel, halfh *(1- ypos));
+      this.buffer.ellipse(xpos+this.bezel, halfh*(1-ypos), 5);
+      this.buffer.stroke(this.strokeClr[2]); this.buffer.fill(this.strokeClr[2])
+      this.buffer.line (xpos + this.bezel, halfh, xpos+this.bezel, halfh *(1- noise));
+      this.buffer.ellipse(xpos+this.bezel, halfh*(1-noise), 5);
+      this.buffer.stroke(this.strokeClr[0]);
+
+      //xpos += 20000/this.settings.sampleRate*imagePeriod;
+      xpos = xpos+ 20000 / this.settings.sampleRate * imagePeriod;
+
+    }
+    //TODO probably should combine these two loops
+    this.buffer.beginShape(); this.buffer.noFill();
+    for (let x = 0; x < this.settings.signal.length-2*this.bezel; x++) {
+      //this.buffer.ellipse(x+this.bezel,this.settings.signal[x]*halfh+ halfh,1)
+      this.buffer.curveVertex(x+this.bezel,halfh*(1-this.settings.signal[x]));
+      // this.buffer.line(x+this.bezel, this.settings.signal[x - 1]*halfh + halfh,
+                      // x+this.bezel, this.settings.signal[x]*halfh + halfh);
+    }
+    this.buffer.endShape();
+    this.buffer.line(this.bezel, halfh, this.buffer.width-this.bezel, halfh);
+    this.drawBorder();
+
+
 }
 }
 class sliderPanel extends Panel{
