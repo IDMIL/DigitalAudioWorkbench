@@ -16,7 +16,7 @@ var settings =
     { amplitude : 1.0
     , fundFreq : 1250
     , sampleRate : WEBAUDIO_MAX_SAMPLERATE
-    , downsamplingFactor : 12
+    , downsamplingFactor : 2
     , numHarm : 2
     , fftSize : fftSize
     , original: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
@@ -78,7 +78,7 @@ function sliderSetup() {
   // bitDepthDisplayer.position(bitDepthSlider.x * 2 + bitDepthSlider.width, p.height - p.height / numPanels + 85);
   // bitDepthSlider.input(updateGraphics);
 
-  sampleRateSlider = p.createSlider(p.log(1000)/p.log(2)*1000, 
+  sampleRateSlider = p.createSlider(p.log(3000)/p.log(2)*1000, 
                                     p.log(48000)/p.log(2)*1000, 
                                     p.log(48000)/p.log(2)*1000);
   sampleRateSlider.position(p.width / 2 + 10, p.height - p.height / numPanels + 10);
@@ -92,13 +92,13 @@ function sliderSetup() {
   originalButton.position(sampleRateSlider.x, ampSlider.y);
   originalButton.mousePressed( () => {
     if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.original, snd);
+    playWave(settings.original, settings.sampleRate, snd);
   });
   reconstructedButton = p.createButton("play reconstructed");
   reconstructedButton.position(sampleRateSlider.x + originalButton.width * 1.1, ampSlider.y);
   reconstructedButton.mousePressed( () => {
     if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.reconstructed, snd);
+    playWave(settings.reconstructed, settings.sampleRate, snd);
   });
 }
 
@@ -163,11 +163,12 @@ function renderWaves() {
 
   // render "sampled" wave (actually just downsampled original)
   // TODO: quantization and dither
+  settings.downsampled = new Float32Array(p.round(settings.sampleRate / settings.downsamplingFactor));
   settings.downsampled.forEach( (_, i, arr) => arr[i] = settings.original[i * settings.downsamplingFactor]);
 
   // render reconstructed wave using an OfflineAudioContext for upsampling
   offlineSnd = new OfflineAudioContext(1, WEBAUDIO_MAX_SAMPLERATE, WEBAUDIO_MAX_SAMPLERATE); 
-  playWave(settings.downsampled, offlineSnd);
+  playWave(settings.downsampled, settings.sampleRate / settings.downsamplingFactor, offlineSnd);
   return offlineSnd.startRendering()
     .then( buffer => settings.reconstructed = buffer.getChannelData(0) )
     .then( _ => {
@@ -176,20 +177,12 @@ function renderWaves() {
     });
 }
 
-function playWave(wave, audioctx, fft) {
-  // it is assumed that all waves are one second in duration, and that the size
-  // in samples and sampling rate are thus both equal to wave.length
-  var buffer = audioctx.createBuffer(1, wave.length, wave.length);
+function playWave(wave, sampleRate, audioctx) {
+  var buffer = audioctx.createBuffer(1, wave.length, sampleRate);
   buffer.copyToChannel(wave, 0, 0);
   var source = audioctx.createBufferSource();
   source.buffer = buffer;
-  if (fft) {
-    source.connect(fft);
-    fft.connect(audioctx.destination);
-  }
-  else {
-    source.connect(audioctx.destination);
-  }
+  source.connect(audioctx.destination);
   source.start();
 }
 
