@@ -84,15 +84,23 @@ function drawFFT(panel, fft) {
   let gain = (panel.buffer.height - 2 * panel.bezel);
   let offset = 100;
   let normalize = 4/fft.length;
+  let xscale = (panel.buffer.width - 2*panel.bezel)/(fft.length/2);
   panel.buffer.background(panel.background);
   panel.buffer.strokeWeight(1);
   panel.buffer.stroke(panel.strokeClr[0]);
-  for (let x = 0; x <= Math.min(panel.buffer.width - 2*panel.bezel, fft.length/2); x++) {
-    let xpos = x + panel.bezel;
+  panel.buffer.fill(panel.stroke);
+
+  panel.buffer.beginShape();
+  panel.buffer.vertex(panel.bezel, base);
+  // fft.length / 2 because it is an interleaved complex array 
+  // with twice as many elements as it has (complex) numbers
+  for (let x = 0; x <= fft.length/2; x++) { 
+    let xpos = xscale*x + panel.bezel;
     let ypos = base - gain * normalize * magnitude(fft[2*x], fft[2*x+1]);
-    if (x > panel.buffer.width/2) panel.buffer.stroke(panel.strokeClr[1]);
-    panel.buffer.line(xpos, base, xpos, ypos);
+    panel.buffer.vertex(xpos, ypos);
   }
+  panel.buffer.vertex(panel.buffer.width - panel.bezel, base);
+  panel.buffer.endShape(panel.buffer.CLOSE);
   panel.buffer.strokeWeight(panel.strokeWeight);
   panel.buffer.stroke(panel.stroke);
   panel.drawBorder();
