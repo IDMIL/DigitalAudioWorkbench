@@ -13,10 +13,9 @@ let panelWidth = totalWidth / numColumns;
 let fftSize = p.pow(2, p.round(p.log(panelWidth) / p.log(2)));
 let fft = new FFTJS(fftSize);
 var settings = 
-    { signal: new Array(44100)
-    , amplitude : 1.0
+    { amplitude : 1.0
     , fundFreq : 1250
-    , sampleRate : 44100
+    , sampleRate : WEBAUDIO_MAX_SAMPLERATE
     , downsamplingFactor : 12
     , numHarm : 2
     , fftSize : fftSize
@@ -52,7 +51,9 @@ p.draw = function() {
 }
 
 function sliderSetup() {
-  freqSlider = p.createSlider(200, settings.sampleRate / 2, settings.fundFreq);
+  freqSlider = p.createSlider((p.log(200)/p.log(2))*1000, 
+                              (p.log(settings.sampleRate / 2)/p.log(2))*1000, 
+                              (p.log(settings.fundFreq)/p.log(2))*1000);
   freqSlider.position(10, p.height - p.height / numPanels + 10);
   freqSlider.style('width', '200px');
   freqSlider.input(updateGraphics);
@@ -77,7 +78,9 @@ function sliderSetup() {
   // bitDepthDisplayer.position(bitDepthSlider.x * 2 + bitDepthSlider.width, p.height - p.height / numPanels + 85);
   // bitDepthSlider.input(updateGraphics);
 
-  sampleRateSlider = p.createSlider(10000, 20000, 20000);
+  sampleRateSlider = p.createSlider(p.log(1000)/p.log(2)*1000, 
+                                    p.log(48000)/p.log(2)*1000, 
+                                    p.log(48000)/p.log(2)*1000);
   sampleRateSlider.position(p.width / 2 + 10, p.height - p.height / numPanels + 10);
   sampleRateSlider.style('width', '200px');
   sampleRateSlider.input(updateGraphics);
@@ -101,7 +104,6 @@ function sliderSetup() {
 
 function updateGraphics() {
   drawSliderBuffer();
-  calcWave();
   renderWaves()
   .then( _ => {
     panels.forEach(panel => panel.drawPanel());
@@ -147,10 +149,17 @@ function renderWaves() {
       };
   // render original wave
   // TODO: configurable additive synthesis
-  settings.original.forEach( (_, i, arr) => arr[i] = Math.sin(2 * Math.PI * 440 * i / WEBAUDIO_MAX_SAMPLERATE));
+  settings.original.fill(0);
+  settings.original.forEach( (_, i, arr) => {
+    for (let harmonic = 1; harmonic < settings.numHarm; harmonic++) {
+      let omega = 2 * Math.PI * settings.fundFreq * harmonic;
+      arr[i] += settings.amplitude * Math.sin(omega * i / settings.sampleRate)
+    }
+  });
 
   // render original wave FFT
   fft.realTransform(settings.originalFreq, settings.original);
+  fft.completeSpectrum(settings.originalFreq);
 
   // render "sampled" wave (actually just downsampled original)
   // TODO: quantization and dither
@@ -161,7 +170,10 @@ function renderWaves() {
   playWave(settings.downsampled, offlineSnd);
   return offlineSnd.startRendering()
     .then( buffer => settings.reconstructed = buffer.getChannelData(0) )
-    .then( _ => fft.realTransform(settings.reconstructedFreq, settings.reconstructed));
+    .then( _ => {
+      fft.realTransform(settings.reconstructedFreq, settings.reconstructed)
+      fft.completeSpectrum(settings.reconstructedFreq);
+    });
 }
 
 function playWave(wave, audioctx, fft) {
@@ -179,7 +191,6 @@ function playWave(wave, audioctx, fft) {
     source.connect(audioctx.destination);
   }
   source.start();
-
 }
 
 function drawSampFreqBuffer() {
@@ -206,15 +217,15 @@ function drawSampFreqBuffer() {
 }
 
 function drawSliderBuffer() {
-  settings.fundFreq = freqSlider.value();
+  settings.fundFreq = p.pow(2,freqSlider.value()/1000);
   settings.amplitude = ampSlider.value();
-  settings.sampleRate = sampleRateSlider.value();
+  settings.downsamplingFactor = p.round(96000/p.pow(2, sampleRateSlider.value()/1000));
   //bitDepth = bitDepthSlider.value();
   phaseIncrement = (p.TWO_PI * settings.fundFreq / 20000 / imagePeriod)
-  freqDisplayer.html('Frequency: ' + freqSlider.value() + " Hz")
+  freqDisplayer.html('Frequency: ' + p.round(settings.fundFreq) + " Hz")
   ampDisplayer.html('Amplitude: ' + ampSlider.value())
   // bitDepthDisplayer.html('Bit Depth: ' + bitDepthSlider.value())
-  sampleRateDisplayer.html('Sample Rate: ' + sampleRateSlider.value() / 1000 + " kHz")
+  sampleRateDisplayer.html('Sample Rate: ' + p.round(settings.sampleRate / settings.downsamplingFactor / 1000, 3) + " kHz")
 }
 
 }; return new p5(sketch); } // end function new_widget() { var sketch = p => {
