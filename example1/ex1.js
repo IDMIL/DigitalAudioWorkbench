@@ -1,8 +1,8 @@
-const BIT_DEPTH_MAX = 16;
+const BIT_DEPTH_MAX = 25;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
 function new_widget(totalHeight, totalWidth, numColumns, panels) { const sketch = p => {
-let freqSlider, sampleRateSlider, ampSlider, bitDepthSlider, originalButton, reconstructedButton, numHarmSlider;
+let freqSlider, sampleRateSlider, ditherSlider, bitDepthSlider, originalButton, reconstructedButton, numHarmSlider;
 
 let snd;
 
@@ -19,6 +19,8 @@ var settings =
     , downsamplingFactor : 2
     , numHarm : 2
     , fftSize : fftSize
+    , bitDepth : BIT_DEPTH_MAX
+    , dither : 0.0
     , original: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
     , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4))
     , reconstructed: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
@@ -59,7 +61,7 @@ function sliderSetup() {
   freqSlider.input(updateGraphics);
 
   freqDisplayer = p.createP();
-  freqDisplayer.position(freqSlider.x * 2 + freqSlider.width, freqSlider.y - 15);
+  freqDisplayer.position(freqSlider.x + freqSlider.width * 1.1, freqSlider.y - 15);
 
   numHarmSlider = p.createSlider(1, 5, 1);
   numHarmSlider.position(10, p.height - p.height / numPanels + 50);
@@ -67,41 +69,41 @@ function sliderSetup() {
   numHarmSlider.input(updateGraphics);
 
   numHarmDisplayer = p.createP();
-  numHarmDisplayer.position(numHarmSlider.x * 2 + numHarmSlider.width, numHarmSlider.y - 15);
-
-  ampSlider = p.createSlider(0.0, 1.0, 1.0, .01);
-  ampSlider.position(10, p.height - p.height / numPanels + 90);
-  ampSlider.style('width', '200px');
-  ampSlider.input(updateGraphics);
-
-  ampDisplayer = p.createP()
-  ampDisplayer.position(ampSlider.x * 2 + ampSlider.width, ampSlider.y - 15);
-
-  // bitDepthSlider = p.createSlider(1, BIT_DEPTH_MAX, BIT_DEPTH_MAX, 1);
-  // bitDepthSlider.position(10, p.height - p.height / numPanels + 100);
-  // bitDepthSlider.style('width', '200px');
-  // bitDepthDisplayer = createP()
-  // bitDepthDisplayer.position(bitDepthSlider.x * 2 + bitDepthSlider.width, p.height - p.height / numPanels + 85);
-  // bitDepthSlider.input(updateGraphics);
+  numHarmDisplayer.position(numHarmSlider.x + numHarmSlider.width * 1.1, numHarmSlider.y - 15);
 
   sampleRateSlider = p.createSlider(p.log(3000)/p.log(2)*1000, 
                                     p.log(48000)/p.log(2)*1000, 
                                     p.log(48000)/p.log(2)*1000);
-  sampleRateSlider.position(p.width / 2 + 10, p.height - p.height / numPanels + 10);
+  sampleRateSlider.position(10, p.height - p.height / numPanels + 90);
   sampleRateSlider.style('width', '200px');
   sampleRateSlider.input(updateGraphics);
 
   sampleRateDisplayer = p.createP()
   sampleRateDisplayer.position(sampleRateSlider.x + sampleRateSlider.width * 1.1, sampleRateSlider.y - 15);
 
+  ditherSlider = p.createSlider(0.0, 1.0, 0.0, .01);
+  ditherSlider.position(p.width/2 + 10, numHarmSlider.y);
+  ditherSlider.style('width', '200px');
+  ditherSlider.input(updateGraphics);
+
+  ditherDisplayer = p.createP()
+  ditherDisplayer.position(ditherSlider.x + ditherSlider.width * 1.1, ditherSlider.y - 15);
+
+  bitDepthSlider = p.createSlider(1, BIT_DEPTH_MAX, BIT_DEPTH_MAX);
+  bitDepthSlider.position(p.width / 2 + 10, freqSlider.y);
+  bitDepthSlider.style('width', '200px');
+  bitDepthSlider.input(updateGraphics);
+  bitDepthDisplayer = p.createP()
+  bitDepthDisplayer.position(bitDepthSlider.x + bitDepthSlider.width * 1.1, bitDepthSlider.y - 15);
+
   originalButton = p.createButton("play original");
-  originalButton.position(sampleRateSlider.x, ampSlider.y);
+  originalButton.position(bitDepthSlider.x, sampleRateSlider.y);
   originalButton.mousePressed( () => {
     if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
     playWave(settings.original, settings.sampleRate, snd);
   });
   reconstructedButton = p.createButton("play reconstructed");
-  reconstructedButton.position(sampleRateSlider.x + originalButton.width * 1.1, ampSlider.y);
+  reconstructedButton.position(originalButton.x + originalButton.width * 1.1, originalButton.y);
   reconstructedButton.mousePressed( () => {
     if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
     playWave(settings.reconstructed, settings.sampleRate, snd);
@@ -173,7 +175,17 @@ function renderWaves() {
   // render "sampled" wave (actually just downsampled original)
   // TODO: quantization and dither
   settings.downsampled = new Float32Array(p.round(settings.sampleRate / settings.downsamplingFactor));
-  settings.downsampled.forEach( (_, i, arr) => arr[i] = settings.original[i * settings.downsamplingFactor]);
+  settings.downsampled.forEach( (_, i, arr) => {
+    let y = settings.original[i * settings.downsamplingFactor];
+    if (settings.bitDepth == BIT_DEPTH_MAX) return arr[i] = y;
+    let maxInt = p.pow(2, settings.bitDepth - 1);
+    let dither = (2 * Math.random() - 1) * settings.dither;
+    let rectified = (dither + y) * 0.5 + 0.5;
+    let quantized = p.round(rectified * maxInt);
+    let renormalized = quantized / maxInt;
+    let centered = 2 * renormalized - 1;
+    arr[i] = centered;
+  });
 
   // render reconstructed wave using an OfflineAudioContext for upsampling
   offlineSnd = new OfflineAudioContext(1, WEBAUDIO_MAX_SAMPLERATE, WEBAUDIO_MAX_SAMPLERATE); 
@@ -223,14 +235,14 @@ function drawSampFreqBuffer() {
 function drawSliderBuffer() {
   settings.fundFreq = p.pow(2,freqSlider.value()/1000);
   settings.numHarm = numHarmSlider.value();
-  settings.amplitude = ampSlider.value();
+  settings.dither = ditherSlider.value();
   settings.downsamplingFactor = p.round(96000/p.pow(2, sampleRateSlider.value()/1000));
-  //bitDepth = bitDepthSlider.value();
+  settings.bitDepth = bitDepthSlider.value();
   phaseIncrement = (p.TWO_PI * settings.fundFreq / 20000 / imagePeriod)
   freqDisplayer.html('Fundamental: ' + p.round(settings.fundFreq) + " Hz")
   numHarmDisplayer.html('Bandwidth: ' + p.round(settings.fundFreq * settings.numHarm) + " Hz")
-  ampDisplayer.html('Amplitude: ' + ampSlider.value())
-  // bitDepthDisplayer.html('Bit Depth: ' + bitDepthSlider.value())
+  ditherDisplayer.html('Dither: ' + p.round(settings.dither, 3));
+  bitDepthDisplayer.html('Bit Depth: ' + (settings.bitDepth == BIT_DEPTH_MAX ? 'Float32' : settings.bitDepth));
   sampleRateDisplayer.html('Sample Rate: ' + p.round(settings.sampleRate / settings.downsamplingFactor / 1000, 3) + " kHz")
 }
 
