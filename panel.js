@@ -11,10 +11,8 @@ class Panel {
   }
 
   setup(p, height, width, settings) {
-    this.height = height;
-    this.width = width;
     this.settings = settings;
-    this.buffer = p.createGraphics(this.width, this.height);
+    this.buffer = p.createGraphics(width, height);
     this.buffer.strokeWeight(this.strokeWeight);
     this.buffer.background(this.background);
     this.buffer.stroke(this.stroke);
@@ -27,32 +25,44 @@ class Panel {
   setFill(fillClr){ this.fill = fillClr; }
 
   drawBorder(){
-    this.buffer.line(this.bezel, this.bezel, this.bezel,this.height-this.bezel);
-    this.buffer.line(this.bezel,this.height-this.bezel, this.width-this.bezel, this.height-this.bezel);
-    this.buffer.line(this.width-this.bezel, this.height-this.bezel, this.width-this.bezel, this.bezel);
-    this.buffer.line(this.width-this.bezel, this.bezel, this.bezel, this.bezel);
-
+    let x1 = this.bezel;
+    let y1 = this.bezel;
+    let x2 = this.buffer.width - this.bezel;
+    let y2 = this.buffer.height - this.bezel;
+    this.buffer.line(x1, y1, x1, y2); // left side
+    this.buffer.line(x1, y1, x2, y1); // top
+    this.buffer.line(x2, y1, x2, y2); // right side
+    this.buffer.line(x1, y2, x2, y2); // bottom
   }
   drawPanel(){ }
 
 }
 
+function drawSignal(panel, signal)
+{
+    let halfh = panel.buffer.height/2;
+    let gain = halfh * 0.7;
+    panel.buffer.background(panel.background);
+    panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
+    panel.buffer.beginShape();
+    for (let x = 0; x < panel.buffer.width - 2*panel.bezel; x++) {
+      let y = halfh - gain * signal[x];
+      panel.buffer.curveVertex(x + panel.bezel, y);
+    }
+    panel.buffer.endShape();
+    panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
+    panel.drawBorder();
+}
+
 class inputSigPanel extends Panel {
   drawPanel(){
-    this.buffer.background(this.background);
-    let halfh = this.buffer.height/2;
-    this.buffer.noFill();
-    this.buffer.beginShape();
-    for (let x = 0; x < this.settings.signal.length-2*this.bezel; x++) {
-      //this.buffer.ellipse(x+this.bezel,this.settings.signal[x]*halfh+ halfh,1)
-      this.buffer.curveVertex(x+this.bezel,halfh*(1-this.settings.signal[x]));
-      // this.buffer.line(x+this.bezel, this.settings.signal[x - 1]*halfh + halfh,
-                      // x+this.bezel, this.settings.signal[x]*halfh + halfh);
-    }
-    this.buffer.endShape();
-    this.buffer.line(this.bezel, halfh, this.buffer.width-this.bezel, halfh);
-    this.drawBorder();
+    drawSignal(this, this.settings.original);
+  }
+}
 
+class reconstructedSigPanel extends Panel {
+  drawPanel(){
+    drawSignal(this, this.settings.reconstructed);
   }
 }
 
@@ -71,26 +81,67 @@ class inputSigFreqPanel extends Panel {
   this.buffer.line(xpos, this.bezel*2, xpos, halfh);
 
   this.drawBorder();
-  //this.buffer.line(this.width, this.height, this.width, 0);
-
-
   }
 
 }
 
+function magnitude(real, cplx) {
+  return Math.sqrt(real * real + cplx * cplx);
+}
+
+function drawFFT(panel, fft) {
+  let base = panel.buffer.height - panel.bezel;
+  let gain = (panel.buffer.height - 2 * panel.bezel);
+  let offset = 100;
+  let normalize = 4/fft.length;
+  let xscale = (panel.buffer.width - 2*panel.bezel)/(fft.length/2);
+  panel.buffer.background(panel.background);
+  panel.buffer.strokeWeight(1);
+  panel.buffer.stroke(panel.strokeClr[0]);
+  panel.buffer.fill(panel.stroke);
+
+  panel.buffer.beginShape();
+  panel.buffer.vertex(panel.bezel, base);
+  // fft.length / 2 because it is an interleaved complex array 
+  // with twice as many elements as it has (complex) numbers
+  for (let x = 0; x <= fft.length/2; x++) { 
+    let xpos = xscale*x + panel.bezel;
+    let ypos = base - gain * normalize * magnitude(fft[2*x], fft[2*x+1]);
+    panel.buffer.vertex(xpos, ypos);
+  }
+  panel.buffer.vertex(panel.buffer.width - panel.bezel, base);
+  panel.buffer.endShape(panel.buffer.CLOSE);
+  panel.buffer.strokeWeight(panel.strokeWeight);
+  panel.buffer.stroke(panel.stroke);
+  panel.drawBorder();
+}
+
+class inputSigFFTPanel extends Panel {
+  drawPanel() {
+    drawFFT(this, this.settings.originalFreq);
+  }
+}
+
+class sampledSigFFTPanel extends Panel {
+  drawPanel() {
+    drawFFT(this, this.settings.reconstructedFreq);
+  }
+}
+
 class impulsePanel extends Panel {
   drawPanel(){
+    let base = this.buffer.height * 0.75;
+    let height = this.buffer.height * 0.25;
     this.buffer.background(this.background);
     this.drawBorder();
+    this.buffer.line(this.bezel,base,this.width-this.bezel,base);
 
-    let imagePeriod = 20000 / this.buffer.width; // How many pixels before the wave repeats
-    this.buffer.line(this.bezel,this.height*.75,this.width-this.bezel,this.height*.75)
-
-    let xpos = 0;//this.bezel*2; // first
-    while (xpos<this.buffer.width-2*this.bezel){
-      this.buffer.line(xpos+this.bezel, this.buffer.height * .75, xpos+this.bezel, this.buffer.height / 4);
-      this.buffer.ellipse(xpos+this.bezel, this.buffer.height / 4, 10, 10);
-      xpos += 20000/this.settings.sampleRate*imagePeriod;
+    let visibleSamples = Math.round((this.buffer.width - 2 * this.bezel) 
+                                    / this.settings.downsamplingFactor);
+    for (let x = 0; x < visibleSamples; x++) {
+      let xpos = this.bezel + x * this.settings.downsamplingFactor;
+      this.buffer.line(xpos, base, xpos, height);
+      this.buffer.ellipse(xpos, height, 10, 10);
     }
   }
 }
@@ -116,30 +167,19 @@ class impulseFreqPanel extends Panel {
 class sampledInputPanel extends Panel{
   drawPanel(){
     let halfh = this.buffer.height/2;
+    let gain = halfh * 0.7;
     this.buffer.background(this.background);
-    this.buffer.line(this.bezel, halfh , this.buffer.width-this.bezel, halfh);
     this.drawBorder();
-    let xpos = 0; // first
-    let imagePeriod = 20000 / this.buffer.width; // How many pixels before the wave repeats
-    while (xpos<this.buffer.width-2*this.bezel){
-      let ypos = this.settings.signal[Math.round(xpos)];
-      console.log(xpos, ypos);
-      this.buffer.line(xpos+this.bezel, halfh, xpos+this.bezel, halfh *(1- ypos));
-      this.buffer.ellipse(xpos+this.bezel, halfh*(1-ypos), 10);
-      //xpos += 20000/this.settings.sampleRate*imagePeriod;
-      xpos = xpos+ 20000 / this.settings.sampleRate * imagePeriod;
-      // console.log("Sampled xpos: ",xpos);
-      // console.log("",this.settings.signal[xpos])
-
+    this.buffer.line(this.bezel, halfh , this.buffer.width-this.bezel, halfh);
+    let visibleSamples = Math.round((this.buffer.width - 2 * this.bezel) 
+                                    / this.settings.downsamplingFactor);
+    for (let x = 0; x < visibleSamples; x++) {
+      let xpos = Math.round(this.bezel + x * this.settings.downsamplingFactor);
+      let ypos = halfh - gain * this.settings.downsampled[x];
+      this.buffer.line(xpos, halfh, xpos, ypos);
+      this.buffer.ellipse(xpos, ypos, 10);
     }
-
-    // for (let x = 0; x < this.buffer.width / imagePeriod; x++) {
-    //     let xpos = Math.round(x * 20000 / this.settings.sampleRate * imagePeriod);
-    //     this.buffer.line(xpos, halfh, xpos, this.settings.signal[xpos]*halfh + halfh);
-    //     this.buffer.ellipse(xpos, this.settings.signal[xpos]*halfh + halfh, 10);
-    //   }
-
-    }
+  }
 }
 
 
