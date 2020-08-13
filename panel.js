@@ -38,21 +38,31 @@ class Panel {
 
 }
 
+function drawSignal(panel, signal)
+{
+    let halfh = panel.buffer.height/2;
+    let gain = halfh * 0.7;
+    panel.buffer.background(panel.background);
+    panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
+    panel.buffer.beginShape();
+    for (let x = 0; x < panel.buffer.width - 2*panel.bezel; x++) {
+      let y = halfh - gain * signal[x];
+      panel.buffer.curveVertex(x + panel.bezel, y);
+    }
+    panel.buffer.endShape();
+    panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
+    panel.drawBorder();
+}
+
 class inputSigPanel extends Panel {
   drawPanel(){
-    let halfh = this.buffer.height/2;
-    let gain = halfh * 0.7;
-    this.buffer.background(this.background);
-    this.buffer.line(this.bezel, halfh, this.buffer.width-this.bezel, halfh);
-    this.buffer.beginShape();
-    for (let x = 0; x < this.buffer.width - 2*this.bezel; x++) {
-      let y = gain * this.settings.original[x] + halfh;
-      this.buffer.curveVertex(x + this.bezel, y);
-    }
-    this.buffer.endShape();
-    this.buffer.line(this.bezel, halfh, this.buffer.width-this.bezel, halfh);
-    super.drawBorder();
+    drawSignal(this, this.settings.original);
+  }
+}
 
+class reconstructedSigPanel extends Panel {
+  drawPanel(){
+    drawSignal(this, this.settings.reconstructed);
   }
 }
 
@@ -124,15 +134,14 @@ class impulsePanel extends Panel {
     let height = this.buffer.height * 0.25;
     this.buffer.background(this.background);
     this.drawBorder();
+    this.buffer.line(this.bezel,base,this.width-this.bezel,base);
 
-    let imagePeriod = 20000 / this.buffer.width; // How many pixels before the wave repeats
-    this.buffer.line(this.bezel,this.height*.75,this.width-this.bezel,this.height*.75)
-
-    let xpos = this.bezel;//this.bezel*2; // first
-    while (xpos<this.buffer.width-2*this.bezel){
-      this.buffer.line(xpos, this.buffer.height * .75, xpos, this.buffer.height / 4);
-      this.buffer.ellipse(xpos, this.buffer.height / 4, 10, 10);
-      xpos += 20000/this.settings.sampleRate*imagePeriod;
+    let visibleSamples = Math.round((this.buffer.width - 2 * this.bezel) 
+                                    / this.settings.downsamplingFactor);
+    for (let x = 0; x < visibleSamples; x++) {
+      let xpos = this.bezel + x * this.settings.downsamplingFactor;
+      this.buffer.line(xpos, base, xpos, height);
+      this.buffer.ellipse(xpos, height, 10, 10);
     }
   }
 }
@@ -166,7 +175,7 @@ class sampledInputPanel extends Panel{
                                     / this.settings.downsamplingFactor);
     for (let x = 0; x < visibleSamples; x++) {
       let xpos = Math.round(this.bezel + x * this.settings.downsamplingFactor);
-      let ypos = gain * this.settings.downsampled[x] + halfh;
+      let ypos = halfh - gain * this.settings.downsampled[x];
       this.buffer.line(xpos, halfh, xpos, ypos);
       this.buffer.ellipse(xpos, ypos, 10);
     }

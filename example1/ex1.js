@@ -240,7 +240,8 @@ const widget = new_widget(900,1200,NUM_COLUMNS,
   [ new inputSigPanel()
   , new inputSigFFTPanel()
   , new impulsePanel()
-  , new impulseFreqPanel()
   , new sampledInputPanel()
-  , new sampledSigFFTPanel()]
+  , new reconstructedSigPanel()
+  , new sampledSigFFTPanel()
+  ]
 );
