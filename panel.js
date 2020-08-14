@@ -42,6 +42,7 @@ function drawSignal(panel, signal)
 {
     let halfh = panel.buffer.height/2;
     let gain = halfh * 0.7;
+    panel.buffer.noFill();
     panel.buffer.background(panel.background);
     panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
     panel.buffer.beginShape();
@@ -102,9 +103,9 @@ function drawFFT(panel, fft) {
 
   panel.buffer.beginShape();
   panel.buffer.vertex(panel.bezel, base);
-  // fft.length / 2 because it is an interleaved complex array 
+  // fft.length / 2 because it is an interleaved complex array
   // with twice as many elements as it has (complex) numbers
-  for (let x = 0; x <= fft.length/2; x++) { 
+  for (let x = 0; x <= fft.length/2; x++) {
     let xpos = xscale*x + panel.bezel;
     let ypos = base - gain * normalize * magnitude(fft[2*x], fft[2*x+1]);
     panel.buffer.vertex(xpos, ypos);
@@ -136,7 +137,7 @@ class impulsePanel extends Panel {
     this.drawBorder();
     this.buffer.line(this.bezel,base,this.width-this.bezel,base);
 
-    let visibleSamples = Math.round((this.buffer.width - 2 * this.bezel) 
+    let visibleSamples = Math.round((this.buffer.width - 2 * this.bezel)
                                     / this.settings.downsamplingFactor);
     for (let x = 0; x < visibleSamples; x++) {
       let xpos = this.bezel + x * this.settings.downsamplingFactor;
@@ -171,7 +172,7 @@ class sampledInputPanel extends Panel{
     this.buffer.background(this.background);
     this.drawBorder();
     this.buffer.line(this.bezel, halfh , this.buffer.width-this.bezel, halfh);
-    let visibleSamples = Math.round((this.buffer.width - 2 * this.bezel) 
+    let visibleSamples = Math.round((this.buffer.width - 2 * this.bezel)
                                     / this.settings.downsamplingFactor);
     for (let x = 0; x < visibleSamples; x++) {
       let xpos = Math.round(this.bezel + x * this.settings.downsamplingFactor);
