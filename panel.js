@@ -135,7 +135,7 @@ class impulsePanel extends Panel {
     let height = this.buffer.height * 0.25;
     this.buffer.background(this.background);
     this.drawBorder();
-    this.buffer.line(this.bezel,base,this.width-this.bezel,base);
+    this.buffer.line(this.bezel,base,this.buffer.width-this.bezel,base);
 
     let visibleSamples = Math.round((this.buffer.width - 2 * this.bezel)
                                     / this.settings.downsamplingFactor);
