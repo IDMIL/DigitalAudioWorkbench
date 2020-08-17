@@ -130,6 +130,11 @@ class sampledSigFFTPanel extends Panel {
 }
 
 class impulsePanel extends Panel {
+  constructor(){
+    super()
+    this.strokeWeight=1;
+    this.ellipseSize=5;
+  }
   drawPanel(){
     let base = this.buffer.height * 0.75;
     let height = this.buffer.height * 0.25;
@@ -142,12 +147,13 @@ class impulsePanel extends Panel {
     for (let x = 0; x < visibleSamples; x++) {
       let xpos = this.bezel + x * this.settings.downsamplingFactor;
       this.buffer.line(xpos, base, xpos, height);
-      this.buffer.ellipse(xpos, height, 10, 10);
+      this.buffer.ellipse(xpos, height, this.ellipseSize);
     }
   }
 }
 
 class impulseFreqPanel extends Panel {
+
   drawPanel(){
     this.buffer.background(this.background);
     this.buffer.fill(this.fill); this.buffer.strokeWeight(this.strokeWeight);
@@ -166,6 +172,11 @@ class impulseFreqPanel extends Panel {
 }
 
 class sampledInputPanel extends Panel{
+  constructor(){
+    super()
+    this.strokeWeight=1;
+    this.ellipseSize=5;
+  }
   drawPanel(){
     let halfh = this.buffer.height/2;
     let gain = halfh * 0.7;
@@ -178,7 +189,7 @@ class sampledInputPanel extends Panel{
       let xpos = Math.round(this.bezel + x * this.settings.downsamplingFactor);
       let ypos = halfh - gain * this.settings.downsampled[x];
       this.buffer.line(xpos, halfh, xpos, ypos);
-      this.buffer.ellipse(xpos, ypos, 10);
+      this.buffer.ellipse(xpos, ypos, this.ellipseSize);
     }
   }
 }
