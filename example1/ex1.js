@@ -2,18 +2,21 @@ const BIT_DEPTH_MAX = 25;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
 
-function new_widget(totalHeight, totalWidth, numColumns, panels) { const sketch = p => {
+function new_widget(totalHeight, totalWidth, numColumns, panels, sliders) { const sketch = p => {
 
-let freqSlider, sampleRateSlider, ditherSlider, bitDepthSlider, originalButton, reconstructedButton, numHarmSlider;
+// let freqSlider,
+let sampleRateSlider, ditherSlider, bitDepthSlider, originalButton, reconstructedButton, numHarmSlider;
 let snd;
 var numPanels = panels.length;
+var numSliders = sliders.length;
 let panelHeight = totalHeight / Math.ceil((numPanels+1)/numColumns);
 let panelWidth = totalWidth / numColumns;
+let sliderWidth = totalWidth/numColumns;
   //
 // set fftSize to the largest power of two that will approximately fill the panel
 let fftSize = p.pow(2, p.round(p.log(panelWidth) / p.log(2)));
 let fft = new FFTJS(fftSize);
-var settings = 
+var settings =
     { amplitude : 1.0
     , fundFreq : 1250
     , sampleRate : WEBAUDIO_MAX_SAMPLERATE
@@ -32,6 +35,8 @@ var settings =
 p.setup = function () {
   p.createCanvas(totalWidth, totalHeight);
   panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, settings));
+  console.log("settings up sliders...")
+  sliders.forEach(slider => slider.setup(p,sliderWidth,numPanels,settings));
   sliderSetup();
   updateGraphics();
   p.noLoop();
@@ -57,14 +62,14 @@ function makeSlider(min, max, initial, step, x, y)
 }
 
 function sliderSetup() {
-  [freqSlider, freqDisplayer] = makeSlider
-    ( (p.log(200)/p.log(2))
-    , (p.log(settings.sampleRate / 2 / 5)/p.log(2))
-    , (p.log(settings.fundFreq)/p.log(2))
-    , 0.001
-    , 10
-    , p.height - p.height / numPanels + 10
-    );
+  // [freqSlider, freqDisplayer] = makeSlider
+  //   ( (p.log(200)/p.log(2))
+  //   , (p.log(settings.sampleRate / 2 / 5)/p.log(2))
+  //   , (p.log(settings.fundFreq)/p.log(2))
+  //   , 0.001
+  //   , 10
+  //   , p.height - p.height / numPanels + 10
+  //   );
 
   [numHarmSlider, numHarmDisplayer] = makeSlider
     ( 1
@@ -128,7 +133,7 @@ function updateGraphics() {
 
 function renderWaves() {
   var offlineSnd, fftNode;
-  var fftOptions = 
+  var fftOptions =
       { fftSize: settings.fftSize
       , maxDecibels: 0
       , minDecibels: -100
@@ -166,7 +171,7 @@ function renderWaves() {
 
   // render reconstructed wave using an OfflineAudioContext for upsampling
   // TODO: use a better upsampling method (Chromium just does linear interp)
-  offlineSnd = new OfflineAudioContext(1, WEBAUDIO_MAX_SAMPLERATE, WEBAUDIO_MAX_SAMPLERATE); 
+  offlineSnd = new OfflineAudioContext(1, WEBAUDIO_MAX_SAMPLERATE, WEBAUDIO_MAX_SAMPLERATE);
   playWave(settings.downsampled, settings.sampleRate / settings.downsamplingFactor, offlineSnd);
   return offlineSnd.startRendering()
     .then( buffer => settings.reconstructed = buffer.getChannelData(0) )
@@ -188,13 +193,14 @@ function playWave(wave, sampleRate, audioctx) {
 }
 
 function readSliders() {
-  settings.fundFreq = p.pow(2,freqSlider.value());
+  //settings.fundFreq = p.pow(2,freqSlider.value());
+  settings.fundFreq = p.pow(2,)
   settings.numHarm = numHarmSlider.value();
   settings.dither = ditherSlider.value();
   settings.downsamplingFactor = p.round(96000/p.pow(2, sampleRateSlider.value()));
   settings.bitDepth = bitDepthSlider.value();
 
-  freqDisplayer.html('Fundamental: ' + p.round(settings.fundFreq) + " Hz")
+  //freqDisplayer.html('Fundamental: ' + p.round(settings.fundFreq) + " Hz")
   numHarmDisplayer.html('Bandwidth: ' + p.round(settings.fundFreq * settings.numHarm) + " Hz")
   ditherDisplayer.html('Dither: ' + p.round(settings.dither, 3));
   bitDepthDisplayer.html('Bit Depth: ' + (settings.bitDepth == BIT_DEPTH_MAX ? 'Float32' : settings.bitDepth));
@@ -203,12 +209,17 @@ function readSliders() {
 
 }; return new p5(sketch); } // end function new_widget() { var sketch = p => {
 
-const widget = new_widget(900,1000,NUM_COLUMNS,
+const widget = new_widget(900,1600,NUM_COLUMNS,
   [ new inputSigPanel()
   , new inputSigFFTPanel()
   , new impulsePanel()
+  , new impulseFreqPanel()
   , new sampledInputPanel()
+  , new sampledInputFreqPanel()
   , new reconstructedSigPanel()
   , new sampledSigFFTPanel()
-  ]
+],
+[ new freqSlider()
+
+]
 );
