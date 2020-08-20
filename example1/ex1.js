@@ -35,14 +35,15 @@ var settings =
 p.setup = function () {
   p.createCanvas(totalWidth, totalHeight);
   panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, settings));
-  console.log("settings up sliders...")
   sliders.forEach(slider => slider.setup(p,sliderWidth,numPanels,settings));
   sliderSetup();
   updateGraphics();
-  p.noLoop();
+  // p.noLoop();
 }
 
 p.draw = function() {
+  updateGraphics();
+
   panels.forEach( (panel, index) => {
     let y = p.floor(index / numColumns) * panelHeight;
     let x = p.floor(index % numColumns) * panelWidth;
@@ -50,16 +51,16 @@ p.draw = function() {
   });
 }
 
-function makeSlider(min, max, initial, step, x, y)
-{
-  let slider = p.createSlider(min, max, initial, step);
-  slider.position(x, y);
-  slider.style('width', '200px');
-  slider.input(updateGraphics);
-  let textLabel = p.createP();
-  textLabel.position(x + slider.width * 1.1, y - 15);
-  return [slider, textLabel];
-}
+// function makeSlider(min, max, initial, step, x, y)
+// {
+//   let slider = p.createSlider(min, max, initial, step);
+//   slider.position(x, y);
+//   slider.style('width', '200px');
+//   slider.input(updateGraphics);
+//   let textLabel = p.createP();
+//   textLabel.position(x + slider.width * 1.1, y - 15);
+//   return [slider, textLabel];
+// }
 
 function sliderSetup() {
   // [freqSlider, freqDisplayer] = makeSlider
@@ -71,44 +72,44 @@ function sliderSetup() {
   //   , p.height - p.height / numPanels + 10
   //   );
 
-  [numHarmSlider, numHarmDisplayer] = makeSlider
-    ( 1
-    , 5
-    , 1
-    , 1
-    , 10
-    , p.height - p.height / numPanels + 50
-    );
+  // [numHarmSlider, numHarmDisplayer] = makeSlider
+  //   ( 1
+  //   , 5
+  //   , 1
+  //   , 1
+  //   , 10
+  //   , p.height - p.height / numPanels + 50
+  //   );
 
-  [sampleRateSlider, sampleRateDisplayer] = makeSlider
-    ( p.log(3000)/p.log(2)
-    , p.log(48000)/p.log(2)
-    , p.log(48000)/p.log(2)
-    , 0.001
-    , 10
-    , p.height - p.height / numPanels + 90
-    );
-
-  [ditherSlider, ditherDisplayer] = makeSlider
-    ( 0.0
-    , 1.0
-    , 0.0
-    , .01
-    , p.width/2 + 10
-    , numHarmSlider.y
-    );
-
-  [bitDepthSlider, bitDepthDisplayer] = makeSlider
-      ( 1
-      , BIT_DEPTH_MAX
-      , BIT_DEPTH_MAX
-      , 1
-      , p.width / 2 + 10
-      , freqSlider.y
-      );
+  // [sampleRateSlider, sampleRateDisplayer] = makeSlider
+  //   ( p.log(3000)/p.log(2)
+  //   , p.log(48000)/p.log(2)
+  //   , p.log(48000)/p.log(2)
+  //   , 0.001
+  //   , 10
+  //   , p.height - p.height / numPanels + 90
+  //   );
+  //
+  // [ditherSlider, ditherDisplayer] = makeSlider
+  //   ( 0.0
+  //   , 1.0
+  //   , 0.0
+  //   , .01
+  //   , p.width/2 + 10
+  //   , numHarmSlider.y
+  //   );
+  //
+  // [bitDepthSlider, bitDepthDisplayer] = makeSlider
+  //     ( 1
+  //     , BIT_DEPTH_MAX
+  //     , BIT_DEPTH_MAX
+  //     , 1
+  //     , p.width / 2 + 10
+  //     , freqSlider.y
+  //     );
 
   originalButton = p.createButton("play original");
-  originalButton.position(bitDepthSlider.x, sampleRateSlider.y);
+  originalButton.position(p.width/2 + 10, p.height - p.height / numPanels + 90);
   originalButton.mousePressed( () => {
     if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
     playWave(settings.original, settings.sampleRate, snd);
@@ -127,7 +128,7 @@ function updateGraphics() {
   renderWaves()
   .then( _ => {
     panels.forEach(panel => panel.drawPanel());
-    p.draw();
+    // p.draw();
   });
 }
 
@@ -193,18 +194,19 @@ function playWave(wave, sampleRate, audioctx) {
 }
 
 function readSliders() {
-  //settings.fundFreq = p.pow(2,freqSlider.value());
-  settings.fundFreq = p.pow(2,)
-  settings.numHarm = numHarmSlider.value();
-  settings.dither = ditherSlider.value();
-  settings.downsamplingFactor = p.round(96000/p.pow(2, sampleRateSlider.value()));
-  settings.bitDepth = bitDepthSlider.value();
+  sliders.forEach(slider => slider.updateValue(p));
+  // console.log("read sliders..")
 
-  //freqDisplayer.html('Fundamental: ' + p.round(settings.fundFreq) + " Hz")
-  numHarmDisplayer.html('Bandwidth: ' + p.round(settings.fundFreq * settings.numHarm) + " Hz")
-  ditherDisplayer.html('Dither: ' + p.round(settings.dither, 3));
-  bitDepthDisplayer.html('Bit Depth: ' + (settings.bitDepth == BIT_DEPTH_MAX ? 'Float32' : settings.bitDepth));
-  sampleRateDisplayer.html('Sample Rate: ' + p.round(settings.sampleRate / settings.downsamplingFactor / 1000, 3) + " kHz")
+  // settings.numHarm = numHarmSlider.value();
+  // settings.dither = ditherSlider.value();
+  // settings.downsamplingFactor = p.round(96000/p.pow(2, sampleRateSlider.value()));
+  // settings.bitDepth = bitDepthSlider.value();
+
+  // freqDisplayer.html('Fundamental: ' + p.round(settings.fundFreq) + " Hz")
+  // numHarmDisplayer.html('Bandwidth: ' + p.round(settings.fundFreq * settings.numHarm) + " Hz")
+  // ditherDisplayer.html('Dither: ' + p.round(settings.dither, 3));
+  // bitDepthDisplayer.html('Bit Depth: ' + (settings.bitDepth == BIT_DEPTH_MAX ? 'Float32' : settings.bitDepth));
+  // sampleRateDisplayer.html('Sample Rate: ' + p.round(settings.sampleRate / settings.downsamplingFactor / 1000, 3) + " kHz")
 }
 
 }; return new p5(sketch); } // end function new_widget() { var sketch = p => {
@@ -218,8 +220,11 @@ const widget = new_widget(900,1600,NUM_COLUMNS,
   , new sampledInputFreqPanel()
   , new reconstructedSigPanel()
   , new sampledSigFFTPanel()
-],
-[ new freqSlider()
-
-]
+  ],
+  [ new freqSlider()
+  , new numHarmSlider()
+  , new sampleRateSlider()
+  , new ditherSlider()
+  , new bitDepthSlider()
+  ]
 );
