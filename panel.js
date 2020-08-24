@@ -25,8 +25,7 @@ class Panel {
   setFill(fillClr){ this.fill = fillClr; }
 
   drawBorder(){
-    let x1 = this.bezel;
-    let y1 = this.bezel;
+    let x1,y1 = this.bezel;
     let x2 = this.buffer.width - this.bezel;
     let y2 = this.buffer.height - this.bezel;
     this.buffer.line(x1, y1, x1, y2); // left side
