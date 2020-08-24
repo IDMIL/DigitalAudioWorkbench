@@ -26,7 +26,7 @@ class slider{
     this.slider = p.createSlider(this.min, this.max, this.initial, this.step);
     this.slider.position(this.x, this.y);
     this.slider.style('width', '200px');
-    this.slider.input(p.draw);//updateGraphics);
+    // this.slider.input(p.draw);//updateGraphics);
     this.textLabel = p.createP();
     this.textLabel.position(this.x + this.slider.width * 1.1, this.y - 15);
 
@@ -64,7 +64,8 @@ class numHarmSlider extends slider{
     this.makeSlider(p);
   }
   updateValue(p){
-    this.settings.numHarm = p.pow(2,this.slider.value());
+    this.settings.numHarm = this.slider.value();
+    // console.log(this.settings.numHarm, this.settings.fundFreq);
     this.textLabel.html(this.name +": "+ p.round(this.settings.fundFreq * this.settings.numHarm) + " Hz")
 
   }
@@ -82,8 +83,9 @@ class sampleRateSlider extends slider{
     this.makeSlider(p);
   }
   updateValue(p){
-    this.settings.sampleRate = p.pow(2,this.slider.value());
-    this.settings.downsamplingFactor = p.round(WEBAUDIO_MAX_SAMPLERATE/this.settings.sampleRate);
+    this.settings.downsamplingFactor = p.round(WEBAUDIO_MAX_SAMPLERATE/p.pow(2, this.slider.value()));
+
+    // console.log("downsampling:", this.settings.downsamplingFactor)
     this.textLabel.html('Sample Rate: ' + p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3) + " kHz")
     }
 }

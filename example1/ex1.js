@@ -112,14 +112,14 @@ function sliderSetup() {
   originalButton.position(p.width/2 + 10, p.height - p.height / numPanels + 90);
   originalButton.mousePressed( () => {
     if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.original, settings.sampleRate, snd);
+    playWave(settings.original, WEBAUDIO_MAX_SAMPLERATE, snd);
   });
 
   reconstructedButton = p.createButton("play reconstructed");
   reconstructedButton.position(originalButton.x + originalButton.width * 1.1, originalButton.y);
   reconstructedButton.mousePressed( () => {
     if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.reconstructed, settings.sampleRate, snd);
+    playWave(settings.reconstructed, WEBAUDIO_MAX_SAMPLERATE, snd);
   });
 }
 
@@ -145,7 +145,7 @@ function renderWaves() {
   settings.original.forEach( (_, i, arr) => {
     for (let harmonic = 1; harmonic <= settings.numHarm; harmonic++) {
       let omega = 2 * Math.PI * settings.fundFreq * harmonic;
-      arr[i] += settings.amplitude * Math.sin(omega * i / settings.sampleRate) / harmonic;
+      arr[i] += settings.amplitude * Math.sin(omega * i / WEBAUDIO_MAX_SAMPLERATE) / harmonic;
     }
   });
   let max = Math.max.apply(Math, settings.original);
@@ -157,7 +157,7 @@ function renderWaves() {
   fft.completeSpectrum(settings.originalFreq);
 
   // render "sampled" wave (actually just downsampled original)
-  settings.downsampled = new Float32Array(p.round(settings.sampleRate / settings.downsamplingFactor));
+  settings.downsampled = new Float32Array(p.round(WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor));
   settings.downsampled.forEach( (_, i, arr) => {
     let y = settings.original[i * settings.downsamplingFactor];
     if (settings.bitDepth == BIT_DEPTH_MAX) return arr[i] = y;
@@ -173,7 +173,7 @@ function renderWaves() {
   // render reconstructed wave using an OfflineAudioContext for upsampling
   // TODO: use a better upsampling method (Chromium just does linear interp)
   offlineSnd = new OfflineAudioContext(1, WEBAUDIO_MAX_SAMPLERATE, WEBAUDIO_MAX_SAMPLERATE);
-  playWave(settings.downsampled, settings.sampleRate / settings.downsamplingFactor, offlineSnd);
+  playWave(settings.downsampled, WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor, offlineSnd);
   return offlineSnd.startRendering()
     .then( buffer => settings.reconstructed = buffer.getChannelData(0) )
     .then( _ => {
