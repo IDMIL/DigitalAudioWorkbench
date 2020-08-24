@@ -253,7 +253,7 @@ class quantizedSignalPanel extends Panel{
       let sig = this.settings.signal[Math.round(xpos)];
 //      ypos = Math.floor(sig*max+.5)/max;
       ypos = (Math.floor(sig*max)+.5)/max;
-      console.log(sig +" is rounded to " +ypos);
+      // console.log(sig +" is rounded to " +ypos);
       let noise = sig - ypos;
       this.buffer.fill(this.fill);
       this.buffer.line(xpos+this.bezel, halfh, xpos+this.bezel, halfh *(1- ypos));
