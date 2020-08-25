@@ -1,6 +1,6 @@
 //Panel class. should be extended with a drawPanel method
 class Panel {
-  constructor(background = "white", stroke = "black", strokeWeight = 3, fill = "black",bezel =20) {
+  constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black",bezel =30) {
     this.background =  background;
     this.stroke = stroke;
     this.strokeWeight = strokeWeight;
@@ -17,6 +17,8 @@ class Panel {
     this.buffer.background(this.background);
     this.buffer.stroke(this.stroke);
     this.buffer.fill(this.fill);
+    this.buffer.textFont('Helvetica',20);
+
   }
 
   setbackground(backgroundClr){ this.background = backgroundClr; }
@@ -57,12 +59,17 @@ function drawSignal(panel, signal)
 class inputSigPanel extends Panel {
   drawPanel(){
     drawSignal(this, this.settings.original);
+    this.buffer.fill(this.fill);
+    this.buffer.text('Input Signal', this.buffer.width/2-50, 20);
+
   }
 }
 
 class reconstructedSigPanel extends Panel {
   drawPanel(){
     drawSignal(this, this.settings.reconstructed);
+    this.buffer.fill(this.fill);
+    this.buffer.text('Reconstructed Signal', this.buffer.width/2-75, 20);
   }
 }
 
@@ -148,6 +155,8 @@ class impulsePanel extends Panel {
       this.buffer.line(xpos, base, xpos, height);
       this.buffer.ellipse(xpos, height, this.ellipseSize);
     }
+    this.buffer.text('Sampling Signal', this.buffer.width/2-75, 20);
+
   }
 }
 
@@ -190,6 +199,8 @@ class sampledInputPanel extends Panel{
       this.buffer.line(xpos, halfh, xpos, ypos);
       this.buffer.ellipse(xpos, ypos, this.ellipseSize);
     }
+    this.buffer.text('Sampled Signal', this.buffer.width/2-75, 20);
+
   }
 }
 
@@ -235,7 +246,7 @@ class sampledInputFreqPanel extends Panel{
 class quantizedSignalPanel extends Panel{
   constructor(){
     super();
-    this.bezel=30;
+    //this.bezel=60;
   }
   drawPanel(){
     //Draw quantized bit stem plot
