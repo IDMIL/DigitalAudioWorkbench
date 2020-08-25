@@ -15,6 +15,8 @@ class slider{
     this.textLabel = p.createP();
     this.textLabel.position(this.x + this.slider.width * 1.1, this.y - 15);
     this.slider.input(p.draw);
+    this.slider.mousePressed(p.draw);
+    this.slider.mouseReleased(p.draw);
   }
 }
 
