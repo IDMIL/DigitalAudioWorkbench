@@ -22,6 +22,7 @@ var settings =
     , sampleRate : WEBAUDIO_MAX_SAMPLERATE
     , downsamplingFactor : 2
     , numHarm : 2
+    , phase : 0.0
     , fftSize : fftSize
     , bitDepth : BIT_DEPTH_MAX
     , dither : 0.0
@@ -91,7 +92,7 @@ function renderWaves() {
   settings.original.forEach( (_, i, arr) => {
     for (let harmonic = 1; harmonic <= settings.numHarm; harmonic++) {
       let omega = 2 * Math.PI * settings.fundFreq * harmonic;
-      arr[i] += settings.amplitude * Math.sin(omega * i / WEBAUDIO_MAX_SAMPLERATE) / harmonic;
+      arr[i] += settings.amplitude * Math.sin(omega * i / WEBAUDIO_MAX_SAMPLERATE+settings.phase) / harmonic;
     }
   });
   let max = Math.max.apply(Math, settings.original);
@@ -160,5 +161,6 @@ const widget = new_widget(900,1600,NUM_COLUMNS,
   , new ditherSlider()
   , new bitDepthSlider()
   , new amplitudeSlider()
+  , new phaseSlider()
   ]
 );
