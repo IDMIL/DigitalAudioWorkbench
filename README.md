@@ -3,14 +3,15 @@ https://idmil.gitlab.io/course-materials/mumt203/interactive-demos
 
 ## Demos to be created:
 
-- Class #3, slide 23 (Sampling and reconstruction: time and frequency domains)
-- Class #3, slide 36 (Aliasing and the Nyquist frequency barrier)
-- Class #3, slide 28
+- Class 3
+  - slide 23 (Sampling and reconstruction: time and frequency domains)
+  - slide 36 (Aliasing and the Nyquist frequency barrier)
+  - slide 28
     - video 1 (No Aliasing)
     - video 2 (Aliasing and Folding)
     - video 3 (Aliasing - undersampling)
-- Slide #47 (Quantization level - bit depth)
-- Slide #59 (Quantization error)
+  - Slide 47 (Quantization level - bit depth)
+  - Slide 59 (Quantization error)
 
 I have started a template we can work from for all the examples. It pretty much covers slider 23 and slide 47 already.
     - https://editor.p5js.org/jorp11/full/doPkiztUw 
