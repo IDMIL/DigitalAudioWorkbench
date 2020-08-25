@@ -143,22 +143,3 @@ function readSliders() {
 }
 
 }; return new p5(sketch); } // end function new_widget() { var sketch = p => {
-
-const widget = new_widget(900,1600,NUM_COLUMNS,
-  [ new inputSigPanel()
-  , new inputSigFFTPanel()
-  , new impulsePanel()
-  , new impulseFreqPanel()
-  , new sampledInputPanel()
-  , new sampledInputFreqPanel()
-  , new reconstructedSigPanel()
-  , new sampledSigFFTPanel()
-  ],
-  [ new freqSlider()
-  , new numHarmSlider()
-  , new sampleRateSlider()
-  , new ditherSlider()
-  , new bitDepthSlider()
-  , new amplitudeSlider()
-  ]
-);

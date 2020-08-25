@@ -1,12 +1,25 @@
 <html>
   <head>
     <script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
-   <!-- <script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/addons/p5.sound.js"></script> -->
+  <!--  <script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/addons/p5.sound.js"></script> -->
     <script src="../panel.js"></script>
-    <script src="ex3.js"></script>
+    <script src="../slider.js"></script>
+    <script src="../fft.js"></script>
+    <script src="../widget.js"></script>
   </head>
   <body>
     <main>
+    <script>
+        const widget = new_widget(900,1600,NUM_COLUMNS,
+                [ new inputSigPanel(background="grey'")
+                , new sampledInputPanel()],
+                [ new freqSlider()
+                , new sampleRateSlider()
+                , new bitDepthSlider()
+                , new amplitudeSlider()
+                ]
+        );
+    </script>
     </main>
   </body>
 </html>
