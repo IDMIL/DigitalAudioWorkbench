@@ -1,27 +1,12 @@
 class slider{
   constructor(settings){
     this.settings = settings;
-    // this.name =  name;
-    // this.min = min,
-    // this.max = max;
-    // this.initial = initial;
-    // this.step = step;
-    // this.x = x;
-    // this.y =y;
-    // this.width = '200px';
-    // this.slider = p.createSlider(this.min, this.max, this.initial, this.step);
-    // this.slider.position(this.x, this.y);
-    // this.slider.style('width', this.width);
-    // this.slider.input(updateGraphics);
-    // this.textLabel = p.createP();
-    // this.textLabel.position(this.x + this.slider.width * 1.1, this.y - 15);
   }
-  // setup(){
-  //
-  // }
+
   updateValue(){
   // Should be overridden by a function reading the slider and setting the appropraite "settings" variable
-};
+  }
+
   makeSlider(p){
     this.slider = p.createSlider(this.min, this.max, this.initial, this.step);
     this.slider.position(this.x, this.y);
@@ -29,7 +14,7 @@ class slider{
     // this.slider.input(p.draw);//updateGraphics);
     this.textLabel = p.createP();
     this.textLabel.position(this.x + this.slider.width * 1.1, this.y - 15);
-
+    this.slider.input(p.draw);
   }
 }
 
@@ -45,12 +30,14 @@ class freqSlider extends slider{
     this.y =  p.height - p.height / numPanels + 10;
     this.makeSlider(p);
   }
+
   updateValue(p){
     this.settings.fundFreq = p.pow(2,this.slider.value());
     this.textLabel.html('Fundamental: ' + p.round(this.settings.fundFreq) + " Hz")
 
   }
 }
+
 class numHarmSlider extends slider{
   setup(p,sliderWidth,numPanels,settings){
     this.settings = settings;
@@ -63,13 +50,14 @@ class numHarmSlider extends slider{
     this.y =  p.height - p.height / numPanels + 50;
     this.makeSlider(p);
   }
+
   updateValue(p){
     this.settings.numHarm = this.slider.value();
     // console.log(this.settings.numHarm, this.settings.fundFreq);
     this.textLabel.html(this.name +": "+ p.round(this.settings.fundFreq * this.settings.numHarm) + " Hz")
-
   }
 }
+
 class sampleRateSlider extends slider{
   setup(p,sliderWidth,numPanels,settings){
     this.settings = settings;
@@ -82,13 +70,14 @@ class sampleRateSlider extends slider{
     this.y =  p.height - p.height / numPanels + 90
     this.makeSlider(p);
   }
+
   updateValue(p){
     this.settings.downsamplingFactor = p.round(WEBAUDIO_MAX_SAMPLERATE/p.pow(2, this.slider.value()));
-
     // console.log("downsampling:", this.settings.downsamplingFactor)
     this.textLabel.html('Sample Rate: ' + p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3) + " kHz")
-    }
+  }
 }
+
 class ditherSlider extends slider {
   setup(p,sliderWidth,numPanels,settings){
     // console.log("dither slider setup;")
@@ -102,11 +91,13 @@ class ditherSlider extends slider {
     this.y =  p.height - p.height / numPanels + 50
     this.makeSlider(p);
   }
+
   updateValue(p){
     this.settings.dither = this.slider.value();
     this.textLabel.html('Dither: ' + p.round(this.settings.dither, 3));
+  }
 }
-}
+
 class bitDepthSlider extends slider {
   setup(p,sliderWidth,numPanels,settings){
     // console.log("Bit depth slider setup;")
@@ -119,12 +110,14 @@ class bitDepthSlider extends slider {
     this.x =  p.width/2 + 10;
     this.y =  p.height - p.height / numPanels + 10;
     this.makeSlider(p);
-}
+  }
+
   updateValue(p){
     this.settings.bitDepth = this.slider.value();
     this.textLabel.html('Bit Depth: ' + (this.settings.bitDepth == BIT_DEPTH_MAX ? 'Float32' : this.settings.bitDepth));
   }
 }
+
 class amplitudeSlider extends slider {
   setup(p,sliderWidth,numPanels,settings){
     // console.log("Bit depth slider setup;")
@@ -137,7 +130,8 @@ class amplitudeSlider extends slider {
     this.x =  p.width/4 + 10;
     this.y =  p.height - p.height / numPanels + 10;
     this.makeSlider(p);
-}
+  }
+
   updateValue(p){
     this.settings.amplitude = this.slider.value();
     this.textLabel.html('Amplitude: ' + (this.settings.amplitude));

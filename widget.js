@@ -35,14 +35,19 @@ var settings =
 p.setup = function () {
   p.createCanvas(totalWidth, totalHeight);
   panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, settings));
-  sliders.forEach(slider => slider.setup(p,sliderWidth,numPanels,settings));
+  sliders.forEach(slider => slider.setup(p, sliderWidth, numPanels, settings));
   buttonSetup();
-  updateGraphics();
-  // p.noLoop();
+  p.noLoop();
+  setTimeout(p.draw, 250);
 }
 
 p.draw = function() {
-  updateGraphics();
+  sliders.forEach(slider => slider.updateValue(p)); // read sliders
+
+  renderWaves()
+  .then( _ => {
+    panels.forEach(panel => panel.drawPanel());
+  });
 
   panels.forEach( (panel, index) => {
     let y = p.floor(index / numColumns) * panelHeight;
@@ -68,15 +73,6 @@ function buttonSetup() {
   });
 }
 
-function updateGraphics() {
-  readSliders();
-  renderWaves()
-  .then( _ => {
-    panels.forEach(panel => panel.drawPanel());
-    // p.draw();
-  });
-}
-
 function renderWaves() {
   var offlineSnd, fftNode;
   var fftOptions =
@@ -87,7 +83,6 @@ function renderWaves() {
       };
   // render original wave
   settings.original.fill(0);
-  console.log(settings.amplitude);
   settings.original.forEach( (_, i, arr) => {
     for (let harmonic = 1; harmonic <= settings.numHarm; harmonic++) {
       let omega = 2 * Math.PI * settings.fundFreq * harmonic;
@@ -138,8 +133,5 @@ function playWave(wave, sampleRate, audioctx) {
   source.start();
 }
 
-function readSliders() {
-  sliders.forEach(slider => slider.updateValue(p));
-}
-
-}; return new p5(sketch); } // end function new_widget() { var sketch = p => {
+}; 
+return new p5(sketch); } // end function new_widget() { var sketch = p => {
