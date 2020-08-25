@@ -5,6 +5,7 @@ pages:
     - mkdir .public
     - cp -a example* .public
     - cp -a *.js .public
+    - cp -a index.html .public
     - mv .public public
 
     artifacts:
