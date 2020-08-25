@@ -160,6 +160,7 @@ class phaseSlider extends slider{
     let sliderVal = this.slider.value();
     this.settings.phase = sliderVal*Math.PI;
     let label;
+    //Todo: this is not the best way to do this
     switch(sliderVal){
       case 0: label = "0"; break;
       case 0.125: label = "PI/8"; break;
@@ -170,9 +171,7 @@ class phaseSlider extends slider{
       case 0.75: label = "3PI/4"; break;
       case 0.875: label = "7 PI/8"; break;
       case 1.0: label = "PI"; break;
-
-
-      default: label = "some bulsh";
+      default: label = "oops!";
     }
     this.textLabel.html(this.name +": " + label + " rads");
   }
