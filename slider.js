@@ -1,6 +1,9 @@
 class slider{
-  constructor(settings){
-    this.settings = settings;
+  constructor(){
+  }
+
+  setup(p, settings){
+    // should be overridden to set up the slider
   }
 
   updateValue(){
@@ -9,25 +12,25 @@ class slider{
 
   makeSlider(p){
     this.slider = p.createSlider(this.min, this.max, this.initial, this.step);
-    this.slider.position(this.x, this.y);
-    this.slider.style('width', '200px');
-    // this.slider.input(p.draw);//updateGraphics);
     this.textLabel = p.createP();
-    this.textLabel.position(this.x + this.slider.width * 1.1, this.y - 15);
     this.slider.input(p.draw);
+  }
+
+  resize(x, y, sliderWidth){
+    this.slider.style('width', Math.round(sliderWidth).toString() + "px");
+    this.slider.position(x, y);
+    this.textLabel.position(x + this.slider.width + 10, y - 15);
   }
 }
 
 class freqSlider extends slider{
-  setup(p,sliderWidth,numPanels,settings){
+  setup(p,settings){
     this.settings = settings;
     this.name ="freq";
     this.min = p.log(200)/p.log(2);
     this.max = (p.log(this.settings.sampleRate / 2 / 5)/p.log(2));
     this.initial = (p.log(settings.fundFreq)/p.log(2));
     this.step = 0.001;
-    this.x = 10;
-    this.y =  p.height - p.height / numPanels + 10;
     this.makeSlider(p);
   }
 
@@ -39,35 +42,30 @@ class freqSlider extends slider{
 }
 
 class numHarmSlider extends slider{
-  setup(p,sliderWidth,numPanels,settings){
+  setup(p,settings){
     this.settings = settings;
     this.name ="Bandwidth";
     this.min = 1;
     this.max = 5;
     this.initial = 1;
     this.step = 1;
-    this.x = 10;
-    this.y =  p.height - p.height / numPanels + 50;
     this.makeSlider(p);
   }
 
   updateValue(p){
     this.settings.numHarm = this.slider.value();
-    // console.log(this.settings.numHarm, this.settings.fundFreq);
     this.textLabel.html(this.name +": "+ p.round(this.settings.fundFreq * this.settings.numHarm) + " Hz")
   }
 }
 
 class sampleRateSlider extends slider{
-  setup(p,sliderWidth,numPanels,settings){
+  setup(p,settings){
     this.settings = settings;
     this.name ="Sample Rate";
     this.min = p.log(3000)/p.log(2);
     this.max =  p.log(48000)/p.log(2);
     this.initial = p.log(48000)/p.log(2);
     this.step = 0.1
-    this.x = 10;
-    this.y =  p.height - p.height / numPanels + 90
     this.makeSlider(p);
   }
 
@@ -79,7 +77,7 @@ class sampleRateSlider extends slider{
 }
 
 class ditherSlider extends slider {
-  setup(p,sliderWidth,numPanels,settings){
+  setup(p,settings){
     // console.log("dither slider setup;")
     this.settings = settings;
     this.name ="Dither";
@@ -87,8 +85,6 @@ class ditherSlider extends slider {
     this.max =  1.0;
     this.initial = 0.0;
     this.step = 0.01;
-    this.x =  p.width/2 + 10;
-    this.y =  p.height - p.height / numPanels + 50
     this.makeSlider(p);
   }
 
@@ -99,7 +95,7 @@ class ditherSlider extends slider {
 }
 
 class bitDepthSlider extends slider {
-  setup(p,sliderWidth,numPanels,settings){
+  setup(p,settings){
     // console.log("Bit depth slider setup;")
     this.settings = settings;
     this.name ="Bit Depth";
@@ -107,8 +103,6 @@ class bitDepthSlider extends slider {
     this.max =  BIT_DEPTH_MAX;
     this.initial = BIT_DEPTH_MAX;
     this.step = 1;
-    this.x =  p.width/2 + 10;
-    this.y =  p.height - p.height / numPanels + 10;
     this.makeSlider(p);
   }
 
@@ -119,7 +113,7 @@ class bitDepthSlider extends slider {
 }
 
 class amplitudeSlider extends slider {
-  setup(p,sliderWidth,numPanels,settings){
+  setup(p,settings){
     // console.log("Bit depth slider setup;")
     this.settings = settings;
     this.name ="Amplitude";
@@ -127,8 +121,6 @@ class amplitudeSlider extends slider {
     this.max =  1.0;
     this.initial = 1.0;
     this.step = 0.01;
-    this.x =  p.width/4 + 10;
-    this.y =  p.height - p.height / numPanels + 10;
     this.makeSlider(p);
   }
 

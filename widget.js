@@ -2,17 +2,15 @@ const BIT_DEPTH_MAX = 25;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
 
-function new_widget(totalHeight, totalWidth, numColumns, panels, sliders) { const sketch = p => {
+function new_widget(panels, sliders) { const sketch = p => {
 
 // let freqSlider,
 let sampleRateSlider, ditherSlider, bitDepthSlider, originalButton, reconstructedButton, numHarmSlider;
-let snd;
 var numPanels = panels.length;
 var numSliders = sliders.length;
-let panelHeight = totalHeight / Math.ceil((numPanels+1)/numColumns);
-let panelWidth = totalWidth / numColumns;
-let sliderWidth = totalWidth/numColumns;
-  //
+let panelHeight, panelWidth, sliderWidth, sliderHeight, numColumns;
+resize(1080, 1920);
+
 // set fftSize to the largest power of two that will approximately fill the panel
 let fftSize = p.pow(2, p.round(p.log(panelWidth) / p.log(2)));
 let fft = new FFTJS(fftSize);
@@ -30,16 +28,18 @@ var settings =
     , reconstructed: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
     , originalFreq : fft.createComplexArray()
     , reconstructedFreq : fft.createComplexArray()
+    , snd : undefined
     };
 
 p.setup = function () {
-  p.createCanvas(totalWidth, totalHeight);
+  p.createCanvas(p.windowWidth, p.windowHeight);
   panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, settings));
-  sliders.forEach(slider => slider.setup(p, sliderWidth, numPanels, settings));
+  sliders.forEach(slider => slider.setup(p, settings));
   buttonSetup();
+  p.windowResized();
   p.noLoop();
   setTimeout(p.draw, 250);
-}
+};
 
 p.draw = function() {
   sliders.forEach(slider => slider.updateValue(p)); // read sliders
@@ -54,6 +54,42 @@ p.draw = function() {
     let x = p.floor(index % numColumns) * panelWidth;
     p.image(panel.buffer, x, y);
   });
+};
+
+p.windowResized = function() {
+  let w = p.windowWidth - 20; // TODO: get panel bezel somehow instead of hardcoded 20
+  let h = p.windowHeight - 20;
+  resize(w, h);
+  p.resizeCanvas(w, h);
+  panels.forEach(panel => panel.resize(panelHeight, panelWidth));
+
+  let yoffset = panelHeight * p.ceil(numPanels/numColumns) + 20;
+  sliders.forEach( (slider, index) => {
+    let y = yoffset + p.floor(index / numColumns) * sliderHeight;
+    let x = p.floor(index % numColumns) * panelWidth;
+    slider.resize(x + 20, y, sliderWidth);
+  });
+
+  let y = yoffset + p.floor((numSliders)/ numColumns) * sliderHeight;
+  let x = p.floor((numSliders) % numColumns) * panelWidth;
+  originalButton.position(x + 20, y);
+  reconstructedButton.position(originalButton.x + originalButton.width * 1.1, originalButton.y);
+};
+
+function resize(w, h) {
+  if (w < 800) numColumns = 1;
+  else numColumns = 2;
+  let panelRows = Math.ceil((numPanels+1)/numColumns);
+  let sliderRows = Math.ceil((numSliders+1)/numColumns);
+  panelWidth   = w / numColumns;
+  sliderWidth  = w / numColumns - 200;
+  panelHeight  = h / panelRows;
+  sliderHeight = panelHeight / sliderRows;
+  if (sliderHeight < 30) { // keep sliders from getting squished
+    sliderHeight = 30;
+    let sliderPanelHeight = sliderHeight * sliderRows;
+    panelHeight = (h - sliderPanelHeight) / (panelRows - 1);
+  }
 }
 
 function buttonSetup() {
@@ -61,15 +97,15 @@ function buttonSetup() {
   originalButton = p.createButton("play original");
   originalButton.position(p.width/2 + 10, p.height - p.height / numPanels + 90);
   originalButton.mousePressed( () => {
-    if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.original, WEBAUDIO_MAX_SAMPLERATE, snd);
+    if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();
+    playWave(settings.original, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
 
   reconstructedButton = p.createButton("play reconstructed");
   reconstructedButton.position(originalButton.x + originalButton.width * 1.1, originalButton.y);
   reconstructedButton.mousePressed( () => {
-    if (!snd) snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.reconstructed, WEBAUDIO_MAX_SAMPLERATE, snd);
+    if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();
+    playWave(settings.reconstructed, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
 }
 
