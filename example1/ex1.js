@@ -36,7 +36,7 @@ p.setup = function () {
   p.createCanvas(totalWidth, totalHeight);
   panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, settings));
   sliders.forEach(slider => slider.setup(p,sliderWidth,numPanels,settings));
-  sliderSetup();
+  buttonSetup();
   updateGraphics();
   // p.noLoop();
 }
@@ -51,62 +51,7 @@ p.draw = function() {
   });
 }
 
-// function makeSlider(min, max, initial, step, x, y)
-// {
-//   let slider = p.createSlider(min, max, initial, step);
-//   slider.position(x, y);
-//   slider.style('width', '200px');
-//   slider.input(updateGraphics);
-//   let textLabel = p.createP();
-//   textLabel.position(x + slider.width * 1.1, y - 15);
-//   return [slider, textLabel];
-// }
-
-function sliderSetup() {
-  // [freqSlider, freqDisplayer] = makeSlider
-  //   ( (p.log(200)/p.log(2))
-  //   , (p.log(settings.sampleRate / 2 / 5)/p.log(2))
-  //   , (p.log(settings.fundFreq)/p.log(2))
-  //   , 0.001
-  //   , 10
-  //   , p.height - p.height / numPanels + 10
-  //   );
-
-  // [numHarmSlider, numHarmDisplayer] = makeSlider
-  //   ( 1
-  //   , 5
-  //   , 1
-  //   , 1
-  //   , 10
-  //   , p.height - p.height / numPanels + 50
-  //   );
-
-  // [sampleRateSlider, sampleRateDisplayer] = makeSlider
-  //   ( p.log(3000)/p.log(2)
-  //   , p.log(48000)/p.log(2)
-  //   , p.log(48000)/p.log(2)
-  //   , 0.001
-  //   , 10
-  //   , p.height - p.height / numPanels + 90
-  //   );
-  //
-  // [ditherSlider, ditherDisplayer] = makeSlider
-  //   ( 0.0
-  //   , 1.0
-  //   , 0.0
-  //   , .01
-  //   , p.width/2 + 10
-  //   , numHarmSlider.y
-  //   );
-  //
-  // [bitDepthSlider, bitDepthDisplayer] = makeSlider
-  //     ( 1
-  //     , BIT_DEPTH_MAX
-  //     , BIT_DEPTH_MAX
-  //     , 1
-  //     , p.width / 2 + 10
-  //     , freqSlider.y
-  //     );
+function buttonSetup() {
 
   originalButton = p.createButton("play original");
   originalButton.position(p.width/2 + 10, p.height - p.height / numPanels + 90);
@@ -142,6 +87,7 @@ function renderWaves() {
       };
   // render original wave
   settings.original.fill(0);
+  console.log(settings.amplitude);
   settings.original.forEach( (_, i, arr) => {
     for (let harmonic = 1; harmonic <= settings.numHarm; harmonic++) {
       let omega = 2 * Math.PI * settings.fundFreq * harmonic;
@@ -149,8 +95,7 @@ function renderWaves() {
     }
   });
   let max = Math.max.apply(Math, settings.original);
-  settings.original.forEach( (samp, i, arr) => arr[i] = samp / max );
-
+  //settings.original.forEach( (samp, i, arr) => arr[i] = samp / max );
   // render original wave FFT
   // TODO: window the input
   fft.realTransform(settings.originalFreq, settings.original);
@@ -195,18 +140,6 @@ function playWave(wave, sampleRate, audioctx) {
 
 function readSliders() {
   sliders.forEach(slider => slider.updateValue(p));
-  // console.log("read sliders..")
-
-  // settings.numHarm = numHarmSlider.value();
-  // settings.dither = ditherSlider.value();
-  // settings.downsamplingFactor = p.round(96000/p.pow(2, sampleRateSlider.value()));
-  // settings.bitDepth = bitDepthSlider.value();
-
-  // freqDisplayer.html('Fundamental: ' + p.round(settings.fundFreq) + " Hz")
-  // numHarmDisplayer.html('Bandwidth: ' + p.round(settings.fundFreq * settings.numHarm) + " Hz")
-  // ditherDisplayer.html('Dither: ' + p.round(settings.dither, 3));
-  // bitDepthDisplayer.html('Bit Depth: ' + (settings.bitDepth == BIT_DEPTH_MAX ? 'Float32' : settings.bitDepth));
-  // sampleRateDisplayer.html('Sample Rate: ' + p.round(settings.sampleRate / settings.downsamplingFactor / 1000, 3) + " kHz")
 }
 
 }; return new p5(sketch); } // end function new_widget() { var sketch = p => {
@@ -226,5 +159,6 @@ const widget = new_widget(900,1600,NUM_COLUMNS,
   , new sampleRateSlider()
   , new ditherSlider()
   , new bitDepthSlider()
+  , new amplitudeSlider()
   ]
 );
