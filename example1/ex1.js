@@ -88,7 +88,6 @@ function renderWaves() {
       };
   // render original wave
   settings.original.fill(0);
-  console.log(settings.amplitude);
   settings.original.forEach( (_, i, arr) => {
     for (let harmonic = 1; harmonic <= settings.numHarm; harmonic++) {
       let omega = 2 * Math.PI * settings.fundFreq * harmonic;
