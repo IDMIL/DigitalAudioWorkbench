@@ -3,7 +3,7 @@ pages:
     
     script:
     - mkdir .public
-    - cp -a examples* .public
+    - cp -a example* .public
     - cp -a *.js .public
     - mv .public public
 
