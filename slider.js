@@ -125,3 +125,21 @@ class bitDepthSlider extends slider {
     this.textLabel.html('Bit Depth: ' + (this.settings.bitDepth == BIT_DEPTH_MAX ? 'Float32' : this.settings.bitDepth));
   }
 }
+class amplitudeSlider extends slider {
+  setup(p,sliderWidth,numPanels,settings){
+    // console.log("Bit depth slider setup;")
+    this.settings = settings;
+    this.name ="Amplitude";
+    this.min = 0.0;
+    this.max =  1.0;
+    this.initial = 1.0;
+    this.step = 0.01;
+    this.x =  p.width/4 + 10;
+    this.y =  p.height - p.height / numPanels + 10;
+    this.makeSlider(p);
+}
+  updateValue(p){
+    this.settings.amplitude = this.slider.value();
+    this.textLabel.html('Amplitude: ' + (this.settings.amplitude));
+  }
+}
