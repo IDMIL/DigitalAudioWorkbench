@@ -20,6 +20,7 @@ var settings =
     , sampleRate : WEBAUDIO_MAX_SAMPLERATE
     , downsamplingFactor : 2
     , numHarm : 2
+    , phase : 0.0
     , fftSize : fftSize
     , bitDepth : BIT_DEPTH_MAX
     , dither : 0.0
@@ -33,6 +34,8 @@ var settings =
 
 p.setup = function () {
   p.createCanvas(p.windowWidth, p.windowHeight);
+  p.textAlign(p.CENTER);
+
   panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, settings));
   sliders.forEach(slider => slider.setup(p, settings));
   buttonSetup();
@@ -122,7 +125,7 @@ function renderWaves() {
   settings.original.forEach( (_, i, arr) => {
     for (let harmonic = 1; harmonic <= settings.numHarm; harmonic++) {
       let omega = 2 * Math.PI * settings.fundFreq * harmonic;
-      arr[i] += settings.amplitude * Math.sin(omega * i / WEBAUDIO_MAX_SAMPLERATE) / harmonic;
+      arr[i] += settings.amplitude * Math.sin(omega * i / WEBAUDIO_MAX_SAMPLERATE+settings.phase) / harmonic;
     }
   });
   let max = Math.max.apply(Math, settings.original);
@@ -169,5 +172,5 @@ function playWave(wave, sampleRate, audioctx) {
   source.start();
 }
 
-}; 
+};
 return new p5(sketch); } // end function new_widget() { var sketch = p => {

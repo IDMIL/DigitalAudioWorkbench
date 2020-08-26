@@ -131,3 +131,37 @@ class amplitudeSlider extends slider {
     this.textLabel.html('Amplitude: ' + (this.settings.amplitude));
   }
 }
+class phaseSlider extends slider{
+  setup(p,sliderWidth,numPanels,settings){
+    // console.log("Bit depth slider setup;")
+    this.settings = settings;
+    this.name ="Phase";
+    this.min = 0;
+    this.max =  1; //pi
+    this.initial = 0.0;
+    this.step = .125; //pi/8
+    this.x =  p.width/4 + 10;
+    this.y =  p.height - p.height / numPanels + 50;
+    this.makeSlider(p);
+}
+  updateValue(p){
+    let sliderVal = this.slider.value();
+    this.settings.phase = sliderVal*Math.PI;
+    let label;
+    //Todo: this is not the best way to do this
+    switch(sliderVal){
+      case 0: label = "0"; break;
+      case 0.125: label = "PI/8"; break;
+      case 0.25: label = "PI/4"; break;
+      case 0.375: label = "3PI/8"; break;
+      case 0.5: label = "PI/2"; break;
+      case 0.625: label = "5PI/8"; break;
+      case 0.75: label = "3PI/4"; break;
+      case 0.875: label = "7 PI/8"; break;
+      case 1.0: label = "PI"; break;
+      default: label = "oops!";
+    }
+    this.textLabel.html(this.name +": " + label + " rads");
+  }
+
+}
