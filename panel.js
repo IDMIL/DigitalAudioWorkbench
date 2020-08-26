@@ -1,13 +1,14 @@
 //Panel class. should be extended with a drawPanel method
 class Panel {
-  constructor(background = "white", stroke = "black", strokeWeight = 3, fill = "black",bezel =20) {
+  constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black",bezel =50) {
     this.background =  background;
     this.stroke = stroke;
     this.strokeWeight = strokeWeight;
     this.bezel = bezel;
     this.fill = fill;
     this.strokeClr = ["black",[28,48,65],'#B2ABF2',"blue","green"];//TODO - update these to less ugly colours
-
+    this.xAxis= "Time";
+    this.yAxis = "Amp";
   }
 
   setup(p, height, width, settings) {
@@ -17,6 +18,9 @@ class Panel {
     this.buffer.background(this.background);
     this.buffer.stroke(this.stroke);
     this.buffer.fill(this.fill);
+    this.buffer.textFont('Helvetica',20);
+    this.buffer.textAlign(p.CENTER);
+
   }
 
   resize(h, w) { 
@@ -41,6 +45,10 @@ class Panel {
 
 }
 
+class freqPanel extends Panel{
+  constructor(){ super(); this.xAxis = "Frequency";
+  }
+}
 function drawSignal(panel, signal)
 {
     let halfh = panel.buffer.height/2;
@@ -58,19 +66,43 @@ function drawSignal(panel, signal)
     panel.drawBorder();
 }
 
+function drawLabels(panel){
+  panel.buffer.fill(panel.fill);
+  panel.buffer.textFont('Helvetica',20);
+  panel.buffer.text (panel.name, panel.buffer.width/2,20);
+  panel.buffer.textFont('Helvetica',15);
+
+  drawAxisLabelX(panel);
+  drawAxisLabelY(panel);
+}
+
+function drawAxisLabelX(panel){
+  panel.buffer.text (panel.xAxis, panel.buffer.width/2,panel.buffer.height-10);
+}
+
+function drawAxisLabelY(panel){
+  panel.buffer.text (panel.yAxis, 25,panel.buffer.height/2);
+}
 class inputSigPanel extends Panel {
+  constructor(){super(); this.name="Continuous Signal"}
+
   drawPanel(){
     drawSignal(this, this.settings.original);
+    drawLabels(this);
   }
 }
 
 class reconstructedSigPanel extends Panel {
+  constructor(){super(); this.name="Reconstructed Signal";};
+
   drawPanel(){
     drawSignal(this, this.settings.reconstructed);
+    drawLabels(this);
   }
 }
 
-class inputSigFreqPanel extends Panel {
+class inputSigFreqPanel extends freqPanel {
+  constructor(){super(); this.name="Input Signal Frequency";}
   drawPanel(){
     this.buffer.background(this.background);
     let halfh = (this.buffer.height)*.75;
@@ -120,15 +152,20 @@ function drawFFT(panel, fft) {
   panel.drawBorder();
 }
 
-class inputSigFFTPanel extends Panel {
+class inputSigFFTPanel extends freqPanel {
+  constructor(){super(); this.name = "Input Signal FFT";}
   drawPanel() {
     drawFFT(this, this.settings.originalFreq);
+    drawLabels(this);
+
   }
 }
 
-class sampledSigFFTPanel extends Panel {
+class sampledSigFFTPanel extends freqPanel {
+  constructor(){super(); this.name="Reconstructed Signal FFT";}
   drawPanel() {
     drawFFT(this, this.settings.reconstructedFreq);
+    drawLabels(this);
   }
 }
 
@@ -137,6 +174,7 @@ class impulsePanel extends Panel {
     super()
     this.strokeWeight=1;
     this.ellipseSize=5;
+    this.name ="Sampling Signal";
   }
   drawPanel(){
     let base = this.buffer.height * 0.75;
@@ -152,11 +190,13 @@ class impulsePanel extends Panel {
       this.buffer.line(xpos, base, xpos, height);
       this.buffer.ellipse(xpos, height, this.ellipseSize);
     }
+    drawLabels(this);
+
   }
 }
 
-class impulseFreqPanel extends Panel {
-
+class impulseFreqPanel extends freqPanel {
+  constructor(){super(); this.name="Sampling Signal FFT";}
   drawPanel(){
     this.buffer.background(this.background);
     this.buffer.fill(this.fill); this.buffer.strokeWeight(this.strokeWeight);
@@ -170,7 +210,7 @@ class impulseFreqPanel extends Panel {
       }
     }
     this.drawBorder();
-
+    drawLabels(this);
   }
 }
 
@@ -179,7 +219,9 @@ class sampledInputPanel extends Panel{
     super()
     this.strokeWeight=1;
     this.ellipseSize=5;
+    this.name="Sampled Signal";
   }
+
   drawPanel(){
     let halfh = this.buffer.height/2;
     let gain = halfh * 0.7;
@@ -194,12 +236,15 @@ class sampledInputPanel extends Panel{
       this.buffer.line(xpos, halfh, xpos, ypos);
       this.buffer.ellipse(xpos, ypos, this.ellipseSize);
     }
-  }
+    // this.buffer.text('Sampled Signal', this.buffer.width/2, 20);
+    drawLabels(this)
+}
 }
 
 
 
-class sampledInputFreqPanel extends Panel{
+class sampledInputFreqPanel extends freqPanel{
+  constructor(){ super(); this.name = "Sampled Signal FFT";}
 
   drawPanel(){
     let ypos = this.buffer.height * .75;
@@ -232,15 +277,13 @@ class sampledInputFreqPanel extends Panel{
     this.buffer.stroke(this.stroke);
     this.buffer.line(this.bezel, ypos, this.buffer.width-this.bezel, ypos);
     this.drawBorder();
+    drawLabels(this);
   }
 }
 
 
 class quantizedSignalPanel extends Panel{
-  constructor(){
-    super();
-    this.bezel=30;
-  }
+
   drawPanel(){
     //Draw quantized bit stem plot
     let max = Math.pow(2, this.settings.bitDepth - 1);
@@ -255,9 +298,7 @@ class quantizedSignalPanel extends Panel{
     while (xpos<this.buffer.width-2*this.bezel){
 
       let sig = this.settings.signal[Math.round(xpos)];
-//      ypos = Math.floor(sig*max+.5)/max;
       ypos = (Math.floor(sig*max)+.5)/max;
-      // console.log(sig +" is rounded to " +ypos);
       let noise = sig - ypos;
       this.buffer.fill(this.fill);
       this.buffer.line(xpos+this.bezel, halfh, xpos+this.bezel, halfh *(1- ypos));
@@ -284,7 +325,7 @@ class quantizedSignalPanel extends Panel{
     this.drawBorder();
 
 
-}
+  }
 }
 class sliderPanel extends Panel{
   drawPanel(){
