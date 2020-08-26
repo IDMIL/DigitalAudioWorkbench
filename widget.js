@@ -138,6 +138,7 @@ function renderWaves() {
         });
     var filter = new Fili.FirFilter(filterCoeffs);
     original = settings.original.map( x => filter.singleStep(x) );
+    original.forEach( (x, i, arr) => arr[i - settings.antialiasing/2] = x );
   }
 
   // downsample original wave
@@ -173,6 +174,7 @@ function renderWaves() {
   });
   let max = Math.max.apply(Math, settings.reconstructed);
   settings.reconstructed.forEach( (x, i, arr) => arr[i] = x/max );
+  settings.reconstructed.forEach( (x, i, arr) => arr[i - 100] = x );
 
   fft.realTransform(settings.reconstructedFreq, settings.reconstructed)
   fft.completeSpectrum(settings.reconstructedFreq);
