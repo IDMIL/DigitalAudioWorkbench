@@ -143,9 +143,10 @@ class antialiasingSlider extends slider {
     this.settings.antialiasing = this.slider.value();
     this.textLabel.html("Antialiasing: " + (this.settings.antialiasing < 1 ? 'None' : this.settings.antialiasing + "th Order FIR"));
   }
+}
 
 class phaseSlider extends slider{
-  setup(p,sliderWidth,numPanels,settings){
+  setup(p,settings){
     this.settings = settings;
     this.name ="Phase";
     this.min = 0;
