@@ -73,14 +73,12 @@ class sampleRateSlider extends slider{
 
   updateValue(p){
     this.settings.downsamplingFactor = p.round(WEBAUDIO_MAX_SAMPLERATE/p.pow(2, this.slider.value()));
-    // console.log("downsampling:", this.settings.downsamplingFactor)
     this.textLabel.html('Sample Rate: ' + p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3) + " kHz")
   }
 }
 
 class ditherSlider extends slider {
   setup(p,settings){
-    // console.log("dither slider setup;")
     this.settings = settings;
     this.name ="Dither";
     this.min = 0.0;
@@ -98,7 +96,6 @@ class ditherSlider extends slider {
 
 class bitDepthSlider extends slider {
   setup(p,settings){
-    // console.log("Bit depth slider setup;")
     this.settings = settings;
     this.name ="Bit Depth";
     this.min = 1;
@@ -116,7 +113,6 @@ class bitDepthSlider extends slider {
 
 class amplitudeSlider extends slider {
   setup(p,settings){
-    // console.log("Bit depth slider setup;")
     this.settings = settings;
     this.name ="Amplitude";
     this.min = 0.0;
@@ -129,5 +125,22 @@ class amplitudeSlider extends slider {
   updateValue(p){
     this.settings.amplitude = this.slider.value();
     this.textLabel.html('Amplitude: ' + (this.settings.amplitude));
+  }
+}
+
+class antialiasingSlider extends slider {
+  setup(p, settings){
+    this.settings = settings;
+    this.name ="Antialiasing";
+    this.min = 0.0;
+    this.max =  200;
+    this.initial = 0;
+    this.step = 10;
+    this.makeSlider(p);
+  }
+
+  updateValue(p){
+    this.settings.antialiasing = this.slider.value();
+    this.textLabel.html("Antialiasing: " + (this.settings.antialiasing < 1 ? 'None' : this.settings.antialiasing + "th Order FIR"));
   }
 }

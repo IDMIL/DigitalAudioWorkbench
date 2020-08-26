@@ -24,6 +24,7 @@ var settings =
     , fftSize : fftSize
     , bitDepth : BIT_DEPTH_MAX
     , dither : 0.0
+    , antialiasing : 0
     , original: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
     , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4))
     , reconstructed: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
@@ -123,13 +124,24 @@ function renderWaves() {
   // TODO: window the input
   fft.realTransform(settings.originalFreq, settings.original);
   fft.completeSpectrum(settings.originalFreq);
+  
+  // apply antialiasing filter if applicable
+  var original = settings.original;
+  if (settings.antialiasing > 1) {
+    var filterCoeffs = firCalculator.lowpass(
+        { order: settings.antialiasing
+        , Fs: WEBAUDIO_MAX_SAMPLERATE
+        , Fc: (WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor) / 2
+        });
+    var filter = new Fili.FirFilter(filterCoeffs);
+    original = settings.original.map( x => filter.singleStep(x) );
+  }
 
-  // render "sampled" wave (actually just downsampled original)
-  // and simultaneously prepare zero stuffed reconstructed array for upsampling
+  // downsample original wave
   settings.reconstructed.fill(0);
   settings.downsampled = new Float32Array(p.round(WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor));
   settings.downsampled.forEach( (_, i, arr) => {
-    let y = settings.original[i * settings.downsamplingFactor];
+    let y = original[i * settings.downsamplingFactor];
     if (settings.bitDepth == BIT_DEPTH_MAX) {
       arr[i] = y;
       settings.reconstructed[i * settings.downsamplingFactor] = y;
