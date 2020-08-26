@@ -132,7 +132,7 @@ class amplitudeSlider extends slider {
   }
 }
 class phaseSlider extends slider{
-  setup(p,sliderWidth,numPanels,settings){
+  setup(p,settings){
     // console.log("Bit depth slider setup;")
     this.settings = settings;
     this.name ="Phase";
@@ -140,27 +140,37 @@ class phaseSlider extends slider{
     this.max =  1; //pi
     this.initial = 0.0;
     this.step = .125; //pi/8
-    this.x =  p.width/4 + 10;
-    this.y =  p.height - p.height / numPanels + 50;
     this.makeSlider(p);
 }
   updateValue(p){
     let sliderVal = this.slider.value();
     this.settings.phase = sliderVal*Math.PI;
-    let label;
+    let label, denom;
     //Todo: this is not the best way to do this
-    switch(sliderVal){
-      case 0: label = "0"; break;
-      case 0.125: label = "PI/8"; break;
-      case 0.25: label = "PI/4"; break;
-      case 0.375: label = "3PI/8"; break;
-      case 0.5: label = "PI/2"; break;
-      case 0.625: label = "5PI/8"; break;
-      case 0.75: label = "3PI/4"; break;
-      case 0.875: label = "7 PI/8"; break;
-      case 1.0: label = "PI"; break;
-      default: label = "oops!";
+    if (sliderVal ===0){
+      label = 0;
     }
+    else if (sliderVal===1){
+      label = "&#960";
+    }
+    else{
+      let pi = "&#960";
+      let denom,num;
+      switch(sliderVal){
+      //case 0: label = "0";  break;
+        case 0.125: denom = "8"; num = pi; break;
+        case 0.25: denom = "4"; num = pi; break;
+        case 0.375: denom = "8"; num = 3+pi; break;
+        case 0.5: denom = "2"; num= pi;break;
+        case 0.625: denom = "8"; num = 5+pi;break;
+        case 0.75: denom = "4"; num = 3+pi;break;
+        case 0.875: denom = "8"; num = 7+pi;break;
+        default: denom = "oops!";
+      }
+      label = "<sup>"+num+"</sup>&frasl;<sub>"+denom+"</sub>";
+
+    }
+
     this.textLabel.html(this.name +": " + label + " rads");
   }
 
