@@ -14,6 +14,7 @@ resize(1080, 1920);
 // set fftSize to the largest power of two that will approximately fill the panel
 let fftSize = p.pow(2, p.round(p.log(panelWidth) / p.log(2)));
 let fft = new FFTJS(fftSize);
+let firCalculator = new Fili.FirCoeffs();
 var settings =
     { amplitude : 1.0
     , fundFreq : 1250
@@ -24,6 +25,7 @@ var settings =
     , fftSize : fftSize
     , bitDepth : BIT_DEPTH_MAX
     , dither : 0.0
+    , antialiasing : 0
     , original: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
     , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4))
     , reconstructed: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
@@ -47,10 +49,9 @@ p.setup = function () {
 p.draw = function() {
   sliders.forEach(slider => slider.updateValue(p)); // read sliders
 
-  renderWaves()
-  .then( _ => {
-    panels.forEach(panel => panel.drawPanel());
-  });
+  renderWaves();
+
+  panels.forEach(panel => panel.drawPanel());
 
   panels.forEach( (panel, index) => {
     let y = p.floor(index / numColumns) * panelHeight;
@@ -113,13 +114,6 @@ function buttonSetup() {
 }
 
 function renderWaves() {
-  var offlineSnd, fftNode;
-  var fftOptions =
-      { fftSize: settings.fftSize
-      , maxDecibels: 0
-      , minDecibels: -100
-      , smoothingTimeConstant: 0
-      };
   // render original wave
   settings.original.fill(0);
   settings.original.forEach( (_, i, arr) => {
@@ -128,18 +122,34 @@ function renderWaves() {
       arr[i] += settings.amplitude * Math.sin(omega * i / WEBAUDIO_MAX_SAMPLERATE+settings.phase) / harmonic;
     }
   });
-  let max = Math.max.apply(Math, settings.original);
-  //settings.original.forEach( (samp, i, arr) => arr[i] = samp / max );
+
   // render original wave FFT
   // TODO: window the input
   fft.realTransform(settings.originalFreq, settings.original);
   fft.completeSpectrum(settings.originalFreq);
+  
+  // apply antialiasing filter if applicable
+  var original = settings.original;
+  if (settings.antialiasing > 1) {
+    var filterCoeffs = firCalculator.lowpass(
+        { order: settings.antialiasing
+        , Fs: WEBAUDIO_MAX_SAMPLERATE
+        , Fc: (WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor) / 2
+        });
+    var filter = new Fili.FirFilter(filterCoeffs);
+    original = settings.original.map( x => filter.singleStep(x) );
+  }
 
-  // render "sampled" wave (actually just downsampled original)
+  // downsample original wave
+  settings.reconstructed.fill(0);
   settings.downsampled = new Float32Array(p.round(WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor));
   settings.downsampled.forEach( (_, i, arr) => {
-    let y = settings.original[i * settings.downsamplingFactor];
-    if (settings.bitDepth == BIT_DEPTH_MAX) return arr[i] = y;
+    let y = original[i * settings.downsamplingFactor];
+    if (settings.bitDepth == BIT_DEPTH_MAX) {
+      arr[i] = y;
+      settings.reconstructed[i * settings.downsamplingFactor] = y;
+      return
+    }
     let maxInt = p.pow(2, settings.bitDepth - 1);
     let dither = (2 * Math.random() - 1) * settings.dither;
     let rectified = (dither + y) * 0.5 + 0.5;
@@ -147,20 +157,25 @@ function renderWaves() {
     let renormalized = quantized / maxInt;
     let centered = 2 * renormalized - 1;
     arr[i] = centered;
+    settings.reconstructed[i * settings.downsamplingFactor] = centered;
   });
 
-  // render reconstructed wave using an OfflineAudioContext for upsampling
-  // TODO: use a better upsampling method (Chromium just does linear interp)
-  offlineSnd = new OfflineAudioContext(1, WEBAUDIO_MAX_SAMPLERATE, WEBAUDIO_MAX_SAMPLERATE);
-  playWave(settings.downsampled, WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor, offlineSnd);
-  return offlineSnd.startRendering()
-    .then( buffer => settings.reconstructed = buffer.getChannelData(0) )
-    .then( _ => {
-      // render the reconstructed wave FFT
-      // TODO: window the input
-      fft.realTransform(settings.reconstructedFreq, settings.reconstructed)
-      fft.completeSpectrum(settings.reconstructedFreq);
-    });
+  // render reconstructed wave low pass filtering the zero stuffed array
+  var filterCoeffs = firCalculator.lowpass(
+      { order: 200
+      , Fs: WEBAUDIO_MAX_SAMPLERATE
+      , Fc: (WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor) / 2
+      });
+  var filter = new Fili.FirFilter(filterCoeffs);
+  settings.reconstructed.forEach( (x, i, arr) => {
+    let y = filter.singleStep(x);
+    arr[i] = y;
+  });
+  let max = Math.max.apply(Math, settings.reconstructed);
+  settings.reconstructed.forEach( (x, i, arr) => arr[i] = x/max );
+
+  fft.realTransform(settings.reconstructedFreq, settings.reconstructed)
+  fft.completeSpectrum(settings.reconstructedFreq);
 }
 
 function playWave(wave, sampleRate, audioctx) {
