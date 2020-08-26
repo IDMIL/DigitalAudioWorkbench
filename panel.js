@@ -19,6 +19,10 @@ class Panel {
     this.buffer.fill(this.fill);
   }
 
+  resize(h, w) { 
+    this.buffer.resizeCanvas(w, h); 
+  }
+
   setbackground(backgroundClr){ this.background = backgroundClr; }
   setStroke(strokeClr){ this.stroke = strokeClr; }
   setStrokeWeight(strokeWgt){ this.strokeWeight = strokeWgt; }
