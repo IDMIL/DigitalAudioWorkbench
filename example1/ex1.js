@@ -35,6 +35,8 @@ var settings =
 
 p.setup = function () {
   p.createCanvas(totalWidth, totalHeight);
+  p.textAlign(p.CENTER);
+
   panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, settings));
   sliders.forEach(slider => slider.setup(p,sliderWidth,numPanels,settings));
   buttonSetup();
