@@ -19,7 +19,7 @@ class slider{
     this.textBox = p.createInput();
     this.textBox.size(50);
     this.button = p.createButton("Update");
-    this.button.mousePressed();
+    this.button.mousePressed(this.buttonPressed());
     // this.displayVal = 1;
   }
 
@@ -30,6 +30,9 @@ class slider{
     this.textBox.position(x+this.slider.width+200,y);
     this.button.position(this.textBox.x+this.textBox.width+5,y);
   }
+  buttonPressed(){
+    //TODO need to set slider.value() to the textbox.value();
+  }
 
 }
 
@@ -37,7 +40,6 @@ class freqSlider extends slider{
   setup(p,settings){
     this.settings = settings;
     this.name ="Fundamental Frequency";
-    // this.label   = "Fundamental:"
     this.min = p.log(200)/p.log(2);
     this.max = (p.log(this.settings.sampleRate / 2 / 5)/p.log(2));
     this.initial = (p.log(settings.fundFreq)/p.log(2));
@@ -49,7 +51,6 @@ class freqSlider extends slider{
   updateValue(p){
     this.settings.fundFreq = p.pow(2,this.slider.value());
     this.displayVal = this.settings.fundFreq;
-    // this.textBox.value(p.round(this.settings.fundFreq));//
     this.textBox.value(p.round(this.displayVal));//
 
     this.textLabel.html(this.name+': ');// + p.round(this.settings.fundFreq))
@@ -71,7 +72,7 @@ class numHarmSlider extends slider{
 
   updateValue(p){
     this.settings.numHarm = this.slider.value();
-    this.textBox.value(this.displayVal);//
+    this.textBox.value(p.round(this.settings.numHarm*this.settings.fundFreq));//
 
     this.textLabel.html(this.name +": ");//+ p.round(this.settings.fundFreq * this.settings.numHarm) + " Hz")
   }
