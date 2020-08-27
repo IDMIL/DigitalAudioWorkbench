@@ -35,6 +35,10 @@ class Panel {
   drawBorder(){
     let x1 = this.bezel;
     let y1 = this.bezel;
+<<<<<<< HEAD
+=======
+    // console.log(this.bezel);
+>>>>>>> ec3a8aee8e99f152f95b964522f50a47103a61ad
     let x2 = this.buffer.width - this.bezel;
     let y2 = this.buffer.height - this.bezel;
     this.buffer.line(x1, y1, x1, y2); // left side
