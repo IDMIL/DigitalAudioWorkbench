@@ -4,3 +4,7 @@ canvas {
   text-align: center;
 }
 sup { vertical-align: top; position: relative; top: -0.5em; }
+
+p{
+  font-family: arial,cursive;
+}
