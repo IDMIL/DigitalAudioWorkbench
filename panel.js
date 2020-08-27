@@ -1,6 +1,6 @@
 //Panel class. should be extended with a drawPanel method
 class Panel {
-  constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black",bezel =50) {
+  constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black",bezel =40) {
     this.background =  background;
     this.stroke = stroke;
     this.strokeWeight = strokeWeight;
@@ -23,8 +23,8 @@ class Panel {
 
   }
 
-  resize(h, w) { 
-    this.buffer.resizeCanvas(w, h); 
+  resize(h, w) {
+    this.buffer.resizeCanvas(w, h);
   }
 
   setbackground(backgroundClr){ this.background = backgroundClr; }
@@ -33,7 +33,9 @@ class Panel {
   setFill(fillClr){ this.fill = fillClr; }
 
   drawBorder(){
-    let x1,y1 = this.bezel;
+    let x1 = this.bezel;
+    let y1 = this.bezel;
+    // console.log(this.bezel);
     let x2 = this.buffer.width - this.bezel;
     let y2 = this.buffer.height - this.bezel;
     this.buffer.line(x1, y1, x1, y2); // left side
