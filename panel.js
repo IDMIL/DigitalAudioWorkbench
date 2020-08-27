@@ -33,7 +33,8 @@ class Panel {
   setFill(fillClr){ this.fill = fillClr; }
 
   drawBorder(){
-    let x1,y1 = this.bezel;
+    let x1 = this.bezel;
+    let y1 = this.bezel;
     let x2 = this.buffer.width - this.bezel;
     let y2 = this.buffer.height - this.bezel;
     this.buffer.line(x1, y1, x1, y2); // left side
@@ -53,13 +54,14 @@ class freqPanel extends Panel{
 function drawSignal(panel, signal)
 {
   let halfh = panel.buffer.height/2;
-  let gain = halfh * 0.7;
+  let pixel_max = (halfh - panel.bezel) * 0.7;
+  let pixel_per_fullscale = pixel_max;
   panel.buffer.noFill();
   panel.buffer.background(panel.background);
-  panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
   panel.buffer.beginShape();
   for (let x = 0; x < panel.buffer.width - 2*panel.bezel; x++) {
-    let y = halfh - gain * signal[x];
+    let pixel_amp = pixel_per_fullscale * signal[x];
+    let y = halfh - pixel_amp;
     panel.buffer.curveVertex(x + panel.bezel, y);
   }
   panel.buffer.endShape();
@@ -84,6 +86,7 @@ function drawAxisLabelX(panel){
 function drawAxisLabelY(panel){
   panel.buffer.text (panel.yAxis, 25,panel.buffer.height/2);
 }
+
 class inputSigPanel extends Panel {
   constructor(){super(); this.name="Continuous Signal"}
 
@@ -179,7 +182,7 @@ class impulsePanel extends Panel {
   }
   drawPanel(){
     let base = this.buffer.height * 0.75;
-    let height = this.buffer.height * 0.25;
+    let height = this.buffer.height * 0.35;
     this.buffer.background(this.background);
     this.drawBorder();
     this.buffer.line(this.bezel,base,this.buffer.width-this.bezel,base);
@@ -225,7 +228,7 @@ class sampledInputPanel extends Panel{
 
   drawPanel(){
     let halfh = this.buffer.height/2;
-    let gain = halfh * 0.7;
+    let gain = (halfh - this.bezel) * 0.7;
     this.buffer.background(this.background);
     this.drawBorder();
     this.buffer.line(this.bezel, halfh , this.buffer.width-this.bezel, halfh);
