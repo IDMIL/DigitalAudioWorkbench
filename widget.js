@@ -71,7 +71,7 @@ p.windowResized = function() {
   sliders.forEach( (slider, index) => {
     let y = yoffset + p.floor(index / numColumns) * sliderHeight;
     let x = p.floor(index % numColumns) * panelWidth;
-    slider.resize(x + 20, y, sliderWidth);
+    slider.resize(x + 20, y, sliderWidth,p);
   });
 
   let y = yoffset + p.floor((numSliders)/ numColumns) * sliderHeight;
@@ -86,7 +86,7 @@ function resize(w, h) {
   let panelRows = Math.ceil((numPanels+1)/numColumns);
   let sliderRows = Math.ceil((numSliders+1)/numColumns);
   panelWidth   = w / numColumns;
-  sliderWidth  = w / numColumns - 200;
+  sliderWidth  = w / numColumns/2;
   panelHeight  = h / panelRows;
   sliderHeight = panelHeight / sliderRows;
   if (sliderHeight < 30) { // keep sliders from getting squished
@@ -127,7 +127,7 @@ function renderWaves() {
   // TODO: window the input
   fft.realTransform(settings.originalFreq, settings.original);
   fft.completeSpectrum(settings.originalFreq);
-  
+
   // apply antialiasing filter if applicable
   var original = settings.original;
   if (settings.antialiasing > 1) {

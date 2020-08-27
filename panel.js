@@ -1,6 +1,6 @@
 //Panel class. should be extended with a drawPanel method
 class Panel {
-  constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black",bezel =50) {
+  constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black",bezel =40) {
     this.background =  background;
     this.stroke = stroke;
     this.strokeWeight = strokeWeight;
@@ -23,8 +23,8 @@ class Panel {
 
   }
 
-  resize(h, w) { 
-    this.buffer.resizeCanvas(w, h); 
+  resize(h, w) {
+    this.buffer.resizeCanvas(w, h);
   }
 
   setbackground(backgroundClr){ this.background = backgroundClr; }
