@@ -84,7 +84,7 @@ function drawAxisLabelX(panel){
 }
 
 function drawAxisLabelY(panel){
-  panel.buffer.text (panel.yAxis, 25,panel.buffer.height/2);
+  panel.buffer.text (panel.yAxis, 15,panel.buffer.height/2);
 }
 
 class inputSigPanel extends Panel {
