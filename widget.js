@@ -29,8 +29,10 @@ var settings =
     , original: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
     , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4))
     , reconstructed: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
+    , quantNoise: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
     , originalFreq : fft.createComplexArray()
     , reconstructedFreq : fft.createComplexArray()
+    , quantNoiseFreq : fft.createComplexArray()
     , snd : undefined
     };
 
@@ -128,6 +130,7 @@ function renderWaves() {
   fft.realTransform(settings.originalFreq, settings.original);
   fft.completeSpectrum(settings.originalFreq);
 
+
   // apply antialiasing filter if applicable
   var original = settings.original;
   if (settings.antialiasing > 1) {
@@ -143,6 +146,7 @@ function renderWaves() {
 
   // downsample original wave
   settings.reconstructed.fill(0);
+  settings.quantNoise.fill(0);
   settings.downsampled = new Float32Array(p.round(WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor));
   settings.downsampled.forEach( (_, i, arr) => {
     let y = original[i * settings.downsamplingFactor];
@@ -159,6 +163,8 @@ function renderWaves() {
     let centered = 2 * renormalized - 1;
     arr[i] = centered;
     settings.reconstructed[i * settings.downsamplingFactor] = centered;
+    settings.quantNoise[i] = centered -y;
+    // console.log(settings.quantNoise[i * settings.downsamplingFactor])
   });
 
   // render reconstructed wave low pass filtering the zero stuffed array
@@ -178,6 +184,8 @@ function renderWaves() {
 
   fft.realTransform(settings.reconstructedFreq, settings.reconstructed)
   fft.completeSpectrum(settings.reconstructedFreq);
+  fft.realTransform(settings.quantNoiseFreq, settings.quantNoise)
+  fft.completeSpectrum(settings.quantNoiseFreq);
 }
 
 function playWave(wave, sampleRate, audioctx) {
