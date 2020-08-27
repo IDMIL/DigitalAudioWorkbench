@@ -49,21 +49,22 @@ class freqPanel extends Panel{
   constructor(){ super(); this.xAxis = "Frequency";
   }
 }
+
 function drawSignal(panel, signal)
 {
-    let halfh = panel.buffer.height/2;
-    let gain = halfh * 0.7;
-    panel.buffer.noFill();
-    panel.buffer.background(panel.background);
-    panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
-    panel.buffer.beginShape();
-    for (let x = 0; x < panel.buffer.width - 2*panel.bezel; x++) {
-      let y = halfh - gain * signal[x];
-      panel.buffer.curveVertex(x + panel.bezel, y);
-    }
-    panel.buffer.endShape();
-    panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
-    panel.drawBorder();
+  let halfh = panel.buffer.height/2;
+  let gain = halfh * 0.7;
+  panel.buffer.noFill();
+  panel.buffer.background(panel.background);
+  panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
+  panel.buffer.beginShape();
+  for (let x = 0; x < panel.buffer.width - 2*panel.bezel; x++) {
+    let y = halfh - gain * signal[x];
+    panel.buffer.curveVertex(x + panel.bezel, y);
+  }
+  panel.buffer.endShape();
+  panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
+  panel.drawBorder();
 }
 
 function drawLabels(panel){
