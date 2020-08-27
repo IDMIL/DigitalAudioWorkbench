@@ -10,6 +10,7 @@ class Panel {
     this.xAxis= "Time";
     this.yAxis = "Amp";
     this.tickTextSize = 9;
+    this.numTimeTicks = 8;
   }
 
   setup(p, height, width, settings) {
@@ -77,6 +78,7 @@ function drawSignal(panel, signal, zoom = 1)
 
   drawName(panel);
   drawSignalAmplitudeTicks(panel, pixel_max, 4);
+  drawTimeTicks(panel, panel.numTimeTicks, 1/panel.settings.sampleRate);
   panel.drawBorder();
 }
 
@@ -92,17 +94,39 @@ function drawHorizontalTick(panel, text, height, tick_length = 5) {
                     panel.bezel,               height);
 }
 
+function drawVerticalTick(panel, text, x, tick_length = 5) {
+  panel.buffer.fill(panel.fill);
+  panel.buffer.textFont('Helvetica', panel.tickTextSize);
+  panel.buffer.textAlign(panel.buffer.CENTER);
+  panel.buffer.textStyle(panel.buffer.ITALIC);
+  panel.buffer.strokeWeight(0);
+  // we draw the text in the center of an oversized box centered over the tick
+  // 20000 pixels should be more than enough for any reasonable tick text
+  panel.buffer.text(text, x - 10000, panel.buffer.height - panel.bezel + tick_length, 20000, panel.bezel);
+  panel.buffer.strokeWeight(panel.strokeWeight);
+  panel.buffer.line(x, panel.buffer.height - panel.bezel, 
+                    x, panel.buffer.height - panel.bezel + tick_length);
+}
+
 function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
   let halfh = panel.buffer.height/2;
 
   for (let i = 1; i <= num_ticks; ++i) {
     let tick_amp_pixels = i * pixel_max / num_ticks;
     let tick_amp_db = atodb(tick_amp_pixels, pixel_max);
-    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', halfh - tick_amp_pixels, panel.tickTextSize);
-    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', halfh + tick_amp_pixels, panel.tickTextSize);
+    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', halfh - tick_amp_pixels);
+    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', halfh + tick_amp_pixels);
   }
-  // draw tick and text for 0.0
   drawHorizontalTick(panel, '-inf dB', halfh);
+}
+
+function drawTimeTicks(panel, num_ticks, seconds_per_pixel) {
+  let tick_jump = Math.floor((panel.buffer.width - 2 * panel.bezel) / num_ticks);
+  for (let i = 0; i < num_ticks; ++i) {
+    let x = i * tick_jump;
+    let text = (x * seconds_per_pixel * 1000).toFixed(1) + ' ms';
+    drawVerticalTick(panel, text, x + panel.bezel);
+  }
 }
 
 function drawName(panel){
@@ -224,6 +248,7 @@ class impulsePanel extends Panel {
 
     drawHorizontalTick(this, '0.0 dB', height);
     drawHorizontalTick(this, '-inf dB', base);
+    drawTimeTicks(this, this.numTimeTicks, 1/(this.settings.sampleRate));
     drawName(this);
   }
 }
@@ -271,6 +296,7 @@ class sampledInputPanel extends Panel{
     }
     // this.buffer.text('Sampled Signal', this.buffer.width/2, 20);
     drawSignalAmplitudeTicks(this, gain, 4);
+    drawTimeTicks(this, this.numTimeTicks, 1/(this.settings.sampleRate));
     drawName(this);
 }
 }
