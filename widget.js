@@ -170,10 +170,8 @@ function renderWaves() {
   var filter = new Fili.FirFilter(filterCoeffs);
   settings.reconstructed.forEach( (x, i, arr) => {
     let y = filter.singleStep(x);
-    arr[i] = y;
+    arr[i] = y * settings.downsamplingFactor;
   });
-  let max = Math.max.apply(Math, settings.reconstructed);
-  settings.reconstructed.forEach( (x, i, arr) => arr[i] = x/max );
   settings.reconstructed.forEach( (x, i, arr) => arr[i - 100] = x );
 
   fft.realTransform(settings.reconstructedFreq, settings.reconstructed)
