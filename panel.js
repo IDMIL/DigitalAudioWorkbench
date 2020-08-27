@@ -9,6 +9,7 @@ class Panel {
     this.strokeClr = ["black",[28,48,65],'#B2ABF2',"blue","green"];//TODO - update these to less ugly colours
     this.xAxis= "Time";
     this.yAxis = "Amp";
+    this.tickTextSize = 9;
   }
 
   setup(p, height, width, settings) {
@@ -51,11 +52,18 @@ class freqPanel extends Panel{
   }
 }
 
-function drawSignal(panel, signal)
+const log10 = Math.log(10);
+
+function atodb(a, a_0 = 1)
+{
+  return 20 * Math.log(a / a_0) / log10;
+}
+
+function drawSignal(panel, signal, zoom = 1)
 {
   let halfh = panel.buffer.height/2;
-  let pixel_max = (halfh - panel.bezel) * 0.7;
-  let pixel_per_fullscale = pixel_max;
+  let pixel_max = (halfh - panel.bezel - panel.tickTextSize/2);
+  let pixel_per_fullscale = pixel_max * zoom;
   panel.buffer.noFill();
   panel.buffer.background(panel.background);
   panel.buffer.beginShape();
@@ -66,25 +74,46 @@ function drawSignal(panel, signal)
   }
   panel.buffer.endShape();
   panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
+
+  drawName(panel);
+  drawSignalAmplitudeTicks(panel, pixel_max, 4);
   panel.drawBorder();
 }
 
-function drawLabels(panel){
+function drawHorizontalTick(panel, text, height, tick_length = 5) {
   panel.buffer.fill(panel.fill);
-  panel.buffer.textFont('Helvetica',20);
-  panel.buffer.text (panel.name, panel.buffer.width/2,20);
+  panel.buffer.textFont('Helvetica', panel.tickTextSize);
+  panel.buffer.textAlign(panel.buffer.RIGHT);
+  panel.buffer.textStyle(panel.buffer.ITALIC);
+  panel.buffer.strokeWeight(0);
+  panel.buffer.text(text, 0, height - panel.tickTextSize/2, panel.bezel - tick_length, height + panel.tickTextSize/2);
+  panel.buffer.strokeWeight(panel.strokeWeight);
+  panel.buffer.line(panel.bezel - tick_length, height, 
+                    panel.bezel,               height);
+}
+
+function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
+  let halfh = panel.buffer.height/2;
+
+  for (let i = 1; i <= num_ticks; ++i) {
+    let tick_amp_pixels = i * pixel_max / num_ticks;
+    let tick_amp_db = atodb(tick_amp_pixels, pixel_max);
+    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', halfh - tick_amp_pixels, panel.tickTextSize);
+    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', halfh + tick_amp_pixels, panel.tickTextSize);
+  }
+  // draw tick and text for 0.0
+  drawHorizontalTick(panel, '-inf dB', halfh);
+}
+
+function drawName(panel){
+  panel.buffer.fill(panel.fill);
+  panel.buffer.strokeWeight(0);
+  panel.buffer.textAlign(panel.buffer.CENTER);
+  panel.buffer.textStyle(panel.buffer.NORMAL);
   panel.buffer.textFont('Helvetica',15);
-
-  drawAxisLabelX(panel);
-  drawAxisLabelY(panel);
-}
-
-function drawAxisLabelX(panel){
-  panel.buffer.text (panel.xAxis, panel.buffer.width/2,panel.buffer.height-10);
-}
-
-function drawAxisLabelY(panel){
-  panel.buffer.text (panel.yAxis, 25,panel.buffer.height/2);
+  let textheight = panel.buffer.textSize() + panel.buffer.textDescent() + 1;
+  panel.buffer.text (panel.name, panel.bezel, panel.bezel - textheight, panel.buffer.width - 2*panel.bezel, panel.bezel);
+  panel.buffer.strokeWeight(panel.strokeWeight);
 }
 
 class inputSigPanel extends Panel {
@@ -92,7 +121,6 @@ class inputSigPanel extends Panel {
 
   drawPanel(){
     drawSignal(this, this.settings.original);
-    drawLabels(this);
   }
 }
 
@@ -101,7 +129,6 @@ class reconstructedSigPanel extends Panel {
 
   drawPanel(){
     drawSignal(this, this.settings.reconstructed);
-    drawLabels(this);
   }
 }
 
@@ -160,7 +187,7 @@ class inputSigFFTPanel extends freqPanel {
   constructor(){super(); this.name = "Input Signal FFT";}
   drawPanel() {
     drawFFT(this, this.settings.originalFreq);
-    drawLabels(this);
+    drawName(this);
 
   }
 }
@@ -169,7 +196,7 @@ class sampledSigFFTPanel extends freqPanel {
   constructor(){super(); this.name="Reconstructed Signal FFT";}
   drawPanel() {
     drawFFT(this, this.settings.reconstructedFreq);
-    drawLabels(this);
+    drawName(this);
   }
 }
 
@@ -181,7 +208,7 @@ class impulsePanel extends Panel {
     this.name ="Sampling Signal";
   }
   drawPanel(){
-    let base = this.buffer.height * 0.75;
+    let base = this.buffer.height - this.bezel;
     let height = this.buffer.height * 0.35;
     this.buffer.background(this.background);
     this.drawBorder();
@@ -194,8 +221,10 @@ class impulsePanel extends Panel {
       this.buffer.line(xpos, base, xpos, height);
       this.buffer.ellipse(xpos, height, this.ellipseSize);
     }
-    drawLabels(this);
 
+    drawHorizontalTick(this, '0.0 dB', height);
+    drawHorizontalTick(this, '-inf dB', base);
+    drawName(this);
   }
 }
 
@@ -214,7 +243,7 @@ class impulseFreqPanel extends freqPanel {
       }
     }
     this.drawBorder();
-    drawLabels(this);
+    drawName(this);
   }
 }
 
@@ -228,7 +257,7 @@ class sampledInputPanel extends Panel{
 
   drawPanel(){
     let halfh = this.buffer.height/2;
-    let gain = (halfh - this.bezel) * 0.7;
+    let gain = halfh - this.bezel - this.tickTextSize/2;
     this.buffer.background(this.background);
     this.drawBorder();
     this.buffer.line(this.bezel, halfh , this.buffer.width-this.bezel, halfh);
@@ -241,7 +270,8 @@ class sampledInputPanel extends Panel{
       this.buffer.ellipse(xpos, ypos, this.ellipseSize);
     }
     // this.buffer.text('Sampled Signal', this.buffer.width/2, 20);
-    drawLabels(this)
+    drawSignalAmplitudeTicks(this, gain, 4);
+    drawName(this);
 }
 }
 
@@ -281,7 +311,7 @@ class sampledInputFreqPanel extends freqPanel{
     this.buffer.stroke(this.stroke);
     this.buffer.line(this.bezel, ypos, this.buffer.width-this.bezel, ypos);
     this.drawBorder();
-    drawLabels(this);
+    drawName(this);
   }
 }
 
