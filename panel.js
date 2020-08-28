@@ -1,10 +1,9 @@
 //Panel class. should be extended with a drawPanel method
 class Panel {
-  constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black",bezel =40) {
+  constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black") {
     this.background =  background;
     this.stroke = stroke;
     this.strokeWeight = strokeWeight;
-    this.bezel = bezel;
     this.fill = fill;
     this.strokeClr = ["black",[28,48,65],'#B2ABF2',"blue","green"];//TODO - update these to less ugly colours
     this.xAxis= "Time";
@@ -15,7 +14,8 @@ class Panel {
 
   setup(p, height, width, settings) {
     this.settings = settings;
-    this.buffer = p.createGraphics(width, height);
+    this.buffer = p.createGraphics(1,1);
+    this.resize(height, width);
     this.buffer.strokeWeight(this.strokeWeight);
     this.buffer.background(this.background);
     this.buffer.stroke(this.stroke);
@@ -27,6 +27,17 @@ class Panel {
 
   resize(h, w) {
     this.buffer.resizeCanvas(w, h);
+    this.xbezel = Math.max(70, w * 0.1);
+    this.xbezelLeft  = 0.75 * this.xbezel;
+    this.xbezelRight = 0.25 * this.xbezel;
+    this.ybezel = Math.max(20, h * 0.1);
+    this.halfh = h/2;
+    this.plotHeight = h - 2 * this.ybezel;
+    this.plotWidth = w - this.xbezel;
+    this.plotLeft = this.xbezelLeft; // the x coord. of the left side of the plot
+    this.plotRight = w - this.xbezelRight; // ditto of the right side of the plot
+    this.plotTop = this.ybezel; // y coord. of top
+    this.plotBottom = h - this.ybezel; // y coord. of bottom
   }
 
   setbackground(backgroundClr){ this.background = backgroundClr; }
@@ -35,14 +46,10 @@ class Panel {
   setFill(fillClr){ this.fill = fillClr; }
 
   drawBorder(){
-    let x1 = this.bezel;
-    let y1 = this.bezel;
-    let x2 = this.buffer.width - this.bezel;
-    let y2 = this.buffer.height - this.bezel;
-    this.buffer.line(x1, y1, x1, y2); // left side
-    this.buffer.line(x1, y1, x2, y1); // top
-    this.buffer.line(x2, y1, x2, y2); // right side
-    this.buffer.line(x1, y2, x2, y2); // bottom
+    this.buffer.line(this.plotLeft, this.plotTop, this.plotLeft, this.plotBottom);
+    this.buffer.line(this.plotLeft, this.plotTop, this.plotRight, this.plotTop);
+    this.buffer.line(this.plotRight, this.plotTop, this.plotRight, this.plotBottom);
+    this.buffer.line(this.plotLeft, this.plotBottom, this.plotRight, this.plotBottom);
   }
   drawPanel(){ }
 
@@ -60,21 +67,24 @@ function atodb(a, a_0 = 1)
   return 20 * Math.log(a / a_0) / log10;
 }
 
+function drawMidLine(panel) {
+  panel.buffer.line(panel.plotLeft, panel.halfh, panel.plotRight, panel.halfh);
+}
+
 function drawSignal(panel, signal, zoom = 1)
 {
-  let halfh = panel.buffer.height/2;
-  let pixel_max = (halfh - panel.bezel - panel.tickTextSize/2);
+  let pixel_max = panel.plotHeight/2;
   let pixel_per_fullscale = pixel_max * zoom;
   panel.buffer.noFill();
   panel.buffer.background(panel.background);
   panel.buffer.beginShape();
-  for (let x = 0; x < panel.buffer.width - 2*panel.bezel; x++) {
+  for (let x = 0; x < panel.plotWidth; x++) {
     let pixel_amp = pixel_per_fullscale * signal[x];
-    let y = halfh - pixel_amp;
-    panel.buffer.curveVertex(x + panel.bezel, y);
+    let y = panel.halfh - pixel_amp;
+    panel.buffer.curveVertex(x + panel.plotLeft, y);
   }
   panel.buffer.endShape();
-  panel.buffer.line(panel.bezel, halfh, panel.buffer.width-panel.bezel, halfh);
+  drawMidLine(panel);
 
   drawName(panel);
   drawSignalAmplitudeTicks(panel, pixel_max, 4);
@@ -83,17 +93,15 @@ function drawSignal(panel, signal, zoom = 1)
 }
 
 function drawDiscreteSignal(panel,signal){
-  let halfh = panel.buffer.height/2;
-  let gain = (halfh - panel.bezel) * 0.7;
+  let gain = panel.plotHeight/2;
   panel.buffer.background(panel.background);
   panel.drawBorder();
-  panel.buffer.line(panel.bezel, halfh , panel.buffer.width-panel.bezel, halfh);
-  let visibleSamples = Math.round((panel.buffer.width - 2 * panel.bezel)
-                                  / panel.settings.downsamplingFactor);
+  drawMidLine(panel);
+  let visibleSamples = Math.round(panel.plotWidth / panel.settings.downsamplingFactor);
   for (let x = 0; x < visibleSamples; x++) {
-    let xpos = Math.round(panel.bezel + x * panel.settings.downsamplingFactor);
-    let ypos = halfh - gain * signal[x];
-    panel.buffer.line(xpos, halfh, xpos, ypos);
+    let xpos = Math.round(panel.plotLeft + x * panel.settings.downsamplingFactor);
+    let ypos = panel.halfh - gain * signal[x];
+    panel.buffer.line(xpos, panel.halfh, xpos, ypos);
     panel.buffer.ellipse(xpos, ypos, panel.ellipseSize);
   }
   drawSignalAmplitudeTicks(panel, gain, 4);
@@ -107,10 +115,10 @@ function drawHorizontalTick(panel, text, height, tick_length = 5) {
   panel.buffer.textAlign(panel.buffer.RIGHT);
   panel.buffer.textStyle(panel.buffer.ITALIC);
   panel.buffer.strokeWeight(0);
-  panel.buffer.text(text, 0, height - panel.tickTextSize/2, panel.bezel - tick_length, height + panel.tickTextSize/2);
+  panel.buffer.text(text, 0, height - panel.tickTextSize/2, panel.plotLeft - tick_length, height + panel.tickTextSize/2);
   panel.buffer.strokeWeight(panel.strokeWeight);
-  panel.buffer.line(panel.bezel - tick_length, height, 
-                    panel.bezel,               height);
+  panel.buffer.line(panel.plotLeft - tick_length, height, 
+                    panel.plotLeft,               height);
 }
 
 function drawVerticalTick(panel, text, x, tick_length = 5) {
@@ -121,30 +129,27 @@ function drawVerticalTick(panel, text, x, tick_length = 5) {
   panel.buffer.strokeWeight(0);
   // we draw the text in the center of an oversized box centered over the tick
   // 20000 pixels should be more than enough for any reasonable tick text
-  panel.buffer.text(text, x - 10000, panel.buffer.height - panel.bezel + tick_length, 20000, panel.bezel);
+  panel.buffer.text(text, x - 10000, panel.plotBottom + tick_length, 20000, panel.ybezel - tick_length);
   panel.buffer.strokeWeight(panel.strokeWeight);
-  panel.buffer.line(x, panel.buffer.height - panel.bezel, 
-                    x, panel.buffer.height - panel.bezel + tick_length);
+  panel.buffer.line(x, panel.plotBottom, x, panel.plotBottom + tick_length);
 }
 
 function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
-  let halfh = panel.buffer.height/2;
-
   for (let i = 1; i <= num_ticks; ++i) {
     let tick_amp_pixels = i * pixel_max / num_ticks;
     let tick_amp_db = atodb(tick_amp_pixels, pixel_max);
-    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', halfh - tick_amp_pixels);
-    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', halfh + tick_amp_pixels);
+    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh - tick_amp_pixels);
+    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh + tick_amp_pixels);
   }
-  drawHorizontalTick(panel, '-inf dB', halfh);
+  drawHorizontalTick(panel, '-inf dB', panel.halfh);
 }
 
 function drawTimeTicks(panel, num_ticks, seconds_per_pixel) {
-  let tick_jump = Math.floor((panel.buffer.width - 2 * panel.bezel) / num_ticks);
+  let tick_jump = Math.floor((panel.plotWidth) / num_ticks);
   for (let i = 0; i < num_ticks; ++i) {
     let x = i * tick_jump;
     let text = (x * seconds_per_pixel * 1000).toFixed(1) + ' ms';
-    drawVerticalTick(panel, text, x + panel.bezel);
+    drawVerticalTick(panel, text, x + panel.plotLeft);
   }
 }
 
@@ -155,7 +160,7 @@ function drawName(panel){
   panel.buffer.textStyle(panel.buffer.NORMAL);
   panel.buffer.textFont('Helvetica',15);
   let textheight = panel.buffer.textSize() + panel.buffer.textDescent() + 1;
-  panel.buffer.text (panel.name, panel.bezel, panel.bezel - textheight, panel.buffer.width - 2*panel.bezel, panel.bezel);
+  panel.buffer.text (panel.name, panel.plotLeft, panel.plotTop - textheight, panel.plotWidth, panel.ybezel);
   panel.buffer.strokeWeight(panel.strokeWeight);
 }
 
@@ -180,15 +185,15 @@ class inputSigFreqPanel extends freqPanel {
   drawPanel(){
     this.buffer.background(this.background);
     let halfh = (this.buffer.height)*.75;
-    this.buffer.line(this.bezel, halfh, this.buffer.width-this.bezel, halfh);
+    drawMidLine(this);
 
   for (let x = 1; x <= this.settings.numHarm; x++) {
-    let xpos = this.settings.fundFreq / 20000 * x * this.width / 2 - 1 +this.bezel;
+    let xpos = this.settings.fundFreq / 20000 * x * this.width / 2 - 1 +this.plotLeft;
     this.buffer.line(xpos, halfh, xpos, halfh * (1 - this.settings.amplitude * .66 / x));
   }
-  let xpos = this.settings.sampleRate / 20000 * this.width / 4+this.bezel;
-  this.buffer.line(this.bezel, this.bezel*2, xpos, this.bezel*2);
-  this.buffer.line(xpos, this.bezel*2, xpos, halfh);
+  let xpos = this.settings.sampleRate / 20000 * this.width / 4+this.plotLeft;
+  this.buffer.line(this.ybezel, this.ybezel*2, xpos, this.ybezel*2);
+  this.buffer.line(xpos, this.ybezel*2, xpos, halfh);
 
   this.drawBorder();
   drawName(this);
@@ -201,26 +206,26 @@ function magnitude(real, cplx) {
 }
 
 function drawFFT(panel, fft) {
-  let base = panel.buffer.height - panel.bezel;
-  let gain = (panel.buffer.height - 2 * panel.bezel);
+  let base = panel.plotBottom;
+  let gain = panel.plotHeight;
   let offset = 100;
   let normalize = 4/fft.length;
-  let xscale = (panel.buffer.width - 2*panel.bezel)/(fft.length/2);
+  let xscale = panel.plotWidth/(fft.length/2);
   panel.buffer.background(panel.background);
   panel.buffer.strokeWeight(1);
   panel.buffer.stroke(panel.strokeClr[0]);
   panel.buffer.fill(panel.stroke);
 
   panel.buffer.beginShape();
-  panel.buffer.vertex(panel.bezel, base);
+  panel.buffer.vertex(panel.plotLeft, base);
   // fft.length / 2 because it is an interleaved complex array
   // with twice as many elements as it has (complex) numbers
   for (let x = 0; x <= fft.length/2; x++) {
-    let xpos = xscale*x + panel.bezel;
+    let xpos = xscale*x + panel.plotLeft;
     let ypos = base - gain * normalize * magnitude(fft[2*x], fft[2*x+1]);
     panel.buffer.vertex(xpos, ypos);
   }
-  panel.buffer.vertex(panel.buffer.width - panel.bezel, base);
+  panel.buffer.vertex(panel.plotRight, base);
   panel.buffer.endShape(panel.buffer.CLOSE);
   panel.buffer.strokeWeight(panel.strokeWeight);
   panel.buffer.stroke(panel.stroke);
@@ -253,21 +258,19 @@ class impulsePanel extends Panel {
     this.name ="Sampling Signal";
   }
   drawPanel(){
-    let base = this.buffer.height - this.bezel;
-    let height = this.buffer.height * 0.35;
+    let base = this.plotBottom;
+    let ytop = this.plotTop + 10;
     this.buffer.background(this.background);
     this.drawBorder();
-    this.buffer.line(this.bezel,base,this.buffer.width-this.bezel,base);
 
-    let visibleSamples = Math.round((this.buffer.width - 2 * this.bezel)
-                                    / this.settings.downsamplingFactor);
+    let visibleSamples = Math.round(this.plotWidth / this.settings.downsamplingFactor);
     for (let x = 0; x < visibleSamples; x++) {
-      let xpos = this.bezel + x * this.settings.downsamplingFactor;
-      this.buffer.line(xpos, base, xpos, height);
-      this.buffer.ellipse(xpos, height, this.ellipseSize);
+      let xpos = this.plotLeft + x * this.settings.downsamplingFactor;
+      this.buffer.line(xpos, base, xpos, ytop);
+      this.buffer.ellipse(xpos, ytop, this.ellipseSize);
     }
 
-    drawHorizontalTick(this, '0.0 dB', height);
+    drawHorizontalTick(this, '0.0 dB', ytop);
     drawHorizontalTick(this, '-inf dB', base);
     drawTimeTicks(this, this.numTimeTicks, 1/(this.settings.sampleRate));
     drawName(this);
@@ -279,13 +282,12 @@ class impulseFreqPanel extends freqPanel {
   drawPanel(){
     this.buffer.background(this.background);
     this.buffer.fill(this.fill); this.buffer.strokeWeight(this.strokeWeight);
-    this.buffer.line(this.bezel, this.buffer.height*.75 , this.buffer.width-this.bezel, this.buffer.height*.75);
 
     for (let x = 0; x <= 4; x++) {
-      let xpos = this.settings.sampleRate / 20000 * x * this.buffer.width/2+1+this.bezel;
+      let xpos = this.settings.sampleRate / 20000 * x * this.buffer.width/2+1+this.ybezel;
       this.buffer.line(xpos, this.buffer.height *  .75, xpos, this.buffer.height / 4);
       if (x > 0) {
-        this.buffer.text((x) + "FS", xpos-10, this.buffer.height - this.bezel*2)
+        this.buffer.text((x) + "FS", xpos-10, this.buffer.height - this.ybezel*2)
       }
     }
     this.drawBorder();
@@ -310,35 +312,35 @@ class sampledInputFreqPanel extends freqPanel{
   constructor(){ super(); this.name = "Sampled Signal Frequency Domain";}
 
   drawPanel(){
-    let ypos = this.buffer.height * .75;
-    this.buffer.background(this.background);
-
-    for (let x = 0; x <= 4; x++) {
-      let xpos = this.settings.sampleRate / 20000 * x * (this.buffer.width) / 2;
-      this.buffer.stroke(this.strokeClr[x]);
-      if ((xpos < this.buffer.width-this.bezel*2) &(xpos > this.bezel)){
-        this.buffer.line(xpos+this.bezel, ypos, xpos+this.bezel, this.buffer.height  / 8);
-        this.buffer.line(xpos+this.bezel, this.buffer.height / 8, xpos+this.bezel, this.buffer.height / 8);
-        this.buffer.text((x) + "FS", xpos+this.bezel-10, this.buffer.height - this.bezel*2)
-
-      }
-
-    //Draw harmonics
-      for (let harm = 1; harm <= this.settings.numHarm; harm++) {
-        let xPositive = xpos + this.settings.fundFreq * harm * this.buffer.width / 2 / 20000+this.bezel;
-        let xNegative = xpos - this.settings.fundFreq * harm * this.buffer.width / 2 / 20000+this.bezel;
-        let yEnd = ypos * (1 - this.settings.amplitude * .6 / harm);
-        if ((xPositive > this.bezel) & (xPositive < this.buffer.width-this.bezel)){
-          this.buffer.line(xPositive, ypos, xPositive, yEnd);
-        }
-        if ((xNegative > this.bezel) & (xNegative < this.buffer.width-this.bezel)){
-        this.buffer.line(xNegative, ypos, xNegative, yEnd);
-      }
-      }
-
-    }
-    this.buffer.stroke(this.stroke);
-    this.buffer.line(this.bezel, ypos, this.buffer.width-this.bezel, ypos);
+//    let ypos = this.buffer.height * .75;
+//    this.buffer.background(this.background);
+//
+//    for (let x = 0; x <= 4; x++) {
+//      let xpos = this.settings.sampleRate / 20000 * x * (this.buffer.width) / 2;
+//      this.buffer.stroke(this.strokeClr[x]);
+//      if ((xpos < this.buffer.width-this.bezel*2) &(xpos > this.bezel)){
+//        this.buffer.line(xpos+this.bezel, ypos, xpos+this.bezel, this.buffer.height  / 8);
+//        this.buffer.line(xpos+this.bezel, this.buffer.height / 8, xpos+this.bezel, this.buffer.height / 8);
+//        this.buffer.text((x) + "FS", xpos+this.bezel-10, this.buffer.height - this.bezel*2)
+//
+//      }
+//
+//    //Draw harmonics
+//      for (let harm = 1; harm <= this.settings.numHarm; harm++) {
+//        let xPositive = xpos + this.settings.fundFreq * harm * this.buffer.width / 2 / 20000+this.bezel;
+//        let xNegative = xpos - this.settings.fundFreq * harm * this.buffer.width / 2 / 20000+this.bezel;
+//        let yEnd = ypos * (1 - this.settings.amplitude * .6 / harm);
+//        if ((xPositive > this.bezel) & (xPositive < this.buffer.width-this.bezel)){
+//          this.buffer.line(xPositive, ypos, xPositive, yEnd);
+//        }
+//        if ((xNegative > this.bezel) & (xNegative < this.buffer.width-this.bezel)){
+//        this.buffer.line(xNegative, ypos, xNegative, yEnd);
+//      }
+//      }
+//
+//    }
+//    this.buffer.stroke(this.stroke);
+//    this.buffer.line(this.bezel, ypos, this.buffer.width-this.bezel, ypos);
     this.drawBorder();
     drawName(this);
   }
