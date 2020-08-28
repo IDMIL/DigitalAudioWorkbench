@@ -16,30 +16,44 @@ class slider{
     this.slider.input(p.draw);
     this.slider.mousePressed(p.draw);
     this.slider.mouseReleased(p.draw);
+    this.textBox = p.createInput();
+    this.textBox.size(50);
+    this.button = p.createButton("Update");
+    this.button.mousePressed(this.buttonPressed());
+    // this.displayVal = 1;
   }
 
-  resize(x, y, sliderWidth){
+  resize(x, y, sliderWidth,p){
     this.slider.style('width', Math.round(sliderWidth).toString() + "px");
     this.slider.position(x, y);
     this.textLabel.position(x + this.slider.width + 10, y - 15);
+    this.textBox.position(x+this.slider.width+200,y);
+    this.button.position(this.textBox.x+this.textBox.width+5,y);
   }
+  buttonPressed(){
+    //TODO need to set slider.value() to the textbox.value();
+  }
+
 }
 
 class freqSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="freq";
+    this.name ="Fundamental Frequency";
     this.min = p.log(200)/p.log(2);
     this.max = (p.log(this.settings.sampleRate / 2 / 5)/p.log(2));
     this.initial = (p.log(settings.fundFreq)/p.log(2));
     this.step = 0.001;
+    this.displayVal = this.initial;
     this.makeSlider(p);
   }
 
   updateValue(p){
     this.settings.fundFreq = p.pow(2,this.slider.value());
-    this.textLabel.html('Fundamental: ' + p.round(this.settings.fundFreq) + " Hz")
+    this.displayVal = this.settings.fundFreq;
+    this.textBox.value(p.round(this.displayVal));//
 
+    this.textLabel.html(this.name+': ');// + p.round(this.settings.fundFreq))
   }
 }
 
@@ -51,12 +65,16 @@ class numHarmSlider extends slider{
     this.max = 5;
     this.initial = 1;
     this.step = 1;
+    this.displayVal = this.initial;
+
     this.makeSlider(p);
   }
 
   updateValue(p){
     this.settings.numHarm = this.slider.value();
-    this.textLabel.html(this.name +": "+ p.round(this.settings.fundFreq * this.settings.numHarm) + " Hz")
+    this.textBox.value(p.round(this.settings.numHarm*this.settings.fundFreq));//
+
+    this.textLabel.html(this.name +": ");//+ p.round(this.settings.fundFreq * this.settings.numHarm) + " Hz")
   }
 }
 
@@ -73,7 +91,8 @@ class sampleRateSlider extends slider{
 
   updateValue(p){
     this.settings.downsamplingFactor = p.round(WEBAUDIO_MAX_SAMPLERATE/p.pow(2, this.slider.value()));
-    this.textLabel.html('Sample Rate: ' + p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3) + " kHz")
+    this.textBox.value(p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3)+" Khz");//
+    this.textLabel.html('Sample Rate: ');// + p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3) + " kHz")
   }
 }
 
@@ -90,7 +109,8 @@ class ditherSlider extends slider {
 
   updateValue(p){
     this.settings.dither = this.slider.value();
-    this.textLabel.html('Dither: ' + p.round(this.settings.dither, 3));
+    this.textBox.value(p.round(this.settings.dither, 3));
+    this.textLabel.html('Dither: ');// + p.round(this.settings.dither, 3));
   }
 }
 
@@ -107,7 +127,8 @@ class bitDepthSlider extends slider {
 
   updateValue(p){
     this.settings.bitDepth = this.slider.value();
-    this.textLabel.html('Bit Depth: ' + (this.settings.bitDepth == BIT_DEPTH_MAX ? 'Float32' : this.settings.bitDepth));
+    this.textBox.value(this.settings.bitDepth );
+    this.textLabel.html('Bit Depth: ');// + (this.settings.bitDepth == BIT_DEPTH_MAX ? 'Float32' : this.settings.bitDepth));
   }
 }
 
@@ -124,7 +145,8 @@ class amplitudeSlider extends slider {
 
   updateValue(p){
     this.settings.amplitude = this.slider.value();
-    this.textLabel.html('Amplitude: ' + (this.settings.amplitude));
+    this.textBox.value(this.settings.amplitude);
+    this.textLabel.html('Amplitude: ');// + (this.settings.amplitude));
   }
 }
 
@@ -141,7 +163,8 @@ class antialiasingSlider extends slider {
 
   updateValue(p){
     this.settings.antialiasing = this.slider.value();
-    this.textLabel.html("Antialiasing: " + (this.settings.antialiasing < 1 ? 'None' : this.settings.antialiasing + "th Order FIR"));
+    this.textBox.value(this.settings.antialiasing)
+    this.textLabel.html("Antialiasing: ");// + (this.settings.antialiasing < 1 ? 'None' : this.settings.antialiasing + "th Order FIR"));
   }
 }
 
@@ -183,7 +206,7 @@ class phaseSlider extends slider{
       label = "<sup>"+num+"</sup>&frasl;<sub>"+denom+"</sub>";
 
     }
-
-    this.textLabel.html(this.name +": " + label + " rads");
+    this.textBox.value(sliderVal);
+    this.textLabel.html(this.name +": ");// + label + " rads");
   }
 }

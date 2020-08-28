@@ -1,6 +1,6 @@
 //Panel class. should be extended with a drawPanel method
 class Panel {
-  constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black",bezel =50) {
+  constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black",bezel =40) {
     this.background =  background;
     this.stroke = stroke;
     this.strokeWeight = strokeWeight;
@@ -25,8 +25,8 @@ class Panel {
 
   }
 
-  resize(h, w) { 
-    this.buffer.resizeCanvas(w, h); 
+  resize(h, w) {
+    this.buffer.resizeCanvas(w, h);
   }
 
   setbackground(backgroundClr){ this.background = backgroundClr; }
@@ -80,6 +80,25 @@ function drawSignal(panel, signal, zoom = 1)
   drawSignalAmplitudeTicks(panel, pixel_max, 4);
   drawTimeTicks(panel, panel.numTimeTicks, 1/panel.settings.sampleRate);
   panel.drawBorder();
+}
+
+function drawDiscreteSignal(panel,signal){
+  let halfh = panel.buffer.height/2;
+  let gain = (halfh - panel.bezel) * 0.7;
+  panel.buffer.background(panel.background);
+  panel.drawBorder();
+  panel.buffer.line(panel.bezel, halfh , panel.buffer.width-panel.bezel, halfh);
+  let visibleSamples = Math.round((panel.buffer.width - 2 * panel.bezel)
+                                  / panel.settings.downsamplingFactor);
+  for (let x = 0; x < visibleSamples; x++) {
+    let xpos = Math.round(panel.bezel + x * panel.settings.downsamplingFactor);
+    let ypos = halfh - gain * signal[x];
+    panel.buffer.line(xpos, halfh, xpos, ypos);
+    panel.buffer.ellipse(xpos, ypos, panel.ellipseSize);
+  }
+  drawSignalAmplitudeTicks(panel, gain, 4);
+  drawTimeTicks(panel, panel.numTimeTicks, 1/(panel.settings.sampleRate));
+  drawName(panel);
 }
 
 function drawHorizontalTick(panel, text, height, tick_length = 5) {
@@ -281,27 +300,9 @@ class sampledInputPanel extends Panel{
   }
 
   drawPanel(){
-    let halfh = this.buffer.height/2;
-    let gain = halfh - this.bezel - this.tickTextSize/2;
-    this.buffer.background(this.background);
-    this.drawBorder();
-    this.buffer.line(this.bezel, halfh , this.buffer.width-this.bezel, halfh);
-    let visibleSamples = Math.round((this.buffer.width - 2 * this.bezel)
-                                    / this.settings.downsamplingFactor);
-    for (let x = 0; x < visibleSamples; x++) {
-      let xpos = Math.round(this.bezel + x * this.settings.downsamplingFactor);
-      let ypos = halfh - gain * this.settings.downsampled[x];
-      this.buffer.line(xpos, halfh, xpos, ypos);
-      this.buffer.ellipse(xpos, ypos, this.ellipseSize);
-    }
-    // this.buffer.text('Sampled Signal', this.buffer.width/2, 20);
-    drawSignalAmplitudeTicks(this, gain, 4);
-    drawTimeTicks(this, this.numTimeTicks, 1/(this.settings.sampleRate));
-    drawName(this);
+    drawDiscreteSignal(this,this.settings.downsampled)
 }
 }
-
-
 
 class sampledInputFreqPanel extends freqPanel{
   constructor(){ super(); this.name = "Sampled Signal FFT";}
@@ -389,5 +390,28 @@ class quantizedSignalPanel extends Panel{
 }
 class sliderPanel extends Panel{
   drawPanel(){
+  }
+}
+class quantNoisePanel extends Panel{
+  constructor(){
+    super()
+    this.strokeWeight=1;
+    this.ellipseSize=5;
+    this.name ="Quantization Noise";
+  }
+  drawPanel(){
+    drawDiscreteSignal(this, this.settings.quantNoise);
+  }
+}
+class quantNoiseFreqPanel extends Panel{
+  constructor(){
+    super()
+    this.name ="Quantization Noise FFT";
+    this.ellipseSize=2;
+    this.xAxis = "Frequency";
+  }
+  drawPanel(){
+    drawFFT(this, this.settings.quantNoiseFreq);
+    drawLabels(this);
   }
 }
