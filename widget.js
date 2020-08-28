@@ -34,6 +34,7 @@ var settings =
     , reconstructedFreq : fft.createComplexArray()
     , quantNoiseFreq : fft.createComplexArray()
     , snd : undefined
+    , frequencyZoom : 2
     };
 
 p.setup = function () {

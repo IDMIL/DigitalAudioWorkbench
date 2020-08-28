@@ -184,19 +184,23 @@ class inputSigFreqPanel extends freqPanel {
   constructor(){super(); this.name="Input Signal Frequency Domain";}
   drawPanel(){
     this.buffer.background(this.background);
-    let halfh = (this.buffer.height)*.75;
-    drawMidLine(this);
+    let sampleRate = this.settings.sampleRate / this.settings.downsamplingFactor;
+    let max_freq = sampleRate * this.settings.frequencyZoom;
+    let pixels_per_hz = this.plotWidth / max_freq;
 
-  for (let x = 1; x <= this.settings.numHarm; x++) {
-    let xpos = this.settings.fundFreq / 20000 * x * this.width / 2 - 1 +this.plotLeft;
-    this.buffer.line(xpos, halfh, xpos, halfh * (1 - this.settings.amplitude * .66 / x));
-  }
-  let xpos = this.settings.sampleRate / 20000 * this.width / 4+this.plotLeft;
-  this.buffer.line(this.ybezel, this.ybezel*2, xpos, this.ybezel*2);
-  this.buffer.line(xpos, this.ybezel*2, xpos, halfh);
+    for (let harmonic = 1; harmonic <= this.settings.numHarm; harmonic++) {
+      let freq = this.settings.fundFreq * harmonic;
+      let i = 0;
+      while (freq + i * sampleRate < max_freq) {
+        let xpositive = (freq + i * sampleRate) * pixels_per_hz + this.plotLeft;
+        let y = this.plotBottom - (this.plotHeight * this.settings.amplitude / harmonic);
+        this.buffer.line(xpositive, this.plotBottom, xpositive, y);
+        freq += sampleRate;
+      }
+    }
 
-  this.drawBorder();
-  drawName(this);
+    this.drawBorder();
+    drawName(this);
   }
 
 }
