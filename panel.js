@@ -95,6 +95,7 @@ function drawMidLine(panel) {
   // panel.buffer.drawingContext.setLineDash([5,5]);
   panel.buffer.stroke("gray");
   panel.buffer.line(panel.plotLeft, panel.halfh, panel.plotRight, panel.halfh);
+  panel.buffer.stroke(panel.stroke);
   // panel.buffer.drawingContext.setLineDash([]);
 }
 
