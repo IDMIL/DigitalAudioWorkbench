@@ -9,6 +9,7 @@ class Panel {
     this.yAxis = "Amp";
     this.tickTextSize = 9;
     this.numTimeTicks = 8;
+    this.numFreqTicks = 8;
   }
 
   setup(p, height, width, settings) {
@@ -178,6 +179,16 @@ function drawTimeTicks(panel, num_ticks, seconds_per_pixel) {
   }
 }
 
+function drawFreqTicks(panel, num_ticks, pixels_per_hz) {
+  let hz_per_pixel = 1/pixels_per_hz;
+  let tick_jump = Math.floor((panel.plotWidth) / num_ticks);
+  for (let i = 0; i < num_ticks; ++i) {
+    let x = i * tick_jump;
+    let text = (x * hz_per_pixel).toFixed(0) + ' hz';
+    drawVerticalTick(panel, text, x + panel.plotLeft);
+  }
+}
+
 function drawName(panel){
   panel.buffer.fill(panel.fill);
   panel.buffer.strokeWeight(0);
@@ -215,6 +226,7 @@ class inputSigFreqPanel extends freqPanel {
     this.buffer.background(this.background);
     let base = this.plotBottom;
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
+    drawPassBand(this);
 
     for (let x = 1; x <= this.settings.numHarm; x++) {
       let hz = this.settings.fundFreq * x;
@@ -225,6 +237,7 @@ class inputSigFreqPanel extends freqPanel {
     }
 
     this.drawBorder();
+    drawFreqTicks(this, this.numFreqTicks, pixels_per_hz);
     drawName(this);
   }
 
@@ -235,28 +248,31 @@ function magnitude(real, cplx) {
 }
 
 function drawFFT(panel, fft) {
-  let base = panel.plotBottom;
   let gain = panel.plotHeight;
   let offset = 100;
-  let normalize = 4/fft.length;
-  let xscale = panel.plotWidth/(fft.length/4);
-  panel.buffer.background(panel.background);
-
-  panel.buffer.beginShape();
-  panel.buffer.vertex(panel.plotLeft, base);
+  let hz_per_bin = panel.settings.sampleRate / (fft.length / 2);
   // fft.length / 2 because it is an interleaved complex array
   // with twice as many elements as it has (complex) numbers
-  // / 4 because we're only plotting up to the nyquist
-  for (let x = 0; x <= fft.length/4; x++) {
-    let xpos = xscale*x + panel.plotLeft;
-    let ypos = base - gain * normalize * magnitude(fft[2*x], fft[2*x+1]);
+  let pixels_per_hz = panel.plotWidth / panel.settings.maxVisibleFrequency;
+  let pixels_per_bin = pixels_per_hz * hz_per_bin;
+  let num_bins = Math.round(panel.plotWidth / pixels_per_bin);
+  let normalize = 4/fft.length;
+
+  panel.buffer.background(panel.background);
+  drawPassBand(panel);
+  panel.buffer.beginShape();
+  panel.buffer.vertex(panel.plotLeft, panel.plotBottom);
+  for (let bin = 0; bin <= num_bins; bin++) {
+    let xpos = pixels_per_bin * bin + panel.plotLeft;
+    let ypos = panel.plotBottom - panel.plotHeight * normalize * magnitude(fft[2*bin], fft[2*bin+1]);
     panel.buffer.vertex(xpos, ypos);
   }
-  panel.buffer.vertex(panel.plotRight, base);
+  panel.buffer.vertex(panel.plotRight, panel.plotBottom);
   panel.buffer.endShape(panel.buffer.CLOSE);
   panel.buffer.strokeWeight(panel.strokeWeight);
   panel.buffer.stroke(panel.stroke);
   panel.drawBorder();
+  drawFreqTicks(panel, panel.numFreqTicks, pixels_per_hz);
   drawName(panel);
 }
 
@@ -265,7 +281,6 @@ class inputSigFFTPanel extends freqPanel {
 
   drawPanel() {
     drawFFT(this, this.settings.originalFreq);
-    drawName(this);
   }
 }
 
@@ -273,7 +288,6 @@ class sampledSigFFTPanel extends freqPanel {
   constructor(){super(); this.name="Reconstructed Signal FFT";}
   drawPanel() {
     drawFFT(this, this.settings.reconstructedFreq);
-    drawName(this);
   }
 }
 
@@ -310,13 +324,15 @@ class impulseFreqPanel extends freqPanel {
     let base = this.plotBottom;
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
     let sampleRate = this.settings.sampleRate / this.settings.downsamplingFactor;
+    let numPeaks = Math.round(this.settings.maxVisibleFrequency / sampleRate);
 
-    var hz = 0;
-    for (let peak = 0; hz < this.settings.maxVisibleFrequency; peak++) {
-      hz = peak * this.settings.sampleRate / this.settings.downsamplingFactor;
+    for (let peak = 0; peak <= numPeaks; peak++) {
+      let hz = peak * this.settings.sampleRate / this.settings.downsamplingFactor;
       let xpos  = hz * pixels_per_hz + this.plotLeft;
       let color = getColor(peak);
       this.drawPeak(xpos, this.plotHeight, base, color)
+      let text = peak.toFixed(0) + ' FS';
+      drawVerticalTick(this, text, xpos);
     }
 
     this.drawBorder();
@@ -337,19 +353,32 @@ class sampledInputPanel extends Panel{
   }
 }
 
+function drawPassBand(panel) {
+  let sampleRate = panel.settings.sampleRate/panel.settings.downsamplingFactor;
+  let pixels_per_hz = panel.plotWidth / panel.settings.maxVisibleFrequency;
+  panel.buffer.strokeWeight(0);
+  panel.buffer.fill(235);
+  let passbandcutoff = sampleRate/2;
+  let passbandpixelwidth = passbandcutoff * pixels_per_hz;
+  panel.buffer.rect(panel.plotLeft, panel.plotTop, passbandpixelwidth, panel.plotHeight);
+  panel.buffer.strokeWeight(panel.strokeWeight);
+  panel.buffer.fill(panel.fill);
+}
+
 class sampledInputFreqPanel extends freqPanel{
   constructor(){ super(); this.name = "Sampled Signal Frequency Domain";}
 
   drawPanel(){
-    this.bufferInit();
+    this.buffer.background(this.background);
+    this.buffer.stroke(this.stroke);
     let base = this.plotBottom;
     let sampleRate = this.settings.sampleRate / this.settings.downsamplingFactor;
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
-    let numPeaks = this.settings.downsamplingFactor/2;
+    let numPeaks = Math.round(this.settings.maxVisibleFrequency / sampleRate);
 
-    var done = false;
-    var peak = 0;
-    while(!done) {
+    drawPassBand(this);
+
+    for (let peak = 0; peak <= numPeaks; peak++) {
       let color = getColor(peak);
       let peakhz = peak * sampleRate;
       let xpos = peakhz * pixels_per_hz + this.plotLeft;
@@ -359,6 +388,11 @@ class sampledInputFreqPanel extends freqPanel{
       // does the sampled signal actually have amplitude at the sampling frequency? 
       // If so, revert this dashed line to a drawPeak
       this.buffer.drawingContext.setLineDash([]);
+      let fstext = peak.toFixed(0) + ' FS';
+      let nyquisttext = (peak - 1).toFixed(0) + '.5 FS';
+      let nyquistxpos = (peakhz - sampleRate/2) * pixels_per_hz + this.plotLeft;
+      drawVerticalTick(this, fstext, xpos);
+      drawVerticalTick(this, nyquisttext, nyquistxpos);
 
       for (let harm = 1; harm <= this.settings.numHarm; harm++) {
         let hzNegative = peakhz - (this.settings.fundFreq * harm);
@@ -370,11 +404,9 @@ class sampledInputFreqPanel extends freqPanel{
         let negativeHeight = this.settings.amplitude*this.plotHeight/harm;
         let xNegative = hzNegative * pixels_per_hz + this.plotLeft;
         let xPositive = hzPositive * pixels_per_hz + this.plotLeft;
-        if (harm >= this.settings.numHarm && xNegative > this.plotRight) done = true;
         if (xNegative < this.plotRight) this.drawPeak(xNegative, negativeHeight, base, color);
         if (xPositive < this.plotRight) this.drawPeak(xPositive, positiveHeight, base, color);
       }
-      ++peak;
     }
     this.drawBorder();
     drawName(this);
