@@ -1,4 +1,5 @@
 //Panel class. should be extended with a drawPanel method
+const log10 = Math.log(10);
 class Panel {
   constructor(background = "white", stroke = "black", strokeWeight = 1, fill = "black") {
     this.background =  background;
@@ -9,7 +10,7 @@ class Panel {
     this.yAxis = "Amp";
     this.tickTextSize = 9;
     this.numTimeTicks = 8;
-    this.numFreqTicks = 8;
+    this.numFreqTicks = 4;
   }
 
   setup(p, height, width, settings) {
@@ -24,8 +25,8 @@ class Panel {
   resize(h, w) {
     this.buffer.resizeCanvas(w, h);
     this.xbezel = Math.max(70, w * 0.1);
-    this.xbezelLeft  = 0.75 * this.xbezel;
-    this.xbezelRight = 0.25 * this.xbezel;
+    this.xbezelLeft  = 0.60 * this.xbezel;
+    this.xbezelRight = 0.40 * this.xbezel;
     this.ybezel = Math.max(20, h * 0.1);
     this.halfh = h/2;
     this.plotHeight = h - 2 * this.ybezel;
@@ -69,7 +70,7 @@ class freqPanel extends Panel{
   }
 
   drawPeak(x,height,base,colour="black"){
-    this.buffer.fill(colour); 
+    this.buffer.fill(colour);
     this.buffer.stroke(colour);
     this.buffer.beginShape();
     if (x<this.plotLeft || x>this.plotRight) return;
@@ -85,17 +86,16 @@ class freqPanel extends Panel{
   }
 }
 
-const log10 = Math.log(10);
-
-function atodb(a, a_0 = 1)
+function linToDB(a, a_0 = 1)
 {
   return 20 * Math.log(a / a_0) / log10;
 }
 
 function drawMidLine(panel) {
-  panel.buffer.drawingContext.setLineDash([5,5]);
+  // panel.buffer.drawingContext.setLineDash([5,5]);
+  panel.buffer.stroke("gray");
   panel.buffer.line(panel.plotLeft, panel.halfh, panel.plotRight, panel.halfh);
-  panel.buffer.drawingContext.setLineDash([]);
+  // panel.buffer.drawingContext.setLineDash([]);
 }
 
 function drawSignal(panel, signal, zoom = 1)
@@ -135,16 +135,28 @@ function drawDiscreteSignal(panel,signal){
   drawName(panel);
 }
 
-function drawHorizontalTick(panel, text, height, tick_length = 5) {
+function drawHorizontalTick(panel, text, height, tick_length = 5,side="left") {
   panel.buffer.fill(panel.fill);
   panel.buffer.textFont('Helvetica', panel.tickTextSize);
-  panel.buffer.textAlign(panel.buffer.RIGHT);
   panel.buffer.textStyle(panel.buffer.ITALIC);
   panel.buffer.strokeWeight(0);
-  panel.buffer.text(text, 0, height - panel.tickTextSize/2, panel.plotLeft - tick_length, height + panel.tickTextSize/2);
+  panel.buffer.textAlign(panel.buffer.RIGHT);
+  let tickStart = panel.plotLeft-tick_length;
+  let tickEnd = panel.plotLeft;
+  if (side == "right"){
+    panel.buffer.textAlign(panel.buffer.LEFT);
+    tickEnd = panel.plotRight+tick_length;
+    tickStart = panel.plotRight;
+    panel.buffer.text(text, tickEnd, height - panel.tickTextSize/2, panel.buffer.width , height + panel.tickTextSize/2);
+  }
+  else{
+    panel.buffer.text(text, 0, height - panel.tickTextSize/2, tickStart , height + panel.tickTextSize/2);
+
+  }
+
   panel.buffer.strokeWeight(panel.strokeWeight);
-  panel.buffer.line(panel.plotLeft - tick_length, height, 
-                    panel.plotLeft,               height);
+  panel.buffer.line(tickStart , height,
+                    tickEnd,               height);
 }
 
 function drawVerticalTick(panel, text, x, tick_length = 5) {
@@ -163,11 +175,17 @@ function drawVerticalTick(panel, text, x, tick_length = 5) {
 function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
   for (let i = 1; i <= num_ticks; ++i) {
     let tick_amp_pixels = i * pixel_max / num_ticks;
-    let tick_amp_db = atodb(tick_amp_pixels, pixel_max);
+    let tick_amp_db = linToDB(tick_amp_pixels, pixel_max);
+    drawHorizontalTick(panel, (tick_amp_pixels/pixel_max).toFixed(2), panel.halfh - tick_amp_pixels,5,"right");
+    drawHorizontalTick(panel, (tick_amp_pixels/pixel_max).toFixed(2), panel.halfh + tick_amp_pixels,5,"right");
     drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh - tick_amp_pixels);
     drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh + tick_amp_pixels);
+    // console.log(tick_amp_pixels.toFixed(1), i)
+
   }
   drawHorizontalTick(panel, '-inf dB', panel.halfh);
+  drawHorizontalTick(panel, '0', panel.halfh, 5, "right");
+
 }
 
 function drawTimeTicks(panel, num_ticks, seconds_per_pixel) {
@@ -182,6 +200,7 @@ function drawTimeTicks(panel, num_ticks, seconds_per_pixel) {
 function drawFreqTicks(panel, num_ticks, pixels_per_hz) {
   let hz_per_pixel = 1/pixels_per_hz;
   let tick_jump = Math.floor((panel.plotWidth) / num_ticks);
+  tick_jump=panel.plotWidth / num_ticks
   for (let i = 0; i < num_ticks; ++i) {
     let x = i * tick_jump;
     let text = (x * hz_per_pixel).toFixed(0) + ' hz';
@@ -385,7 +404,7 @@ class sampledInputFreqPanel extends freqPanel{
       this.buffer.stroke(color);
       this.buffer.drawingContext.setLineDash([5,5]);
       this.buffer.line(xpos, this.plotTop, xpos, this.plotBottom);
-      // does the sampled signal actually have amplitude at the sampling frequency? 
+      // does the sampled signal actually have amplitude at the sampling frequency?
       // If so, revert this dashed line to a drawPeak
       this.buffer.drawingContext.setLineDash([]);
       let fstext = peak.toFixed(0) + ' FS';
