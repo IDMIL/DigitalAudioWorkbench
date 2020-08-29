@@ -5,7 +5,6 @@ class Panel {
     this.stroke = stroke;
     this.strokeWeight = strokeWeight;
     this.fill = fill;
-    this.strokeClr = ["black",[28,48,65],'#B2ABF2',"blue","green"];//TODO - update these to less ugly colours
     this.xAxis= "Time";
     this.yAxis = "Amp";
     this.tickTextSize = 9;
@@ -16,13 +15,9 @@ class Panel {
     this.settings = settings;
     this.buffer = p.createGraphics(1,1);
     this.resize(height, width);
-    this.buffer.strokeWeight(this.strokeWeight);
-    this.buffer.background(this.background);
-    this.buffer.stroke(this.stroke);
-    this.buffer.fill(this.fill);
+    this.bufferInit();
     this.buffer.textFont('Helvetica',20);
     this.buffer.textAlign(p.CENTER);
-
   }
 
   resize(h, w) {
@@ -40,6 +35,18 @@ class Panel {
     this.plotBottom = h - this.ybezel; // y coord. of bottom
   }
 
+  bufferInit(){
+    this.buffer.background(this.background);
+    this.buffer.fill(this.fill);
+    this.buffer.stroke(this.stroke);
+    this.buffer.strokeWeight(this.strokeWeight);
+  }
+
+  drawStem(x,y,startHeight){
+    this.buffer.line(x, startHeight, x, y);
+    this.buffer.ellipse(x, y, this.ellipseSize);
+  };
+
   setbackground(backgroundClr){ this.background = backgroundClr; }
   setStroke(strokeClr){ this.stroke = strokeClr; }
   setStrokeWeight(strokeWgt){ this.strokeWeight = strokeWgt; }
@@ -51,12 +58,28 @@ class Panel {
     this.buffer.line(this.plotRight, this.plotTop, this.plotRight, this.plotBottom);
     this.buffer.line(this.plotLeft, this.plotBottom, this.plotRight, this.plotBottom);
   }
-  drawPanel(){ }
 
+  drawPanel(){}
 }
 
 class freqPanel extends Panel{
   constructor(){ super(); this.xAxis = "Frequency";
+  }
+
+  drawPeak(x,height,base,colour="black"){
+    this.buffer.fill(colour); 
+    this.buffer.stroke(colour);
+    this.buffer.beginShape();
+    if (x<this.plotLeft || x>this.plotRight) return;
+    let x1=x-1; let x2 = x+1;
+    x1 = Math.max(x1, this.plotLeft);
+    x2 = Math.min(x2, this.plotRight);
+    this.buffer.vertex(x1, base);
+    this.buffer.vertex(x, this.plotBottom-height);
+    this.buffer.vertex(x2, base);
+    this.buffer.vertex(x, base);
+    this.buffer.endShape();
+    this.buffer.stroke(this.stroke); this.buffer.fill(this.fill);
   }
 }
 
@@ -101,8 +124,7 @@ function drawDiscreteSignal(panel,signal){
   for (let x = 0; x < visibleSamples; x++) {
     let xpos = Math.round(panel.plotLeft + x * panel.settings.downsamplingFactor);
     let ypos = panel.halfh - gain * signal[x];
-    panel.buffer.line(xpos, panel.halfh, xpos, ypos);
-    panel.buffer.ellipse(xpos, ypos, panel.ellipseSize);
+    panel.drawStem(xpos,ypos,panel.halfh);
   }
   drawSignalAmplitudeTicks(panel, gain, 4);
   drawTimeTicks(panel, panel.numTimeTicks, 1/(panel.settings.sampleRate));
@@ -163,6 +185,9 @@ function drawName(panel){
   panel.buffer.text (panel.name, panel.plotLeft, panel.plotTop - textheight, panel.plotWidth, panel.ybezel);
   panel.buffer.strokeWeight(panel.strokeWeight);
 }
+function getColor(num){
+  return [num*666%255,num*69%255,num*420%255]
+}
 
 class inputSigPanel extends Panel {
   constructor(){super(); this.name="Input Signal"}
@@ -184,19 +209,12 @@ class inputSigFreqPanel extends freqPanel {
   constructor(){super(); this.name="Input Signal Frequency Domain";}
   drawPanel(){
     this.buffer.background(this.background);
-    let sampleRate = this.settings.sampleRate / this.settings.downsamplingFactor;
-    let max_freq = sampleRate * this.settings.frequencyZoom;
-    let pixels_per_hz = this.plotWidth / max_freq;
+    let base = this.plotBottom
 
-    for (let harmonic = 1; harmonic <= this.settings.numHarm; harmonic++) {
-      let freq = this.settings.fundFreq * harmonic;
-      let i = 0;
-      while (freq + i * sampleRate < max_freq) {
-        let xpositive = (freq + i * sampleRate) * pixels_per_hz + this.plotLeft;
-        let y = this.plotBottom - (this.plotHeight * this.settings.amplitude / harmonic);
-        this.buffer.line(xpositive, this.plotBottom, xpositive, y);
-        freq += sampleRate;
-      }
+    for (let x = 1; x <= this.settings.numHarm; x++) {
+      let xpos = this.settings.fundFreq / (this.settings.sampleRate/2) * x * this.plotWidth - 1 +this.plotLeft;
+      let height = this.settings.amplitude * this.plotHeight / x;
+      this.drawPeak(xpos, height, base)
     }
 
     this.drawBorder();
@@ -216,9 +234,6 @@ function drawFFT(panel, fft) {
   let normalize = 4/fft.length;
   let xscale = panel.plotWidth/(fft.length/2);
   panel.buffer.background(panel.background);
-  panel.buffer.strokeWeight(1);
-  panel.buffer.stroke(panel.strokeClr[0]);
-  panel.buffer.fill(panel.stroke);
 
   panel.buffer.beginShape();
   panel.buffer.vertex(panel.plotLeft, base);
@@ -239,10 +254,10 @@ function drawFFT(panel, fft) {
 
 class inputSigFFTPanel extends freqPanel {
   constructor(){super(); this.name = "Input Signal FFT";}
+
   drawPanel() {
     drawFFT(this, this.settings.originalFreq);
     drawName(this);
-
   }
 }
 
@@ -270,8 +285,7 @@ class impulsePanel extends Panel {
     let visibleSamples = Math.round(this.plotWidth / this.settings.downsamplingFactor);
     for (let x = 0; x < visibleSamples; x++) {
       let xpos = this.plotLeft + x * this.settings.downsamplingFactor;
-      this.buffer.line(xpos, base, xpos, ytop);
-      this.buffer.ellipse(xpos, ytop, this.ellipseSize);
+      this.drawStem(xpos,ytop,base);
     }
 
     drawHorizontalTick(this, '0.0 dB', ytop);
@@ -284,16 +298,16 @@ class impulsePanel extends Panel {
 class impulseFreqPanel extends freqPanel {
   constructor(){super(); this.name="Sampling Signal Frequency Domain";}
   drawPanel(){
-    this.buffer.background(this.background);
-    this.buffer.fill(this.fill); this.buffer.strokeWeight(this.strokeWeight);
+    this.bufferInit();
+    let base = this.plotBottom;
+    let numPeaks = this.settings.downsamplingFactor/2;
 
-    for (let x = 0; x <= 4; x++) {
-      let xpos = this.settings.sampleRate / 20000 * x * this.buffer.width/2+1+this.ybezel;
-      this.buffer.line(xpos, this.buffer.height *  .75, xpos, this.buffer.height / 4);
-      if (x > 0) {
-        this.buffer.text((x) + "FS", xpos-10, this.buffer.height - this.ybezel*2)
-      }
+    for (let peak = 0; peak <= numPeaks; peak++) {
+      let xpos  = peak / numPeaks * this.plotWidth + this.plotLeft;
+      let color = getColor(peak);
+      this.drawPeak(xpos, this.plotHeight, base, color)
     }
+
     this.drawBorder();
     drawName(this);
   }
@@ -309,42 +323,40 @@ class sampledInputPanel extends Panel{
 
   drawPanel(){
     drawDiscreteSignal(this,this.settings.downsampled)
-}
+  }
 }
 
 class sampledInputFreqPanel extends freqPanel{
   constructor(){ super(); this.name = "Sampled Signal Frequency Domain";}
 
   drawPanel(){
-//    let ypos = this.buffer.height * .75;
-//    this.buffer.background(this.background);
-//
-//    for (let x = 0; x <= 4; x++) {
-//      let xpos = this.settings.sampleRate / 20000 * x * (this.buffer.width) / 2;
-//      this.buffer.stroke(this.strokeClr[x]);
-//      if ((xpos < this.buffer.width-this.bezel*2) &(xpos > this.bezel)){
-//        this.buffer.line(xpos+this.bezel, ypos, xpos+this.bezel, this.buffer.height  / 8);
-//        this.buffer.line(xpos+this.bezel, this.buffer.height / 8, xpos+this.bezel, this.buffer.height / 8);
-//        this.buffer.text((x) + "FS", xpos+this.bezel-10, this.buffer.height - this.bezel*2)
-//
-//      }
-//
-//    //Draw harmonics
-//      for (let harm = 1; harm <= this.settings.numHarm; harm++) {
-//        let xPositive = xpos + this.settings.fundFreq * harm * this.buffer.width / 2 / 20000+this.bezel;
-//        let xNegative = xpos - this.settings.fundFreq * harm * this.buffer.width / 2 / 20000+this.bezel;
-//        let yEnd = ypos * (1 - this.settings.amplitude * .6 / harm);
-//        if ((xPositive > this.bezel) & (xPositive < this.buffer.width-this.bezel)){
-//          this.buffer.line(xPositive, ypos, xPositive, yEnd);
-//        }
-//        if ((xNegative > this.bezel) & (xNegative < this.buffer.width-this.bezel)){
-//        this.buffer.line(xNegative, ypos, xNegative, yEnd);
-//      }
-//      }
-//
-//    }
-//    this.buffer.stroke(this.stroke);
-//    this.buffer.line(this.bezel, ypos, this.buffer.width-this.bezel, ypos);
+    this.bufferInit();
+    let base = this.plotBottom;
+    let numPeaks = this.settings.downsamplingFactor/2;
+
+    for (let peak = 0;peak<=numPeaks;peak++){
+      let color= getColor(peak);
+      let xpos = peak / numPeaks * this.plotWidth + this.plotLeft;
+      this.drawPeak(xpos, this.plotHeight, base, color);
+
+      for (let harm = 1; harm <= this.settings.numHarm; harm++) {
+        let xNegative = xpos - this.settings.fundFreq
+                        / (this.settings.sampleRate/2) * harm * this.plotWidth;
+        if (xNegative <this.plotLeft) {
+          xNegative = this.plotLeft+(this.plotLeft-xNegative)
+        } //Reflect at 0. TODO should technically use a new color.
+        let xPositive = xpos + this.settings.fundFreq
+                        / (this.settings.sampleRate/2) * harm * this.plotWidth;
+        if (xPositive > this.plotRight) {
+          xPositive = this.plotRight + (this.plotRight-xPositive)
+        }//Reflect at FS. TODO should also use a new color
+
+        let positiveHeight = this.settings.amplitude*this.plotHeight/harm;
+        let negativeHeight = this.settings.amplitude*this.plotHeight/harm;
+        this.drawPeak(xPositive, positiveHeight, base, color);
+        this.drawPeak(xNegative, negativeHeight, base, color);
+      }
+    }
     this.drawBorder();
     drawName(this);
   }
@@ -361,6 +373,7 @@ class quantNoisePanel extends Panel{
     drawDiscreteSignal(this, this.settings.quantNoise);
   }
 }
+
 class quantNoiseFreqPanel extends Panel{
   constructor(){
     super()
