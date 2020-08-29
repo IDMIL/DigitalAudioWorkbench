@@ -329,9 +329,11 @@ class impulsePanel extends Panel {
       let xpos = this.plotLeft + x * this.settings.downsamplingFactor;
       this.drawStem(xpos,ytop,base);
     }
-
     drawHorizontalTick(this, '0.0 dB', ytop);
+    drawHorizontalTick(this, '1.0', ytop,5,"right");
     drawHorizontalTick(this, '-inf dB', base);
+    drawHorizontalTick(this, '0.0', base,5,"right");
+
     drawTimeTicks(this, this.numTimeTicks, 1/(this.settings.sampleRate));
     drawName(this);
   }
