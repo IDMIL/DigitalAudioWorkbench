@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="styles.css" media="screen" />
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
+    <script src="../fili.min.js"></script>
+    <script src="../panel.js"></script>
+    <script src="../slider.js"></script>
+    <script src="../fft.js"></script>
+    <script src="../widget.js"></script>
+  </head>
+  <body>
+    <main>
+    <script>
+        const widget = new_widget(
+                [ new inputSigPanel()
+                , new inputSigFreqPanel()
+                , new impulsePanel()
+                , new impulseFreqPanel()
+                , new sampledInputPanel()
+                , new sampledInputFreqPanel()
+                , new quantNoisePanel()
+                , new quantNoiseFreqPanel()
+                , new reconstructedSigPanel()
+                , new sampledSigFFTPanel()
+                ],
+                [ new freqSlider()
+                , new numHarmSlider()
+                , new sampleRateSlider()
+                , new antialiasingSlider()
+                , new ditherSlider()
+                , new bitDepthSlider()
+                , new amplitudeSlider()
+                , new phaseSlider()
+                ]
+        );
+    </script>
+    </main>
+  </body>
+</html>
