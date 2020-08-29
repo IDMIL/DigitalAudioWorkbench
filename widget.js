@@ -1,6 +1,7 @@
 const BIT_DEPTH_MAX = 25;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
+const sampleTime = .25;
 
 function new_widget(panels, sliders) { const sketch = p => {
 
@@ -26,10 +27,10 @@ var settings =
     , bitDepth : BIT_DEPTH_MAX
     , dither : 0.0
     , antialiasing : 0
-    , original: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
-    , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4))
-    , reconstructed: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
-    , quantNoise: new Float32Array(WEBAUDIO_MAX_SAMPLERATE)
+    , original: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*sampleTime))
+    , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4*sampleTime))
+    , reconstructed: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*sampleTime))
+    , quantNoise: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*sampleTime))
     , originalFreq : fft.createComplexArray()
     , reconstructedFreq : fft.createComplexArray()
     , quantNoiseFreq : fft.createComplexArray()
@@ -81,6 +82,7 @@ p.windowResized = function() {
   let x = p.floor((numSliders) % numColumns) * panelWidth;
   originalButton.position(x + 20, y);
   reconstructedButton.position(originalButton.x + originalButton.width * 1.1, originalButton.y);
+  quantNoiseButton.position(reconstructedButton.x + reconstructedButton.width * 1.1, reconstructedButton.y);
 };
 
 function resize(w, h) {
@@ -113,6 +115,13 @@ function buttonSetup() {
   reconstructedButton.mousePressed( () => {
     if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();
     playWave(settings.reconstructed, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
+  });
+  quantNoiseButton = p.createButton("play quantization noise");
+  console.log(reconstructedButton.x,reconstructedButton.width)
+  quantNoiseButton.position(reconstructedButton.x + reconstructedButton.width * 1.1, reconstructedButton.y);
+  quantNoiseButton.mousePressed( () => {
+    if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();
+    playWave(settings.quantNoise, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
 }
 
@@ -170,7 +179,7 @@ function renderWaves() {
 
   // render reconstructed wave low pass filtering the zero stuffed array
   var filterCoeffs = firCalculator.lowpass(
-      { order: 200
+      { order:  200
       , Fs: WEBAUDIO_MAX_SAMPLERATE
       , Fc: (WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor) / 2
       });
