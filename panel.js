@@ -209,7 +209,7 @@ class inputSigFreqPanel extends freqPanel {
   constructor(){super(); this.name="Input Signal Frequency Domain";}
   drawPanel(){
     this.buffer.background(this.background);
-    let base = this.plotBottom
+    let base = this.plotBottom;
 
     for (let x = 1; x <= this.settings.numHarm; x++) {
       let xpos = this.settings.fundFreq / (this.settings.sampleRate/2) * x * this.plotWidth - 1 +this.plotLeft;
@@ -232,14 +232,15 @@ function drawFFT(panel, fft) {
   let gain = panel.plotHeight;
   let offset = 100;
   let normalize = 4/fft.length;
-  let xscale = panel.plotWidth/(fft.length/2);
+  let xscale = panel.plotWidth/(fft.length/4);
   panel.buffer.background(panel.background);
 
   panel.buffer.beginShape();
   panel.buffer.vertex(panel.plotLeft, base);
   // fft.length / 2 because it is an interleaved complex array
   // with twice as many elements as it has (complex) numbers
-  for (let x = 0; x <= fft.length/2; x++) {
+  // / 4 because we're only plotting up to the nyquist
+  for (let x = 0; x <= fft.length/4; x++) {
     let xpos = xscale*x + panel.plotLeft;
     let ypos = base - gain * normalize * magnitude(fft[2*x], fft[2*x+1]);
     panel.buffer.vertex(xpos, ypos);
