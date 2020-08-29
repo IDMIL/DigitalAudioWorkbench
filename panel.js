@@ -53,6 +53,7 @@ class Panel {
   setFill(fillClr){ this.fill = fillClr; }
 
   drawBorder(){
+    this.buffer.stroke(this.stroke);
     this.buffer.line(this.plotLeft, this.plotTop, this.plotLeft, this.plotBottom);
     this.buffer.line(this.plotLeft, this.plotTop, this.plotRight, this.plotTop);
     this.buffer.line(this.plotRight, this.plotTop, this.plotRight, this.plotBottom);
@@ -71,7 +72,7 @@ class freqPanel extends Panel{
     this.buffer.stroke(colour);
     this.buffer.beginShape();
     if (x<this.plotLeft || x>this.plotRight) return;
-    let x1=x-1; let x2 = x+1;
+    let x1=x-2; let x2 = x+2;
     x1 = Math.max(x1, this.plotLeft);
     x2 = Math.min(x2, this.plotRight);
     this.buffer.vertex(x1, base);
@@ -91,7 +92,9 @@ function atodb(a, a_0 = 1)
 }
 
 function drawMidLine(panel) {
+  panel.buffer.drawingContext.setLineDash([5,5]);
   panel.buffer.line(panel.plotLeft, panel.halfh, panel.plotRight, panel.halfh);
+  panel.buffer.drawingContext.setLineDash([]);
 }
 
 function drawSignal(panel, signal, zoom = 1)
@@ -185,6 +188,7 @@ function drawName(panel){
   panel.buffer.text (panel.name, panel.plotLeft, panel.plotTop - textheight, panel.plotWidth, panel.ybezel);
   panel.buffer.strokeWeight(panel.strokeWeight);
 }
+
 function getColor(num){
   return [num*666%255,num*69%255,num*420%255]
 }
@@ -210,9 +214,12 @@ class inputSigFreqPanel extends freqPanel {
   drawPanel(){
     this.buffer.background(this.background);
     let base = this.plotBottom;
+    let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
 
     for (let x = 1; x <= this.settings.numHarm; x++) {
-      let xpos = this.settings.fundFreq / (this.settings.sampleRate/2) * x * this.plotWidth - 1 +this.plotLeft;
+      let hz = this.settings.fundFreq * x;
+      let xpos = hz * pixels_per_hz + this.plotLeft;
+      if (xpos > this.plotRight) break;
       let height = this.settings.amplitude * this.plotHeight / x;
       this.drawPeak(xpos, height, base)
     }
@@ -301,10 +308,13 @@ class impulseFreqPanel extends freqPanel {
   drawPanel(){
     this.bufferInit();
     let base = this.plotBottom;
-    let numPeaks = this.settings.downsamplingFactor/2;
+    let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
+    let sampleRate = this.settings.sampleRate / this.settings.downsamplingFactor;
 
-    for (let peak = 0; peak <= numPeaks; peak++) {
-      let xpos  = peak / numPeaks * this.plotWidth + this.plotLeft;
+    var hz = 0;
+    for (let peak = 0; hz < this.settings.maxVisibleFrequency; peak++) {
+      hz = peak * this.settings.sampleRate / this.settings.downsamplingFactor;
+      let xpos  = hz * pixels_per_hz + this.plotLeft;
       let color = getColor(peak);
       this.drawPeak(xpos, this.plotHeight, base, color)
     }
@@ -333,30 +343,38 @@ class sampledInputFreqPanel extends freqPanel{
   drawPanel(){
     this.bufferInit();
     let base = this.plotBottom;
+    let sampleRate = this.settings.sampleRate / this.settings.downsamplingFactor;
+    let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
     let numPeaks = this.settings.downsamplingFactor/2;
 
-    for (let peak = 0;peak<=numPeaks;peak++){
-      let color= getColor(peak);
-      let xpos = peak / numPeaks * this.plotWidth + this.plotLeft;
-      this.drawPeak(xpos, this.plotHeight, base, color);
+    var done = false;
+    var peak = 0;
+    while(!done) {
+      let color = getColor(peak);
+      let peakhz = peak * sampleRate;
+      let xpos = peakhz * pixels_per_hz + this.plotLeft;
+      this.buffer.stroke(color);
+      this.buffer.drawingContext.setLineDash([5,5]);
+      this.buffer.line(xpos, this.plotTop, xpos, this.plotBottom);
+      // does the sampled signal actually have amplitude at the sampling frequency? 
+      // If so, revert this dashed line to a drawPeak
+      this.buffer.drawingContext.setLineDash([]);
 
       for (let harm = 1; harm <= this.settings.numHarm; harm++) {
-        let xNegative = xpos - this.settings.fundFreq
-                        / (this.settings.sampleRate/2) * harm * this.plotWidth;
-        if (xNegative <this.plotLeft) {
-          xNegative = this.plotLeft+(this.plotLeft-xNegative)
-        } //Reflect at 0. TODO should technically use a new color.
-        let xPositive = xpos + this.settings.fundFreq
-                        / (this.settings.sampleRate/2) * harm * this.plotWidth;
-        if (xPositive > this.plotRight) {
-          xPositive = this.plotRight + (this.plotRight-xPositive)
-        }//Reflect at FS. TODO should also use a new color
+        let hzNegative = peakhz - (this.settings.fundFreq * harm);
+        let hzPositive = peakhz + (this.settings.fundFreq * harm);
+        if (hzNegative < 0) hzNegative = 0 + (0 - hzNegative); //Reflect at 0. TODO should technically use a new color.
+        // don't reflect at sampleRate because we are already drawing the negative frequency images
 
         let positiveHeight = this.settings.amplitude*this.plotHeight/harm;
         let negativeHeight = this.settings.amplitude*this.plotHeight/harm;
-        this.drawPeak(xPositive, positiveHeight, base, color);
-        this.drawPeak(xNegative, negativeHeight, base, color);
+        let xNegative = hzNegative * pixels_per_hz + this.plotLeft;
+        let xPositive = hzPositive * pixels_per_hz + this.plotLeft;
+        if (harm >= this.settings.numHarm && xNegative > this.plotRight) done = true;
+        if (xNegative < this.plotRight) this.drawPeak(xNegative, negativeHeight, base, color);
+        if (xPositive < this.plotRight) this.drawPeak(xPositive, positiveHeight, base, color);
       }
+      ++peak;
     }
     this.drawBorder();
     drawName(this);

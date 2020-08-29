@@ -34,7 +34,7 @@ var settings =
     , reconstructedFreq : fft.createComplexArray()
     , quantNoiseFreq : fft.createComplexArray()
     , snd : undefined
-    , frequencyZoom : 2
+    , maxVisibleFrequency : WEBAUDIO_MAX_SAMPLERATE / 2
     };
 
 p.setup = function () {
