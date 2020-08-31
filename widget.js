@@ -1,4 +1,4 @@
-const BIT_DEPTH_MAX = 25;
+const BIT_DEPTH_MAX = 16;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
 const sampleTime = .25;
@@ -36,6 +36,8 @@ var settings =
     , quantNoiseFreq : fft.createComplexArray()
     , snd : undefined
     , maxVisibleFrequency : WEBAUDIO_MAX_SAMPLERATE / 2
+    , freqZoom : 1.0
+    , ampZoom : 1.0
     };
 
 p.setup = function () {

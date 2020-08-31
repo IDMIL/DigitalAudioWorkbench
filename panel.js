@@ -102,13 +102,17 @@ function drawMidLine(panel) {
 function drawSignal(panel, signal, zoom = 1)
 {
   let pixel_max = panel.plotHeight/2;
-  let pixel_per_fullscale = pixel_max * zoom;
+  let pixel_per_fullscale = pixel_max * panel.settings.ampZoom;
   panel.buffer.noFill();
   panel.buffer.background(panel.background);
   panel.buffer.beginShape();
+  panel.buffer.curveTightness(1.0);
   for (let x = 0; x < panel.plotWidth; x++) {
     let pixel_amp = pixel_per_fullscale * signal[x];
     let y = panel.halfh - pixel_amp;
+    y = (y<panel.plotTop)? y=panel.plotTop : (y>panel.plotBottom)? y= panel.plotBottom : y=y; panel.buffer.curveTightness(0);
+    // console.log(y);
+    // y = Math.max (y,panel.buffer.top);
     panel.buffer.curveVertex(x + panel.plotLeft, y);
   }
   panel.buffer.endShape();
@@ -128,7 +132,7 @@ function drawDiscreteSignal(panel,signal){
   let visibleSamples = Math.round(panel.plotWidth / panel.settings.downsamplingFactor);
   for (let x = 0; x < visibleSamples; x++) {
     let xpos = Math.round(panel.plotLeft + x * panel.settings.downsamplingFactor);
-    let ypos = panel.halfh - gain * signal[x];
+    let ypos = panel.halfh - gain * signal[x]*panel.settings.ampZoom;
     panel.drawStem(xpos,ypos,panel.halfh);
   }
   drawSignalAmplitudeTicks(panel, gain, 4);
@@ -136,7 +140,7 @@ function drawDiscreteSignal(panel,signal){
   drawName(panel);
 }
 
-function drawHorizontalTick(panel, text, height, tick_length = 5,side="left") {
+function drawHorizontalTick(panel, text, height, tick_length = 5, side="left") {
   panel.buffer.fill(panel.fill);
   panel.buffer.textFont('Helvetica', panel.tickTextSize);
   panel.buffer.textStyle(panel.buffer.ITALIC);
@@ -148,7 +152,7 @@ function drawHorizontalTick(panel, text, height, tick_length = 5,side="left") {
     panel.buffer.textAlign(panel.buffer.LEFT);
     tickEnd = panel.plotRight+tick_length;
     tickStart = panel.plotRight;
-    panel.buffer.text(text, tickEnd, height - panel.tickTextSize/2, panel.buffer.width , height + panel.tickTextSize/2);
+    panel.buffer.text(text, tickEnd+2, height - panel.tickTextSize/2, panel.buffer.width , height + panel.tickTextSize/2);
   }
   else{
     panel.buffer.text(text, 0, height - panel.tickTextSize/2, tickStart , height + panel.tickTextSize/2);
@@ -175,12 +179,12 @@ function drawVerticalTick(panel, text, x, tick_length = 5) {
 
 function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
   for (let i = 1; i <= num_ticks; ++i) {
-    let tick_amp_pixels = i * pixel_max / num_ticks;
+    let tick_amp_pixels = i * pixel_max / num_ticks/panel.settings.ampZoom;
     let tick_amp_db = linToDB(tick_amp_pixels, pixel_max);
-    drawHorizontalTick(panel, (tick_amp_pixels/pixel_max).toFixed(2), panel.halfh - tick_amp_pixels,5,"right");
-    drawHorizontalTick(panel, (tick_amp_pixels/pixel_max).toFixed(2), panel.halfh + tick_amp_pixels,5,"right");
-    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh - tick_amp_pixels);
-    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh + tick_amp_pixels);
+    drawHorizontalTick(panel, (tick_amp_pixels/pixel_max).toFixed(2), panel.halfh - tick_amp_pixels*panel.settings.ampZoom,5,"right");
+    drawHorizontalTick(panel, (-tick_amp_pixels/pixel_max).toFixed(2), panel.halfh + tick_amp_pixels*panel.settings.ampZoom,5,"right");
+    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh - tick_amp_pixels*panel.settings.ampZoom);
+    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh + tick_amp_pixels*panel.settings.ampZoom);
     // console.log(tick_amp_pixels.toFixed(1), i)
 
   }

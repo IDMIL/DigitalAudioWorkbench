@@ -32,6 +32,7 @@ class slider{
   }
   buttonPressed(){
     //TODO need to set slider.value() to the textbox.value();
+    // this.slider.value(1);
   }
 
 }
@@ -208,5 +209,37 @@ class phaseSlider extends slider{
     }
     this.textBox.value(sliderVal);
     this.textLabel.html(this.name +": ");// + label + " rads");
+  }
+}
+class freqZoomSlider extends slider{
+  setup(p,settings){
+    this.settings = settings;
+    this.name ="freqZoom";
+    this.min = .5;
+    this.max =  2; //pi
+    this.initial = 0.0;
+    this.step = .01; //pi/8
+    this.makeSlider(p);
+}
+updateValue(p){
+  this.settings.freqZoom = this.slider.value();
+  this.textBox.value(this.settings.freqZoom*100 + "%");
+  this.textLabel.html('Freq zoom: ');// + p.round(this.settings.dither, 3));
+  }
+}
+class ampZoomSlider extends slider{
+  setup(p,settings){
+    this.settings = settings;
+    this.name ="ampZoom";
+    this.min = .5;
+    this.max = 2.0; //pi
+    this.initial =1.0;
+    this.step = .01; //pi/8
+    this.makeSlider(p);
+}
+updateValue(p){
+  this.settings.ampZoom = this.slider.value();
+  this.textBox.value(this.settings.ampZoom*100 + "%");
+  this.textLabel.html('Amp zoom: ');// + p.round(this.settings.dither, 3));
   }
 }
