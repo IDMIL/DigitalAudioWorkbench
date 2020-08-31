@@ -44,9 +44,11 @@ class Panel {
     this.buffer.strokeWeight(this.strokeWeight);
   }
 
-  drawStem(x,y,startHeight){
+  drawStem(x,y,startHeight,ellipseSize =this.ellipseSize){
+    y = (y<this.plotTop)? y=this.plotTop : (y>this.plotBottom)? y= this.plotBottom : y;
     this.buffer.line(x, startHeight, x, y);
-    this.buffer.ellipse(x, y, this.ellipseSize);
+    ellipseSize= (y==this.plotTop || y==this.plotBottom)? 0: ellipseSize;
+    this.buffer.ellipse(x, y, ellipseSize);
   };
 
   setbackground(backgroundClr){ this.background = backgroundClr; }
