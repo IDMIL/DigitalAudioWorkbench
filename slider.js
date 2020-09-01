@@ -1,4 +1,6 @@
 class slider{
+  button;
+  slider;
   constructor(){
   }
 
@@ -19,7 +21,7 @@ class slider{
     this.textBox = p.createInput();
     this.textBox.size(50);
     this.button = p.createButton("Update");
-    this.button.mousePressed(this.buttonPressed);
+    this.button.mousePressed(this.buttonPressed.bind(this));
     // this.displayVal = 1;
   }
 
@@ -32,7 +34,7 @@ class slider{
   }
   buttonPressed(){
     //TODO need to set slider.value() to the textbox.value();
-    // this.slider.value(1);
+    this.slider.value(this.textBox.value());
   }
 
 }
