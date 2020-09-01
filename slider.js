@@ -22,6 +22,7 @@ class slider{
     this.textBox.size(50);
     this.button = p.createButton("Update");
     this.button.mousePressed(this.buttonPressed.bind(this));
+    this.button.mouseReleased(p.draw);
     // this.displayVal = 1;
   }
 
@@ -33,7 +34,6 @@ class slider{
     this.button.position(this.textBox.x+this.textBox.width+5,y);
   }
   buttonPressed(){
-    //TODO need to set slider.value() to the textbox.value();
     this.slider.value(this.textBox.value());
   }
 
@@ -43,16 +43,16 @@ class freqSlider extends slider{
   setup(p,settings){
     this.settings = settings;
     this.name ="Fundamental Frequency";
-    this.min = p.log(200)/p.log(2);
-    this.max = (p.log(this.settings.sampleRate / 2 / 5)/p.log(2));
-    this.initial = (p.log(settings.fundFreq)/p.log(2));
-    this.step = 0.001;
+    this.min = 200;
+    this.max = this.settings.sampleRate / 2 / 5;
+    this.initial = 200;
+    this.step = 1.0;
     this.displayVal = this.initial;
     this.makeSlider(p);
   }
 
   updateValue(p){
-    this.settings.fundFreq = p.pow(2,this.slider.value());
+    this.settings.fundFreq = this.slider.value();//p.pow(2,this.slider.value());
     this.displayVal = this.settings.fundFreq;
     this.textBox.value(p.round(this.displayVal));//
 
