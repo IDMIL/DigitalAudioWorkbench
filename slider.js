@@ -23,7 +23,6 @@ class slider{
     this.button = p.createButton("Update");
     this.button.mousePressed(this.buttonPressed.bind(this));
     this.button.mouseReleased(p.draw);
-    // this.displayVal = 1;
   }
 
   resize(x, y, sliderWidth,p){
@@ -34,8 +33,7 @@ class slider{
     this.button.position(this.textBox.x+this.textBox.width+5,y);
   }
   buttonPressed(){
-    this.slider.value(this.textBox.value());
-  }
+    this.slider.value(this.textBox.value());  }
 
 }
 
@@ -52,18 +50,18 @@ class freqSlider extends slider{
   }
 
   updateValue(p){
-    this.settings.fundFreq = this.slider.value();//p.pow(2,this.slider.value());
+    this.settings.fundFreq = this.slider.value();
     this.displayVal = this.settings.fundFreq;
-    this.textBox.value(p.round(this.displayVal));//
+    this.textBox.value(p.round(this.displayVal));
 
-    this.textLabel.html(this.name+': ');// + p.round(this.settings.fundFreq))
+    this.textLabel.html(this.name+': ');
   }
 }
 
 class numHarmSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="Bandwidth";
+    this.name ="Number of Harmonics";
     this.min = 1;
     this.max = 5;
     this.initial = 1;
@@ -75,8 +73,7 @@ class numHarmSlider extends slider{
 
   updateValue(p){
     this.settings.numHarm = this.slider.value();
-    this.textBox.value(p.round(this.settings.numHarm*this.settings.fundFreq));//
-
+    this.textBox.value(this.settings.numHarm);
     this.textLabel.html(this.name +": ");//+ p.round(this.settings.fundFreq * this.settings.numHarm) + " Hz")
   }
 }
@@ -226,7 +223,7 @@ class freqZoomSlider extends slider{
 updateValue(p){
   this.settings.freqZoom = this.slider.value();
   this.textBox.value(this.settings.freqZoom*100 + "%");
-  this.textLabel.html('Freq zoom: ');// + p.round(this.settings.dither, 3));
+  this.textLabel.html('Freq zoom: ');
   }
 }
 class ampZoomSlider extends slider{
@@ -242,6 +239,22 @@ class ampZoomSlider extends slider{
 updateValue(p){
   this.settings.ampZoom = this.slider.value();
   this.textBox.value(this.settings.ampZoom*100 + "%");
-  this.textLabel.html('Amp zoom: ');// + p.round(this.settings.dither, 3));
+  this.textLabel.html('Amp zoom: ');
+  }
+}
+class timeZoomSlider extends slider{
+  setup(p,settings){
+    this.settings = settings;
+    this.name ="timeZoom";
+    this.min = .5;
+    this.max =  2;
+    this.initial = 0.0;
+    this.step = .01;
+    this.makeSlider(p);
+}
+updateValue(p){
+  this.settings.timeZoom = this.slider.value();
+  this.textBox.value(this.settings.timeZoom*100 + "%");
+  this.textLabel.html('Time zoom: ');
   }
 }

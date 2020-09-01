@@ -38,6 +38,7 @@ var settings =
     , maxVisibleFrequency : WEBAUDIO_MAX_SAMPLERATE / 2
     , freqZoom : 1.0
     , ampZoom : 1.0
+    , timeZoom: 1.0
     };
 
 p.setup = function () {
@@ -119,7 +120,6 @@ function buttonSetup() {
     playWave(settings.reconstructed, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
   quantNoiseButton = p.createButton("play quantization noise");
-  console.log(reconstructedButton.x,reconstructedButton.width)
   quantNoiseButton.position(reconstructedButton.x + reconstructedButton.width * 1.1, reconstructedButton.y);
   quantNoiseButton.mousePressed( () => {
     if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();

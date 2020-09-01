@@ -110,11 +110,9 @@ function drawSignal(panel, signal, zoom = 1)
   panel.buffer.beginShape();
   panel.buffer.curveTightness(1.0);
   for (let x = 0; x < panel.plotWidth; x++) {
-    let pixel_amp = pixel_per_fullscale * signal[x];
+    let pixel_amp = pixel_per_fullscale * signal[Math.round(x/panel.settings.timeZoom)];
     let y = panel.halfh - pixel_amp;
     y = (y<panel.plotTop)? y=panel.plotTop : (y>panel.plotBottom)? y= panel.plotBottom : y=y; panel.buffer.curveTightness(0);
-    // console.log(y);
-    // y = Math.max (y,panel.buffer.top);
     panel.buffer.curveVertex(x + panel.plotLeft, y);
   }
   panel.buffer.endShape();
@@ -122,7 +120,7 @@ function drawSignal(panel, signal, zoom = 1)
 
   drawName(panel);
   drawSignalAmplitudeTicks(panel, pixel_max, 4);
-  drawTimeTicks(panel, panel.numTimeTicks, 1/panel.settings.sampleRate);
+  drawTimeTicks(panel, panel.numTimeTicks/panel.settings.timeZoom, 1/(panel.settings.timeZoom*panel.settings.sampleRate));
   panel.drawBorder();
 }
 
@@ -131,14 +129,14 @@ function drawDiscreteSignal(panel,signal){
   panel.buffer.background(panel.background);
   panel.drawBorder();
   drawMidLine(panel);
-  let visibleSamples = Math.round(panel.plotWidth / panel.settings.downsamplingFactor);
+  let visibleSamples = Math.round(panel.plotWidth / panel.settings.downsamplingFactor/panel.settings.timeZoom);
   for (let x = 0; x < visibleSamples; x++) {
-    let xpos = Math.round(panel.plotLeft + x * panel.settings.downsamplingFactor);
+    let xpos = Math.round(panel.plotLeft + x * panel.settings.downsamplingFactor*panel.settings.timeZoom);
     let ypos = panel.halfh - gain * signal[x]*panel.settings.ampZoom;
     panel.drawStem(xpos,ypos,panel.halfh);
   }
   drawSignalAmplitudeTicks(panel, gain, 4);
-  drawTimeTicks(panel, panel.numTimeTicks, 1/(panel.settings.sampleRate));
+  drawTimeTicks(panel, panel.numTimeTicks/panel.settings.timeZoom, 1/(panel.settings.timeZoom*panel.settings.sampleRate));
   drawName(panel);
 }
 
@@ -187,7 +185,6 @@ function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
     drawHorizontalTick(panel, (-tick_amp_pixels/pixel_max).toFixed(2), panel.halfh + tick_amp_pixels*panel.settings.ampZoom,5,"right");
     drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh - tick_amp_pixels*panel.settings.ampZoom);
     drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh + tick_amp_pixels*panel.settings.ampZoom);
-    // console.log(tick_amp_pixels.toFixed(1), i)
 
   }
   drawHorizontalTick(panel, '-inf dB', panel.halfh);
@@ -340,7 +337,7 @@ class impulsePanel extends Panel {
     drawHorizontalTick(this, '-inf dB', base);
     drawHorizontalTick(this, '0.0', base,5,"right");
 
-    drawTimeTicks(this, this.numTimeTicks, 1/(this.settings.sampleRate));
+    drawTimeTicks(this, this.numTimeTicks, this.settings.timeZoom/(this.settings.sampleRate));
     drawName(this);
   }
 }
