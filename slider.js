@@ -19,7 +19,7 @@ class slider{
     this.textBox = p.createInput();
     this.textBox.size(50);
     this.button = p.createButton("Update");
-    this.button.mousePressed(this.buttonPressed());
+    this.button.mousePressed(this.buttonPressed);
     // this.displayVal = 1;
   }
 
