@@ -117,7 +117,6 @@ function drawSignal(panel, signal, zoom = 1)
   }
   panel.buffer.endShape();
   drawMidLine(panel);
-
   drawName(panel);
   drawSignalAmplitudeTicks(panel, pixel_max, 4);
   drawTimeTicks(panel, panel.numTimeTicks/panel.settings.timeZoom, 1/(panel.settings.timeZoom*panel.settings.sampleRate));
@@ -129,7 +128,7 @@ function drawDiscreteSignal(panel,signal){
   panel.buffer.background(panel.background);
   panel.drawBorder();
   drawMidLine(panel);
-  let visibleSamples = Math.round(panel.plotWidth / panel.settings.downsamplingFactor/panel.settings.timeZoom);
+  let visibleSamples = Math.floor(panel.plotWidth / panel.settings.downsamplingFactor/panel.settings.timeZoom+1);
   for (let x = 0; x < visibleSamples; x++) {
     let xpos = Math.round(panel.plotLeft + x * panel.settings.downsamplingFactor*panel.settings.timeZoom);
     let ypos = panel.halfh - gain * signal[x]*panel.settings.ampZoom;
@@ -165,6 +164,7 @@ function drawHorizontalTick(panel, text, height, tick_length = 5, side="left") {
 }
 
 function drawVerticalTick(panel, text, x, tick_length = 5) {
+  if (x<panel.plotLeft || x>panel.plotRight){return};
   panel.buffer.fill(panel.fill);
   panel.buffer.textFont('Helvetica', panel.tickTextSize);
   panel.buffer.textAlign(panel.buffer.CENTER);
@@ -207,6 +207,7 @@ function drawFreqTicks(panel, num_ticks, pixels_per_hz) {
   tick_jump=panel.plotWidth / num_ticks
   for (let i = 0; i < num_ticks; ++i) {
     let x = i * tick_jump;
+    if (x<this.plotLeft || x>this.plotRight) return;
     let text = (x * hz_per_pixel).toFixed(0) + ' hz';
     drawVerticalTick(panel, text, x + panel.plotLeft);
   }
@@ -247,16 +248,15 @@ class inputSigFreqPanel extends freqPanel {
   constructor(){super(); this.name="Input Signal Frequency Domain";}
   drawPanel(){
     this.buffer.background(this.background);
-    let base = this.plotBottom;
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
     drawPassBand(this);
 
     for (let x = 1; x <= this.settings.numHarm; x++) {
       let hz = this.settings.fundFreq * x;
       let xpos = hz * pixels_per_hz + this.plotLeft;
-      if (xpos > this.plotRight) break;
+      if (xpos > this.plotRight|| xpos< this.plotLeft) break;
       let height = this.settings.amplitude * this.plotHeight / x;
-      this.drawPeak(xpos, height, base)
+      this.drawPeak(xpos, height, this.plotBottom)
     }
 
     this.drawBorder();
@@ -327,9 +327,9 @@ class impulsePanel extends Panel {
     this.buffer.background(this.background);
     this.drawBorder();
 
-    let visibleSamples = Math.round(this.plotWidth / this.settings.downsamplingFactor);
+    let visibleSamples = Math.floor(this.plotWidth / this.settings.downsamplingFactor/this.settings.timeZoom+1);
     for (let x = 0; x < visibleSamples; x++) {
-      let xpos = this.plotLeft + x * this.settings.downsamplingFactor;
+      let xpos = this.plotLeft + x * this.settings.downsamplingFactor*this.settings.timeZoom;
       this.drawStem(xpos,ytop,base);
     }
     drawHorizontalTick(this, '0.0 dB', ytop);
@@ -413,11 +413,12 @@ class sampledInputFreqPanel extends freqPanel{
       // does the sampled signal actually have amplitude at the sampling frequency?
       // If so, revert this dashed line to a drawPeak
       this.buffer.drawingContext.setLineDash([]);
+      this.drawPeak(xpos, this.plotHeight, this.plotBottom,color);
       let fstext = peak.toFixed(0) + ' FS';
       let nyquisttext = (peak - 1).toFixed(0) + '.5 FS';
       let nyquistxpos = (peakhz - sampleRate/2) * pixels_per_hz + this.plotLeft;
       drawVerticalTick(this, fstext, xpos);
-      drawVerticalTick(this, nyquisttext, nyquistxpos);
+      // drawVerticalTick(this, nyquisttext, nyquistxpos);
 
       for (let harm = 1; harm <= this.settings.numHarm; harm++) {
         let hzNegative = peakhz - (this.settings.fundFreq * harm);
