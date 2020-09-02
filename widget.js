@@ -1,7 +1,7 @@
 const BIT_DEPTH_MAX = 16;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
-const sampleTime = .25;
+const soundTimeSeconds = .02;
 
 function new_widget(panels, sliders) { const sketch = p => {
 
@@ -27,10 +27,10 @@ var settings =
     , bitDepth : BIT_DEPTH_MAX
     , dither : 0.0
     , antialiasing : 0
-    , original: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*sampleTime))
-    , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4*sampleTime))
-    , reconstructed: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*sampleTime))
-    , quantNoise: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*sampleTime))
+    , original: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
+    , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4*soundTimeSeconds))
+    , reconstructed: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
+    , quantNoise: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
     , originalFreq : fft.createComplexArray()
     , reconstructedFreq : fft.createComplexArray()
     , quantNoiseFreq : fft.createComplexArray()

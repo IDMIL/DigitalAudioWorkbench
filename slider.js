@@ -41,9 +41,9 @@ class freqSlider extends slider{
   setup(p,settings){
     this.settings = settings;
     this.name ="Fundamental Frequency";
-    this.min = 200;
+    this.min = 100;
     this.max = this.settings.sampleRate / 2 / 5;
-    this.initial = 200;
+    this.initial = 100;
     this.step = 1.0;
     this.displayVal = this.initial;
     this.makeSlider(p);
@@ -210,22 +210,7 @@ class phaseSlider extends slider{
     this.textLabel.html(this.name +": ");// + label + " rads");
   }
 }
-class freqZoomSlider extends slider{
-  setup(p,settings){
-    this.settings = settings;
-    this.name ="freqZoom";
-    this.min = .5;
-    this.max =  2; //pi
-    this.initial = 0.0;
-    this.step = .01; //pi/8
-    this.makeSlider(p);
-}
-updateValue(p){
-  this.settings.freqZoom = this.slider.value();
-  this.textBox.value(this.settings.freqZoom*100 + "%");
-  this.textLabel.html('Freq zoom: ');
-  }
-}
+
 class ampZoomSlider extends slider{
   setup(p,settings){
     this.settings = settings;
@@ -248,7 +233,7 @@ class timeZoomSlider extends slider{
     this.name ="timeZoom";
     this.min = .5;
     this.max =  2;
-    this.initial = 0.0;
+    this.initial = 1.0;
     this.step = .01;
     this.makeSlider(p);
 }
@@ -256,5 +241,22 @@ updateValue(p){
   this.settings.timeZoom = this.slider.value();
   this.textBox.value(this.settings.timeZoom*100 + "%");
   this.textLabel.html('Time zoom: ');
+  }
+}
+class freqZoomSlider extends slider{
+  setup(p,settings){
+    this.settings = settings;
+    this.name ="freqZoom";
+    this.min = .5;
+    this.max =  2;
+    this.initial = 1.0;
+    this.step = .01;
+    this.makeSlider(p);
+}
+updateValue(p){
+  this.settings.freqZoom = this.slider.value();
+  this.settings.maxVisibleFrequency = WEBAUDIO_MAX_SAMPLERATE/2/this.settings.freqZoom;
+  this.textBox.value(this.settings.freqZoom*100 + "%");
+  this.textLabel.html('Freq zoom: ');
   }
 }
