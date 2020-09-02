@@ -1,7 +1,9 @@
 class slider{
   button;
   slider;
+  displayScaler=1;
   constructor(){
+
   }
 
   setup(p, settings){
@@ -42,7 +44,7 @@ class freqSlider extends slider{
     this.settings = settings;
     this.name ="Fundamental Frequency";
     this.min = 100;
-    this.max = this.settings.sampleRate / 2 / 5;
+    this.max = this.settings.sampleRate / 4 ;
     this.initial = 100;
     this.step = 1.0;
     this.displayVal = this.initial;
