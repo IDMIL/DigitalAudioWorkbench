@@ -27,12 +27,23 @@ class slider{
     this.button.mouseReleased(p.draw);
   }
 
-  resize(x, y, sliderWidth,p){
+  resize(x, y, w, p){
+    let width = w - 20;
+    let labelWidth = 200;
+    width -= labelWidth;
+    let sliderWidth = width * 0.8;
+    width -= sliderWidth;
+    let textboxWidth = width * 0.5;
+    width -= textboxWidth;
+    let buttonWidth = width;
+
     this.slider.style('width', Math.round(sliderWidth).toString() + "px");
     this.slider.position(x, y);
     this.textLabel.position(x + this.slider.width + 10, y - 15);
-    this.textBox.position(x+this.slider.width+200,y);
+    this.textBox.position(x+this.slider.width + labelWidth,y);
+    this.textBox.style('width', Math.round(textboxWidth).toString() + "px");
     this.button.position(this.textBox.x+this.textBox.width+5,y);
+    this.button.style('width', Math.round(buttonWidth).toString() + "px");
   }
   buttonPressed(){
     this.slider.value(this.textBox.value());  }
@@ -175,41 +186,16 @@ class phaseSlider extends slider{
     this.settings = settings;
     this.name ="Phase";
     this.min = 0;
-    this.max =  1; //pi
+    this.max =  2; //pi
     this.initial = 0.0;
-    this.step = .125; //pi/8
+    this.step = .001; //pi/8
     this.makeSlider(p);
 }
   updateValue(p){
     let sliderVal = this.slider.value();
-    this.settings.phase = sliderVal*Math.PI;
-    let label, denom;
-    //Todo: this is not the best way to do this
-    if (sliderVal ===0){
-      label = 0;
-    }
-    else if (sliderVal===1){
-      label = "&#960";
-    }
-    else{
-      let pi = "&#960";
-      let denom,num;
-      switch(sliderVal){
-      //case 0: label = "0";  break;
-        case 0.125: denom = "8"; num = pi; break;
-        case 0.25: denom = "4"; num = pi; break;
-        case 0.375: denom = "8"; num = 3+pi; break;
-        case 0.5: denom = "2"; num= pi;break;
-        case 0.625: denom = "8"; num = 5+pi;break;
-        case 0.75: denom = "4"; num = 3+pi;break;
-        case 0.875: denom = "8"; num = 7+pi;break;
-        default: denom = "oops!";
-      }
-      label = "<sup>"+num+"</sup>&frasl;<sub>"+denom+"</sub>";
-
-    }
-    this.textBox.value(sliderVal);
-    this.textLabel.html(this.name +": ");// + label + " rads");
+    this.settings.phase = sliderVal * Math.PI;
+    this.textBox.value(this.settings.phase.toFixed(3) + '*PI');
+    this.textLabel.html(this.name +": ");
   }
 }
 

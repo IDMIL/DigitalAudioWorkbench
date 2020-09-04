@@ -94,7 +94,7 @@ function resize(w, h) {
   let panelRows = Math.ceil((numPanels+1)/numColumns);
   let sliderRows = Math.ceil((numSliders+1)/numColumns);
   panelWidth   = w / numColumns;
-  sliderWidth  = w / numColumns/2;
+  sliderWidth  = w / numColumns;
   panelHeight  = h / panelRows;
   sliderHeight = panelHeight / sliderRows;
   if (sliderHeight < 30) { // keep sliders from getting squished
