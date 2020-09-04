@@ -420,11 +420,8 @@ class sampledInputFreqPanel extends freqPanel{
       // If so, revert this dashed line to a drawPeak
       this.buffer.drawingContext.setLineDash([]);
       this.drawPeak(xpos, this.plotHeight, this.plotBottom,color);
-      let fstext = peak.toFixed(0) + ' FS';
-      let nyquisttext = (peak - 1).toFixed(0) + '.5 FS';
-      let nyquistxpos = (peakhz - sampleRate/2) * pixels_per_hz + this.plotLeft;
+      let fstext = peakhz.toFixed(0) + ' Hz';
       drawVerticalTick(this, fstext, xpos);
-      // drawVerticalTick(this, nyquisttext, nyquistxpos);
 
       for (let harm = 1; harm <= this.settings.numHarm; harm++) {
         let hzNegative = peakhz - (this.settings.fundFreq * harm);
