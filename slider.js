@@ -43,8 +43,8 @@ class freqSlider extends slider{
   setup(p,settings){
     this.settings = settings;
     this.name ="Fundamental Frequency";
-    this.min = 100;
-    this.max = this.settings.sampleRate / 4 ;
+    this.min = 0;
+    this.max = this.settings.sampleRate / 2 ;
     this.initial = 100;
     this.step = 1.0;
     this.displayVal = this.initial;
@@ -65,7 +65,7 @@ class numHarmSlider extends slider{
     this.settings = settings;
     this.name ="Number of Harmonics";
     this.min = 1;
-    this.max = 5;
+    this.max = 10;
     this.initial = 1;
     this.step = 1;
     this.displayVal = this.initial;
@@ -250,7 +250,7 @@ class freqZoomSlider extends slider{
     this.settings = settings;
     this.name ="freqZoom";
     this.min = .5;
-    this.max =  2;
+    this.max =  5;
     this.initial = 1.0;
     this.step = .01;
     this.makeSlider(p);

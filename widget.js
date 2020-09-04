@@ -133,7 +133,7 @@ function renderWaves() {
   settings.original.forEach( (_, i, arr) => {
     for (let harmonic = 1; harmonic <= settings.numHarm; harmonic++) {
       let omega = 2 * Math.PI * settings.fundFreq * harmonic;
-      arr[i] += settings.amplitude * Math.sin(omega * i / WEBAUDIO_MAX_SAMPLERATE+settings.phase) / harmonic;
+      arr[i] += settings.amplitude * Math.cos(omega * i / WEBAUDIO_MAX_SAMPLERATE+settings.phase) / harmonic;
     }
   });
 
