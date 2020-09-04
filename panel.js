@@ -106,7 +106,6 @@ function drawSignal(panel, signal, zoom = 1)
   let pixel_max = panel.plotHeight/2;
   let pixel_per_fullscale = pixel_max * panel.settings.ampZoom;
   panel.buffer.noFill();
-  panel.buffer.background(panel.background);
   panel.buffer.beginShape();
   panel.buffer.curveTightness(1.0);
   for (let x = 0; x < panel.plotWidth; x++) {
@@ -116,27 +115,16 @@ function drawSignal(panel, signal, zoom = 1)
     panel.buffer.curveVertex(x + panel.plotLeft, y);
   }
   panel.buffer.endShape();
-  drawMidLine(panel);
-  drawName(panel);
-  drawSignalAmplitudeTicks(panel, pixel_max, 4);
-  drawTimeTicks(panel, panel.numTimeTicks/panel.settings.timeZoom, 1/(panel.settings.timeZoom*panel.settings.sampleRate));
-  panel.drawBorder();
 }
 
 function drawDiscreteSignal(panel,signal){
   let gain = panel.plotHeight/2;
-  panel.buffer.background(panel.background);
-  panel.drawBorder();
-  drawMidLine(panel);
   let visibleSamples = Math.floor(panel.plotWidth / panel.settings.downsamplingFactor/panel.settings.timeZoom+1);
   for (let x = 0; x < visibleSamples; x++) {
     let xpos = Math.round(panel.plotLeft + x * panel.settings.downsamplingFactor*panel.settings.timeZoom);
     let ypos = panel.halfh - gain * signal[x]*panel.settings.ampZoom;
     panel.drawStem(xpos,ypos,panel.halfh);
   }
-  drawSignalAmplitudeTicks(panel, gain, 4);
-  drawTimeTicks(panel, panel.numTimeTicks/panel.settings.timeZoom, 1/(panel.settings.timeZoom*panel.settings.sampleRate));
-  drawName(panel);
 }
 
 function drawHorizontalTick(panel, text, height, tick_length = 5, side="left") {
@@ -232,7 +220,13 @@ class inputSigPanel extends Panel {
   constructor(){super(); this.name="Input Signal"}
 
   drawPanel(){
+    this.buffer.background(this.background);
     drawSignal(this, this.settings.original);
+    drawMidLine(this);
+    drawName(this);
+    drawSignalAmplitudeTicks(this, this.plotHeight/2, 4);
+    drawTimeTicks(this, this.numTimeTicks/this.settings.timeZoom, 1/(this.settings.timeZoom*this.settings.sampleRate));
+    this.drawBorder();
   }
 }
 
@@ -240,7 +234,13 @@ class reconstructedSigPanel extends Panel {
   constructor(){super(); this.name="Reconstructed Signal";};
 
   drawPanel(){
+    this.buffer.background(this.background);
     drawSignal(this, this.settings.reconstructed);
+    drawMidLine(this);
+    drawName(this);
+    drawSignalAmplitudeTicks(this, this.plotHeight/2, 4);
+    drawTimeTicks(this, this.numTimeTicks/this.settings.timeZoom, 1/(this.settings.timeZoom*this.settings.sampleRate));
+    this.drawBorder();
   }
 }
 
@@ -374,7 +374,13 @@ class sampledInputPanel extends Panel{
   }
 
   drawPanel(){
+    this.buffer.background(this.background);
     drawDiscreteSignal(this,this.settings.downsampled)
+    drawMidLine(this);
+    drawName(this);
+    drawSignalAmplitudeTicks(this, this.plotHeight/2, 4);
+    drawTimeTicks(this, this.numTimeTicks/this.settings.timeZoom, 1/(this.settings.timeZoom*this.settings.sampleRate));
+    this.drawBorder();
   }
 }
 
@@ -447,7 +453,13 @@ class quantNoisePanel extends Panel{
     this.name ="Quantization Noise";
   }
   drawPanel(){
+    this.buffer.background(this.background);
     drawDiscreteSignal(this, this.settings.quantNoise);
+    drawMidLine(this);
+    drawName(this);
+    drawSignalAmplitudeTicks(this, this.plotHeight/2, 4);
+    drawTimeTicks(this, this.numTimeTicks/this.settings.timeZoom, 1/(this.settings.timeZoom*this.settings.sampleRate));
+    this.drawBorder();
   }
 }
 
@@ -460,5 +472,48 @@ class quantNoiseFreqPanel extends Panel{
   }
   drawPanel(){
     drawFFT(this, this.settings.quantNoiseFreq);
+  }
+}
+
+class inputPlusSampledPanel extends Panel {
+  constructor() {
+    super();
+    this.name = "Input with Sampled Signal";
+    this.ellipseSize = 5;
+
+  }
+
+  drawPanel() {
+    this.buffer.background(this.background);
+    drawDiscreteSignal(this,this.settings.downsampled)
+    drawSignal(this, this.settings.original);
+    drawMidLine(this);
+    drawName(this);
+    drawSignalAmplitudeTicks(this, this.plotHeight/2, 4);
+    drawTimeTicks(this, this.numTimeTicks/this.settings.timeZoom, 1/(this.settings.timeZoom*this.settings.sampleRate));
+    this.drawBorder();
+  }
+}
+
+class allSignalsPanel extends Panel {
+  constructor() {
+    super();
+    this.name = "Input (solid), Sampled (lollipop), Reconstructed (dotted)";
+    this.ellipseSize = 5;
+
+  }
+
+  drawPanel() {
+    this.buffer.background(this.background);
+    drawDiscreteSignal(this,this.settings.downsampled)
+    drawSignal(this, this.settings.original);
+    this.buffer.drawingContext.setLineDash([5,5]);
+    drawSignal(this, this.settings.reconstructed);
+    this.buffer.drawingContext.setLineDash([]);
+    drawMidLine(this);
+    drawName(this);
+    drawSignalAmplitudeTicks(this, this.plotHeight/2, 4);
+    drawTimeTicks(this, this.numTimeTicks/this.settings.timeZoom, 1/(this.settings.timeZoom*this.settings.sampleRate));
+    this.drawBorder();
   }
 }
