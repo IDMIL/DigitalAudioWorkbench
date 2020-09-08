@@ -1,17 +1,18 @@
 class slider{
   button;
   slider;
-  displayScaler=1;
   constructor(){
-
   }
 
   setup(p, settings){
     // should be overridden to set up the slider
   }
-
-  updateValue(){
-  // Should be overridden by a function reading the slider and setting the appropraite "settings" variable
+  updateValue(p){
+  this.settings[this.propName] = this.slider.value();
+  this.displayVal = this.calcDisplayVal();
+  // console.log(this.displayVal);
+  this.textBox.value(this.displayVal);
+  this.textLabel.html(this.name+': ');
   }
 
   makeSlider(p){
@@ -48,12 +49,22 @@ class slider{
   buttonPressed(){
     this.slider.value(this.textBox.value());  }
 
+  calcSliderVal(){
+    // override this with any calculations needed to convert textbox val to slider val (%, etc)
+    return this.textBox.value();
+  }
+  calcDisplayVal(){
+    // override this with any calculations needed to convert stored variable to display val (%, etc)
+    return this.settings[this.propName];
+  }
 }
+
 
 class freqSlider extends slider{
   setup(p,settings){
     this.settings = settings;
     this.name ="Fundamental Frequency";
+    this.propName = "fundFreq";
     this.min = 0;
     this.max = this.settings.sampleRate / 2 ;
     this.initial = 100;
@@ -62,19 +73,13 @@ class freqSlider extends slider{
     this.makeSlider(p);
   }
 
-  updateValue(p){
-    this.settings.fundFreq = this.slider.value();
-    this.displayVal = this.settings.fundFreq;
-    this.textBox.value(p.round(this.displayVal));
-
-    this.textLabel.html(this.name+': ');
-  }
 }
 
 class numHarmSlider extends slider{
   setup(p,settings){
     this.settings = settings;
     this.name ="Number of Harmonics";
+    this.propName="numHarm"
     this.min = 1;
     this.max = 10;
     this.initial = 1;
@@ -84,24 +89,22 @@ class numHarmSlider extends slider{
     this.makeSlider(p);
   }
 
-  updateValue(p){
-    this.settings.numHarm = this.slider.value();
-    this.textBox.value(this.settings.numHarm);
-    this.textLabel.html(this.name +": ");//+ p.round(this.settings.fundFreq * this.settings.numHarm) + " Hz")
-  }
 }
 
 class sampleRateSlider extends slider{
   setup(p,settings){
     this.settings = settings;
     this.name ="Sample Rate";
+    this.propName="downsamplingFactor";
     this.min = p.log(3000)/p.log(2);
     this.max =  p.log(48000)/p.log(2);
     this.initial = p.log(48000)/p.log(2);
     this.step = 0.1
     this.makeSlider(p);
   }
-
+  // calcDisplayVal(){
+  //   this.displayVal = p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3);
+  // }
   updateValue(p){
     this.settings.downsamplingFactor = p.round(WEBAUDIO_MAX_SAMPLERATE/p.pow(2, this.slider.value()));
     this.textBox.value(p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3)+" Khz");//
@@ -113,6 +116,7 @@ class ditherSlider extends slider {
   setup(p,settings){
     this.settings = settings;
     this.name ="Dither";
+    this.propName="dither";
     this.min = 0.0;
     this.max =  1.0;
     this.initial = 0.0;
@@ -120,17 +124,13 @@ class ditherSlider extends slider {
     this.makeSlider(p);
   }
 
-  updateValue(p){
-    this.settings.dither = this.slider.value();
-    this.textBox.value(p.round(this.settings.dither, 3));
-    this.textLabel.html('Dither: ');// + p.round(this.settings.dither, 3));
-  }
 }
 
 class bitDepthSlider extends slider {
   setup(p,settings){
     this.settings = settings;
     this.name ="Bit Depth";
+    this.propName = "bitDepth";
     this.min = 1;
     this.max =  BIT_DEPTH_MAX;
     this.initial = BIT_DEPTH_MAX;
@@ -138,17 +138,13 @@ class bitDepthSlider extends slider {
     this.makeSlider(p);
   }
 
-  updateValue(p){
-    this.settings.bitDepth = this.slider.value();
-    this.textBox.value(this.settings.bitDepth );
-    this.textLabel.html('Bit Depth: ');// + (this.settings.bitDepth == BIT_DEPTH_MAX ? 'Float32' : this.settings.bitDepth));
-  }
 }
 
 class amplitudeSlider extends slider {
   setup(p,settings){
     this.settings = settings;
-    this.name ="Amplitude";
+    this.propName ="amplitude";
+    this.name = "Amplitude";
     this.min = 0.0;
     this.max =  1.0;
     this.initial = 1.0;
@@ -156,35 +152,26 @@ class amplitudeSlider extends slider {
     this.makeSlider(p);
   }
 
-  updateValue(p){
-    this.settings.amplitude = this.slider.value();
-    this.textBox.value(this.settings.amplitude);
-    this.textLabel.html('Amplitude: ');// + (this.settings.amplitude));
-  }
 }
 
 class antialiasingSlider extends slider {
   setup(p, settings){
     this.settings = settings;
-    this.name ="Antialiasing";
+    this.propName ="antialiasing";
+    this.name = "Antialiasing";
     this.min = 0.0;
     this.max =  200;
     this.initial = 0;
     this.step = 10;
     this.makeSlider(p);
   }
-
-  updateValue(p){
-    this.settings.antialiasing = this.slider.value();
-    this.textBox.value(this.settings.antialiasing)
-    this.textLabel.html("Antialiasing: ");// + (this.settings.antialiasing < 1 ? 'None' : this.settings.antialiasing + "th Order FIR"));
-  }
 }
 
 class phaseSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="Phase";
+    this.propName ="phase";
+    this.name = "Phase";
     this.min = 0;
     this.max =  2; //pi
     this.initial = 0.0;
@@ -202,39 +189,35 @@ class phaseSlider extends slider{
 class ampZoomSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="ampZoom";
+    this.name ="Amp. Zoom";
+    this.propName="ampZoom";
     this.min = .5;
-    this.max = 2.0; //pi
+    this.max = 4.0; //pi
     this.initial =1.0;
     this.step = .01; //pi/8
     this.makeSlider(p);
 }
-updateValue(p){
-  this.settings.ampZoom = this.slider.value();
-  this.textBox.value(this.settings.ampZoom*100 + "%");
-  this.textLabel.html('Amp zoom: ');
-  }
+calcDisplayVal(){return this.settings[this.propName]*100 + "%";}
+
 }
 class timeZoomSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="timeZoom";
+    this.propName ="timeZoom";
+    this.name = "Time zoom"
     this.min = .5;
     this.max =  2;
     this.initial = 1.0;
     this.step = .01;
     this.makeSlider(p);
 }
-updateValue(p){
-  this.settings.timeZoom = this.slider.value();
-  this.textBox.value(this.settings.timeZoom*100 + "%");
-  this.textLabel.html('Time zoom: ');
-  }
+calcDisplayVal(){return this.settings[this.propName]*100 + "%";}
+
 }
 class freqZoomSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="freqZoom";
+    this.propName ="freqZoom";
     this.min = .5;
     this.max =  5;
     this.initial = 1.0;
