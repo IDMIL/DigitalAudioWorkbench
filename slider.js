@@ -10,7 +10,6 @@ class slider{
   updateValue(p){
   this.settings[this.propName] = this.slider.value();
   this.displayVal = this.calcDisplayVal();
-  // console.log(this.displayVal);
   this.textBox.value(this.displayVal);
   this.textLabel.html(this.name+': ');
   }
@@ -22,8 +21,9 @@ class slider{
     this.slider.mousePressed(p.draw);
     this.slider.mouseReleased(p.draw);
     this.textBox = p.createInput();
-    this.textBox.size(50);
+    this.textBox.size(300);
     this.button = p.createButton("Update");
+    // this.button.size(200)
     this.button.mousePressed(this.buttonPressed.bind(this));
     this.button.mouseReleased(p.draw);
   }
@@ -32,7 +32,7 @@ class slider{
     let width = w - 20;
     let labelWidth = 200;
     width -= labelWidth;
-    let sliderWidth = width * 0.8;
+    let sliderWidth = width * 0.6;
     width -= sliderWidth;
     let textboxWidth = width * 0.5;
     width -= textboxWidth;
@@ -47,7 +47,7 @@ class slider{
     this.button.style('width', Math.round(buttonWidth).toString() + "px");
   }
   buttonPressed(){
-    this.slider.value(this.textBox.value());  }
+    this.slider.value(this.calcSliderVal());  }
 
   calcSliderVal(){
     // override this with any calculations needed to convert textbox val to slider val (%, etc)
@@ -66,7 +66,7 @@ class freqSlider extends slider{
     this.name ="Fundamental Frequency";
     this.propName = "fundFreq";
     this.min = 0;
-    this.max = this.settings.sampleRate / 2 ;
+    this.max = this.settings.sampleRate / 4 ;
     this.initial = 100;
     this.step = 1.0;
     this.displayVal = this.initial;
@@ -78,7 +78,7 @@ class freqSlider extends slider{
 class numHarmSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="Number of Harmonics";
+    this.name ="Number of harmonics";
     this.propName="numHarm"
     this.min = 1;
     this.max = 10;
@@ -94,7 +94,7 @@ class numHarmSlider extends slider{
 class sampleRateSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="Sample Rate";
+    this.name ="Sample Rate(kHz)";
     this.propName="downsamplingFactor";
     this.min = p.log(3000)/p.log(2);
     this.max =  p.log(48000)/p.log(2);
@@ -102,13 +102,18 @@ class sampleRateSlider extends slider{
     this.step = 0.1
     this.makeSlider(p);
   }
-  // calcDisplayVal(){
-  //   this.displayVal = p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3);
-  // }
+  calcDisplayVal(){
+    return this.displayVal= Math.round(this.settings.sampleRate / this.settings.downsamplingFactor , 3);//
+  }
+  calcSliderVal(){
+    return Math.log(this.textBox.value())/Math.log(2);
+  }
+
   updateValue(p){
     this.settings.downsamplingFactor = p.round(WEBAUDIO_MAX_SAMPLERATE/p.pow(2, this.slider.value()));
-    this.textBox.value(p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3)+" Khz");//
-    this.textLabel.html('Sample Rate: ');// + p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3) + " kHz")
+    this.displayVal = this.calcDisplayVal();
+    this.textBox.value(this.displayVal);//
+    this.textLabel.html('Sample Rate (Hz)');// + p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3) + " kHz")
   }
 }
 
@@ -158,7 +163,7 @@ class antialiasingSlider extends slider {
   setup(p, settings){
     this.settings = settings;
     this.propName ="antialiasing";
-    this.name = "Antialiasing";
+    this.name = "Antialiasing filter order";
     this.min = 0.0;
     this.max =  200;
     this.initial = 0;
@@ -171,47 +176,43 @@ class phaseSlider extends slider{
   setup(p,settings){
     this.settings = settings;
     this.propName ="phase";
-    this.name = "Phase";
+    this.name = "Phase (Degrees)";
     this.min = 0;
-    this.max =  2; //pi
+    this.max =  360; //pi
     this.initial = 0.0;
-    this.step = .001; //pi/8
+    this.step = 1; //pi/8
     this.makeSlider(p);
 }
-  updateValue(p){
-    let sliderVal = this.slider.value();
-    this.settings.phase = sliderVal * Math.PI;
-    this.textBox.value(this.settings.phase.toFixed(3) + '*PI');
-    this.textLabel.html(this.name +": ");
-  }
+
+  calcDisplayVal(){return this.settings[this.propName];}
 }
 
 class ampZoomSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="Amp. Zoom";
+    this.name ="Amp. Zoom (%)";
     this.propName="ampZoom";
-    this.min = .5;
+    this.min = .25;
     this.max = 4.0; //pi
     this.initial =1.0;
     this.step = .01; //pi/8
     this.makeSlider(p);
 }
-calcDisplayVal(){return this.settings[this.propName]*100 + "%";}
+calcDisplayVal(){return this.settings[this.propName]*100;}
 
 }
 class timeZoomSlider extends slider{
   setup(p,settings){
     this.settings = settings;
     this.propName ="timeZoom";
-    this.name = "Time zoom"
-    this.min = .5;
-    this.max =  2;
+    this.name = "Time zoom (%)"
+    this.min = .25;
+    this.max =  3;
     this.initial = 1.0;
     this.step = .01;
     this.makeSlider(p);
 }
-calcDisplayVal(){return this.settings[this.propName]*100 + "%";}
+calcDisplayVal(){return this.settings[this.propName]*100 ;}
 
 }
 class freqZoomSlider extends slider{
@@ -219,15 +220,24 @@ class freqZoomSlider extends slider{
     this.settings = settings;
     this.propName ="freqZoom";
     this.min = .5;
-    this.max =  5;
+    this.max =  3;
     this.initial = 1.0;
     this.step = .01;
     this.makeSlider(p);
 }
+calcDisplayVal(){return this.settings[this.propName]*100 ;}
+calcSliderVal(){
+  if (isNaN(this.textBox.value())){
+    return this.slider.value();
+  }
+  else{
+    return this.textBox.value()/100;
+  }
+}
 updateValue(p){
   this.settings.freqZoom = this.slider.value();
   this.settings.maxVisibleFrequency = WEBAUDIO_MAX_SAMPLERATE/2/this.settings.freqZoom;
-  this.textBox.value(this.settings.freqZoom*100 + "%");
-  this.textLabel.html('Freq zoom: ');
+  this.textBox.value(this.settings.freqZoom*100);
+  this.textLabel.html('Freq. zoom (%):');
   }
 }
