@@ -106,12 +106,13 @@ function drawSignal(panel, signal, zoom = 1)
   let pixel_max = panel.plotHeight/2;
   let pixel_per_fullscale = pixel_max * panel.settings.ampZoom;
   panel.buffer.noFill();
+  //TODO: there are some artifacts here due to the way the signal is drawn, especially when zoomed in and/or large amplitude
   panel.buffer.beginShape();
   panel.buffer.curveTightness(1.0);
   for (let x = 0; x < panel.plotWidth; x++) {
     let pixel_amp = pixel_per_fullscale * signal[Math.round(x/panel.settings.timeZoom)];
     let y = panel.halfh - pixel_amp;
-    y = (y<panel.plotTop)? y=panel.plotTop : (y>panel.plotBottom)? y= panel.plotBottom : y=y; panel.buffer.curveTightness(0);
+    y = (y<panel.plotTop)? y=panel.plotTop : (y>panel.plotBottom)? y= panel.plotBottom : y=y; panel.buffer.curveTightness(0.0);
     panel.buffer.curveVertex(x + panel.plotLeft, y);
   }
   panel.buffer.endShape();
@@ -196,7 +197,7 @@ function drawFreqTicks(panel, num_ticks, pixels_per_hz) {
   for (let i = 0; i < num_ticks; ++i) {
     let x = i * tick_jump;
     if (x<this.plotLeft || x>this.plotRight) return;
-    let text = (x * hz_per_pixel).toFixed(0) + ' hz';
+    let text = (x * hz_per_pixel).toFixed(0) + ' Hz';
     drawVerticalTick(panel, text, x + panel.plotLeft);
   }
 }
