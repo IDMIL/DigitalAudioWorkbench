@@ -1,7 +1,7 @@
 const BIT_DEPTH_MAX = 16;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
-const soundTimeSeconds = .02;
+const soundTimeSeconds = 1;
 
 function new_widget(panels, sliders) { const sketch = p => {
 
@@ -132,8 +132,8 @@ function renderWaves() {
   settings.original.fill(0);
   settings.original.forEach( (_, i, arr) => {
     for (let harmonic = 1; harmonic <= settings.numHarm; harmonic++) {
-      let omega = 2 * Math.PI * settings.fundFreq * harmonic;
-      arr[i] += settings.amplitude * Math.cos(omega * i / WEBAUDIO_MAX_SAMPLERATE+settings.phase) / harmonic;
+      let omega = settings.fundFreq * harmonic/WEBAUDIO_MAX_SAMPLERATE;
+      arr[i] += settings.amplitude * Math.sin(2*Math.PI*omega * i +Math.PI/180*settings.phase*harmonic) / harmonic;
     }
   });
 
@@ -176,7 +176,6 @@ function renderWaves() {
     arr[i] = centered;
     settings.reconstructed[i * settings.downsamplingFactor] = centered;
     settings.quantNoise[i] = centered -y;
-    // console.log(settings.quantNoise[i * settings.downsamplingFactor])
   });
 
   // render reconstructed wave low pass filtering the zero stuffed array
