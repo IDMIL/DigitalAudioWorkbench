@@ -8,3 +8,11 @@ sup { vertical-align: top; position: relative; top: -0.5em; }
 p{
   font-family: arial,cursive;
 }
+
+footer{
+  padding: 10px 10px 10px;
+  background : lightgrey;
+  font-family: Helvetica, Arial;
+  color: grey;
+  text-align: center;
+}
