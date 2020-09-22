@@ -63,7 +63,7 @@ class slider{
 class freqSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="Fundamental Frequency";
+    this.name ="Frequency (Hz)";
     this.propName = "fundFreq";
     this.min = 0;
     this.max = this.settings.sampleRate / 4 ;
@@ -94,7 +94,7 @@ class numHarmSlider extends slider{
 class sampleRateSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="Sample Rate(kHz)";
+    this.name ="Sample Rate(Hz)";
     this.propName="downsamplingFactor";
     this.min = p.log(3000)/p.log(2);
     this.max =  p.log(48000)/p.log(2);
