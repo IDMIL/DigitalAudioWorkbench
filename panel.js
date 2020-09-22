@@ -417,10 +417,8 @@ class sampledInputFreqPanel extends freqPanel{
       this.buffer.stroke(color);
       this.buffer.drawingContext.setLineDash([5,5]);
       this.buffer.line(xpos, this.plotTop, xpos, this.plotBottom);
-      // does the sampled signal actually have amplitude at the sampling frequency?
-      // If so, revert this dashed line to a drawPeak
       this.buffer.drawingContext.setLineDash([]);
-      this.drawPeak(xpos, this.plotHeight, this.plotBottom,color);
+
       let fstext = peakhz.toFixed(0) + ' Hz';
       drawVerticalTick(this, fstext, xpos);
 
