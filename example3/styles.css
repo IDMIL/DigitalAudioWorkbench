@@ -10,9 +10,10 @@ p{
 }
 
 footer{
-  padding: 10px 10px 10px;
+  padding: 5px 10px 0px;
   background : lightgrey;
   font-family: Helvetica, Arial;
+  font-size: 9pt;
   color: grey;
   text-align: center;
 }
