@@ -1,7 +1,7 @@
 const BIT_DEPTH_MAX = 16;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
-const soundTimeSeconds = 1;
+const soundTimeSeconds = .5;
 
 function new_widget(panels, sliders) { const sketch = p => {
 
@@ -132,12 +132,13 @@ function renderWaves() {
   let harmInc = 1;  let harmonic= 1;
   if (settings.harmType =="Odd" || settings.harmType == "Even"){ harmInc=2;}
   settings.original.forEach( (_, i, arr) => {
-    harmonic =1;
+    harmonic =1; omegaScale=1;
+    //Always calculate number of harmonics. omegaScale is the frequency scalar for each
     while (harmonic<=settings.numHarm){
-      let omega = settings.fundFreq * harmonic/WEBAUDIO_MAX_SAMPLERATE;
-      arr[i] += settings.amplitude * Math.sin(2*Math.PI*omega * i +Math.PI/180*settings.phase*harmonic) / harmonic;
-      i++;
-      (harmonic ==1 && settings.harmType != "Odd")? harmonic++ : harmonic +=harmInc;
+      let omega = settings.fundFreq * omegaScale/WEBAUDIO_MAX_SAMPLERATE;
+      arr[i] += settings.amplitude * Math.sin(2*Math.PI*omega * i +Math.PI/180*settings.phase*harmonic) / omegaScale;
+      (harmonic ==1 && settings.harmType != "Odd")? omegaScale++ : omegaScale +=harmInc;
+      harmonic++;
   }
 });
 

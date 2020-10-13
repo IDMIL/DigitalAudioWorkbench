@@ -260,7 +260,7 @@ class inputSigFreqPanel extends freqPanel {
       if (xpos > this.plotRight|| xpos< this.plotLeft) break;
       let height = this.settings.amplitude * this.plotHeight / harmPeak;
       this.drawPeak(xpos, height, this.plotBottom)
-      console.log(harm, harmPeak, harmInc);
+      // console.log(harm, harmPeak, harmInc);
       harm+=1;
       (harmPeak ==1 && this.settings.harmType != "Odd")? harmPeak++ : harmPeak +=harmInc;
     }
@@ -425,22 +425,26 @@ class sampledInputFreqPanel extends freqPanel{
       this.buffer.drawingContext.setLineDash([5,5]);
       this.buffer.line(xpos, this.plotTop, xpos, this.plotBottom);
       this.buffer.drawingContext.setLineDash([]);
+      let harmInc=1;
+      if (this.settings.harmType =="Odd" || this.settings.harmType == "Even"){ harmInc=2;}
 
       let fstext = peakhz.toFixed(0) + ' Hz';
       drawVerticalTick(this, fstext, xpos);
-
+      let harmScale=1;
       for (let harm = 1; harm <= this.settings.numHarm; harm++) {
-        let hzNegative = peakhz - (this.settings.fundFreq * harm);
-        let hzPositive = peakhz + (this.settings.fundFreq * harm);
+        let hzNegative = peakhz - (this.settings.fundFreq * harmScale);
+        let hzPositive = peakhz + (this.settings.fundFreq * harmScale);
         if (hzNegative < 0) hzNegative = 0 + (0 - hzNegative); //Reflect at 0. TODO should technically use a new color.
         // don't reflect at sampleRate because we are already drawing the negative frequency images
 
-        let positiveHeight = this.settings.amplitude*this.plotHeight/harm;
-        let negativeHeight = this.settings.amplitude*this.plotHeight/harm;
+        let positiveHeight = this.settings.amplitude*this.plotHeight/harmScale;
+        let negativeHeight = this.settings.amplitude*this.plotHeight/harmScale;
         let xNegative = hzNegative * pixels_per_hz + this.plotLeft;
         let xPositive = hzPositive * pixels_per_hz + this.plotLeft;
         if (xNegative < this.plotRight) this.drawPeak(xNegative, negativeHeight, base, color);
         if (xPositive < this.plotRight) this.drawPeak(xPositive, positiveHeight, base, color);
+        (harm ==1 && this.settings.harmType != "Odd")? harmScale++ : harmScale +=harmInc;
+
       }
     }
     this.drawBorder();
