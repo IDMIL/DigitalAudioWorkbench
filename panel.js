@@ -251,14 +251,20 @@ class inputSigFreqPanel extends freqPanel {
     this.buffer.background(this.background);
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
     drawPassBand(this);
-
-    for (let x = 1; x <= this.settings.numHarm; x++) {
-      let hz = this.settings.fundFreq * x;
+    let harmInc = 1;
+    if (this.settings.harmType =="Odd" || this.settings.harmType == "Even"){ harmInc=2;}
+    let harmPeak = 1, harm =1;
+    while (harm<=this.settings.numHarm){
+      let hz = this.settings.fundFreq * harmPeak;
       let xpos = hz * pixels_per_hz + this.plotLeft;
       if (xpos > this.plotRight|| xpos< this.plotLeft) break;
-      let height = this.settings.amplitude * this.plotHeight / x;
+      let height = this.settings.amplitude * this.plotHeight / harmPeak;
       this.drawPeak(xpos, height, this.plotBottom)
+      console.log(harm, harmPeak, harmInc);
+      harm+=1;
+      (harmPeak ==1 && this.settings.harmType != "Odd")? harmPeak++ : harmPeak +=harmInc;
     }
+
 
     this.drawBorder();
     drawFreqTicks(this, this.numFreqTicks, pixels_per_hz);
@@ -333,9 +339,10 @@ class impulsePanel extends Panel {
       let xpos = this.plotLeft + x * this.settings.downsamplingFactor*this.settings.timeZoom;
       this.drawStem(xpos,ytop,base);
     }
-    drawHorizontalTick(this, '0.0 dB', ytop);
+    //I'm not sure dBs make sense here
+    // drawHorizontalTick(this, '0.0 dB', ytop);
+    // drawHorizontalTick(this, '-inf dB', base);
     drawHorizontalTick(this, '1.0', ytop,5,"right");
-    drawHorizontalTick(this, '-inf dB', base);
     drawHorizontalTick(this, '0.0', base,5,"right");
 
     drawTimeTicks(this, this.numTimeTicks, this.settings.timeZoom/(this.settings.sampleRate));

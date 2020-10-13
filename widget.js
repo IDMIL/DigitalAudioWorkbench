@@ -5,8 +5,6 @@ const soundTimeSeconds = 1;
 
 function new_widget(panels, sliders) { const sketch = p => {
 
-// let freqSlider,
-let sampleRateSlider, ditherSlider, bitDepthSlider, originalButton, reconstructedButton, numHarmSlider;
 var numPanels = panels.length;
 var numSliders = sliders.length;
 let panelHeight, panelWidth, sliderWidth, sliderHeight, numColumns;
@@ -22,6 +20,7 @@ var settings =
     , sampleRate : WEBAUDIO_MAX_SAMPLERATE
     , downsamplingFactor : 2
     , numHarm : 2
+    , harmType : "Odd"
     , phase : 0.0
     , fftSize : fftSize
     , bitDepth : BIT_DEPTH_MAX
@@ -130,12 +129,17 @@ function buttonSetup() {
 function renderWaves() {
   // render original wave
   settings.original.fill(0);
+  let harmInc = 1;  let harmonic= 1;
+  if (settings.harmType =="Odd" || settings.harmType == "Even"){ harmInc=2;}
   settings.original.forEach( (_, i, arr) => {
-    for (let harmonic = 1; harmonic <= settings.numHarm; harmonic++) {
+    harmonic =1;
+    while (harmonic<=settings.numHarm){
       let omega = settings.fundFreq * harmonic/WEBAUDIO_MAX_SAMPLERATE;
       arr[i] += settings.amplitude * Math.sin(2*Math.PI*omega * i +Math.PI/180*settings.phase*harmonic) / harmonic;
-    }
-  });
+      i++;
+      (harmonic ==1 && settings.harmType != "Odd")? harmonic++ : harmonic +=harmInc;
+  }
+});
 
   // render original wave FFT
   // TODO: window the input
