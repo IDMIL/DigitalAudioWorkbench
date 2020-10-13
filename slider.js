@@ -30,7 +30,7 @@ class slider{
 
   resize(x, y, w, p){
     let width = w - 20;
-    let labelWidth = 200;
+    let labelWidth = 250;
     width -= labelWidth;
     let sliderWidth = width * 0.6;
     width -= sliderWidth;
@@ -85,11 +85,44 @@ class numHarmSlider extends slider{
     this.initial = 1;
     this.step = 1;
     this.displayVal = this.initial;
-
+    this.selectBox = p.createSelect();
+    this.selectBox.option("Odd");
+    this.selectBox.option("Even");
+    this.selectBox.option("All");
+    this.selectBox.selected(this.settings.harmType);
+    this.selectBox.changed(()=>this.settings.harmType = this.selectBox.value());
     this.makeSlider(p);
   }
+  resize(x, y, w, p){
+    // let width = w - 20;
+    // let labelWidth = 200;
+    // let sliderWidth = width*.35;
+    // let dropDownWidth = width*.1;
+    // let textboxWidth = width *.1;
+    // let buttonWidth = width *.1;
+    let width = w - 20;
+    let labelWidth = 250;
+    width -= labelWidth;
+    let sliderWidth = width * 0.6;
+    width -= sliderWidth;
+    let dropDownWidth = sliderWidth*.25-10;
+    sliderWidth = sliderWidth*.75;
+    let textboxWidth = width * 0.5;
+    width -= textboxWidth;
+    let buttonWidth = width;
 
-}
+    this.slider.style('width', Math.round(sliderWidth).toString() + "px");
+    this.slider.position(x, y);
+    this.selectBox.style('width', Math.round(dropDownWidth).toString() + "px");
+    this.selectBox.position(x+this.slider.width+10,y);
+    this.textLabel.position(x + dropDownWidth + this.slider.width+20, y - 15);
+    this.textBox.position(x+this.slider.width + dropDownWidth+ labelWidth+10,y);
+    this.textBox.style('width', Math.round(textboxWidth).toString() + "px");
+    this.button.position(this.textBox.x+this.textBox.width+5,y);
+    this.button.style('width', Math.round(buttonWidth).toString() + "px");
+  }
+  }
+
 
 class sampleRateSlider extends slider{
   setup(p,settings){
