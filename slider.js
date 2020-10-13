@@ -94,18 +94,13 @@ class numHarmSlider extends slider{
     this.makeSlider(p);
   }
   resize(x, y, w, p){
-    // let width = w - 20;
-    // let labelWidth = 200;
-    // let sliderWidth = width*.35;
-    // let dropDownWidth = width*.1;
-    // let textboxWidth = width *.1;
-    // let buttonWidth = width *.1;
+
     let width = w - 20;
     let labelWidth = 250;
     width -= labelWidth;
     let sliderWidth = width * 0.6;
     width -= sliderWidth;
-    let dropDownWidth = sliderWidth*.25-10;
+    let dropDownWidth = sliderWidth*.25-10; // Make slider + dropdown the same width as other sliders. 
     sliderWidth = sliderWidth*.75;
     let textboxWidth = width * 0.5;
     width -= textboxWidth;
