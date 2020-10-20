@@ -81,7 +81,7 @@ class numHarmSlider extends slider{
     this.name ="Number of harmonics";
     this.propName="numHarm"
     this.min = 1;
-    this.max = 10;
+    this.max = 20;
     this.initial = 1;
     this.step = 1;
     this.displayVal = this.initial;
@@ -100,7 +100,7 @@ class numHarmSlider extends slider{
     width -= labelWidth;
     let sliderWidth = width * 0.6;
     width -= sliderWidth;
-    let dropDownWidth = sliderWidth*.25-10; // Make slider + dropdown the same width as other sliders. 
+    let dropDownWidth = sliderWidth*.25-10; // Make slider + dropdown the same width as other sliders.
     sliderWidth = sliderWidth*.75;
     let textboxWidth = width * 0.5;
     width -= textboxWidth;
