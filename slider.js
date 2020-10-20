@@ -85,12 +85,20 @@ class numHarmSlider extends slider{
     this.initial = 1;
     this.step = 1;
     this.displayVal = this.initial;
-    this.selectBox = p.createSelect();
-    this.selectBox.option("Odd");
-    this.selectBox.option("Even");
-    this.selectBox.option("All");
-    this.selectBox.selected(this.settings.harmType);
-    this.selectBox.changed(()=>this.settings.harmType = this.selectBox.value());
+    this.oddEvenSel = p.createSelect();
+    this.oddEvenSel.option("Odd");
+    this.oddEvenSel.option("Even");
+    this.oddEvenSel.option("All");
+    this.oddEvenSel.selected(this.settings.harmType);
+    this.oddEvenSel.changed(()=>this.settings.harmType = this.oddEvenSel.value());
+
+    this.slopeSel = p.createSelect();
+    this.slopeSel.option("1/x");
+    this.slopeSel.option("lin");
+    this.slopeSel.option("flat");
+    this.slopeSel.selected(this.settings.harmSlope);
+    this.slopeSel.changed(()=>this.settings.harmSlope = this.slopeSel.value());
+
     this.makeSlider(p);
   }
   resize(x, y, w, p){
@@ -98,22 +106,23 @@ class numHarmSlider extends slider{
     let width = w - 20;
     let labelWidth = 250;
     width -= labelWidth;
-    let sliderWidth = width * 0.6;
+    let sliderWidth = width * 0.5; // slider + dropdowns
     width -= sliderWidth;
-    let dropDownWidth = sliderWidth*.25-10; // Make slider + dropdown the same width as other sliders.
-    sliderWidth = sliderWidth*.75;
-    let textboxWidth = width * 0.5;
-    width -= textboxWidth;
-    let buttonWidth = width;
+    let dropDownWidth = sliderWidth * .25-10; // Make slider + dropdown the same width as other sliders.
+    sliderWidth = sliderWidth * .75; // Slider
+    let textboxWidth = width * 0.42;
+    let buttonWidth = width*.4;
 
     this.slider.style('width', Math.round(sliderWidth).toString() + "px");
     this.slider.position(x, y);
-    this.selectBox.style('width', Math.round(dropDownWidth).toString() + "px");
-    this.selectBox.position(x+this.slider.width+10,y);
-    this.textLabel.position(x + dropDownWidth + this.slider.width+20, y - 15);
-    this.textBox.position(x+this.slider.width + dropDownWidth+ labelWidth+10,y);
+    this.oddEvenSel.style('width', Math.round(dropDownWidth).toString() + "px");
+    this.oddEvenSel.position(x+this.slider.width+10,y);
+    this.slopeSel.style('width', Math.round(dropDownWidth).toString() + "px");
+    this.slopeSel.position(x+this.slider.width+dropDownWidth+10,y);
+    this.textLabel.position(x + 2*dropDownWidth + this.slider.width + 20, y - 15);
+    this.textBox.position(x + this.slider.width + 2*dropDownWidth+ labelWidth+10,y);
     this.textBox.style('width', Math.round(textboxWidth).toString() + "px");
-    this.button.position(this.textBox.x+this.textBox.width+5,y);
+    this.button.position(this.textBox.x + this.textBox.width,y);
     this.button.style('width', Math.round(buttonWidth).toString() + "px");
   }
   }
@@ -122,7 +131,7 @@ class numHarmSlider extends slider{
 class sampleRateSlider extends slider{
   setup(p,settings){
     this.settings = settings;
-    this.name ="Sample Rate(Hz)";
+    this.name ="Sample Rate(Hz):";
     this.propName="downsamplingFactor";
     this.min = p.log(3000)/p.log(2);
     this.max =  p.log(48000)/p.log(2);
@@ -141,7 +150,7 @@ class sampleRateSlider extends slider{
     this.settings.downsamplingFactor = p.round(WEBAUDIO_MAX_SAMPLERATE/p.pow(2, this.slider.value()));
     this.displayVal = this.calcDisplayVal();
     this.textBox.value(this.displayVal);//
-    this.textLabel.html('Sample Rate (Hz)');// + p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3) + " kHz")
+    this.textLabel.html(this.name);// + p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3) + " kHz")
   }
 }
 
@@ -214,22 +223,30 @@ class phaseSlider extends slider{
 
   calcDisplayVal(){return this.settings[this.propName];}
 }
-
-class ampZoomSlider extends slider{
+class zoomSlider extends slider{
+  calcDisplayVal(){return this.settings[this.propName]*100;}
+  calcSliderVal(){
+    if (isNaN(this.textBox.value())){
+      return this.slider.value();
+    }
+    else{
+      return this.textBox.value()/100;
+    }
+  }
+}
+class ampZoomSlider extends zoomSlider{
   setup(p,settings){
     this.settings = settings;
     this.name ="Amp. Zoom (%)";
     this.propName="ampZoom";
     this.min = .25;
-    this.max = 4.0; //pi
+    this.max = 4.0;
     this.initial =1.0;
-    this.step = .01; //pi/8
+    this.step = .01;
     this.makeSlider(p);
 }
-calcDisplayVal(){return this.settings[this.propName]*100;}
-
 }
-class timeZoomSlider extends slider{
+class timeZoomSlider extends zoomSlider{
   setup(p,settings){
     this.settings = settings;
     this.propName ="timeZoom";
@@ -240,10 +257,9 @@ class timeZoomSlider extends slider{
     this.step = .01;
     this.makeSlider(p);
 }
-calcDisplayVal(){return this.settings[this.propName]*100 ;}
 
 }
-class freqZoomSlider extends slider{
+class freqZoomSlider extends zoomSlider{
   setup(p,settings){
     this.settings = settings;
     this.propName ="freqZoom";
@@ -252,15 +268,6 @@ class freqZoomSlider extends slider{
     this.initial = 1.0;
     this.step = .01;
     this.makeSlider(p);
-}
-calcDisplayVal(){return this.settings[this.propName]*100 ;}
-calcSliderVal(){
-  if (isNaN(this.textBox.value())){
-    return this.slider.value();
-  }
-  else{
-    return this.textBox.value()/100;
-  }
 }
 updateValue(p){
   this.settings.freqZoom = this.slider.value();
