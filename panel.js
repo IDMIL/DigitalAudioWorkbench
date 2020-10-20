@@ -251,18 +251,20 @@ class inputSigFreqPanel extends freqPanel {
     this.buffer.background(this.background);
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
     drawPassBand(this);
-    let harmInc = 1;
-    if (this.settings.harmType =="Odd" || this.settings.harmType == "Even"){ harmInc=2;}
-    let harmPeak = 1, harm =1;
+    // let harmInc = 1;
+    // if (this.settings.harmType =="Odd" || this.settings.harmType == "Even"){ harmInc=2;}
+    // let harmPeak = 1, harm =1, ampScale = 1;
+    let harm =1;
     while (harm<=this.settings.numHarm){
-      let hz = this.settings.fundFreq * harmPeak;
+      let hz = this.settings.harmonicFreqs[harm-1];
       let xpos = hz * pixels_per_hz + this.plotLeft;
       if (xpos > this.plotRight|| xpos< this.plotLeft) break;
-      let height = this.settings.amplitude * this.plotHeight / harmPeak;
+      // if (this.settings.harmSlope == "lin") {ampScale = 1 - (harm-1)/(this.settings.numHarm)};
+      // if (this.settings.harmSlope == "1/x") {ampScale = 1/harmPeak};
+      let height = this.settings.amplitude * this.plotHeight *this.settings.harmonicAmps[harm-1];
       this.drawPeak(xpos, height, this.plotBottom)
-      // console.log(harm, harmPeak, harmInc);
       harm+=1;
-      (harmPeak ==1 && this.settings.harmType != "Odd")? harmPeak++ : harmPeak +=harmInc;
+      // (harmPeak ==1 && this.settings.harmType != "Odd")? harmPeak++ : harmPeak +=harmInc;
     }
 
 
@@ -425,26 +427,22 @@ class sampledInputFreqPanel extends freqPanel{
       this.buffer.drawingContext.setLineDash([5,5]);
       this.buffer.line(xpos, this.plotTop, xpos, this.plotBottom);
       this.buffer.drawingContext.setLineDash([]);
-      let harmInc=1;
-      if (this.settings.harmType =="Odd" || this.settings.harmType == "Even"){ harmInc=2;}
-
       let fstext = peakhz.toFixed(0) + ' Hz';
       drawVerticalTick(this, fstext, xpos);
-      let harmScale=1;
       for (let harm = 1; harm <= this.settings.numHarm; harm++) {
-        let hzNegative = peakhz - (this.settings.fundFreq * harmScale);
-        let hzPositive = peakhz + (this.settings.fundFreq * harmScale);
+
+        let hzNegative = peakhz - this.settings.harmonicFreqs[harm-1];
+        let hzPositive = peakhz + this.settings.harmonicFreqs[harm-1];
+
         if (hzNegative < 0) hzNegative = 0 + (0 - hzNegative); //Reflect at 0. TODO should technically use a new color.
         // don't reflect at sampleRate because we are already drawing the negative frequency images
 
-        let positiveHeight = this.settings.amplitude*this.plotHeight/harmScale;
-        let negativeHeight = this.settings.amplitude*this.plotHeight/harmScale;
+        let positiveHeight = this.settings.amplitude*this.plotHeight*this.settings.harmonicAmps[harm-1];
+        let negativeHeight = this.settings.amplitude*this.plotHeight*this.settings.harmonicAmps[harm-1];
         let xNegative = hzNegative * pixels_per_hz + this.plotLeft;
         let xPositive = hzPositive * pixels_per_hz + this.plotLeft;
         if (xNegative < this.plotRight) this.drawPeak(xNegative, negativeHeight, base, color);
         if (xPositive < this.plotRight) this.drawPeak(xPositive, positiveHeight, base, color);
-        (harm ==1 && this.settings.harmType != "Odd")? harmScale++ : harmScale +=harmInc;
-
       }
     }
     this.drawBorder();
