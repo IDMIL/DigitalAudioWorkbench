@@ -2,7 +2,7 @@ const BIT_DEPTH_MAX = 16;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
 const soundTimeSeconds = .5;
-
+const MAX_HARMONICS = 20;
 function new_widget(panels, sliders) { const sketch = p => {
 
 var numPanels = panels.length;
@@ -16,16 +16,19 @@ let fft = new FFTJS(fftSize);
 let firCalculator = new Fili.FirCoeffs();
 var settings =
     { amplitude : 1.0
-    , fundFreq : 1250
+    , fundFreq : 1250 // input signal fundamental freq
     , sampleRate : WEBAUDIO_MAX_SAMPLERATE
     , downsamplingFactor : 2
-    , numHarm : 2
-    , harmType : "Odd"
-    , phase : 0.0
+    , numHarm : 2 //Number of harmonics
+    , harmType : "Odd" // Harmonic series to evaluate - Odd, even or all
+    , harmSlope : "1/x" // Amplitude scaling for harmonics. can be used to create different shapes like saw or square
+    , harmonicFreqs : new Float32Array(MAX_HARMONICS) //Array storing harmonic frequency in hz
+    , harmonicAmps  : new Float32Array(MAX_HARMONICS) //Array storing harmonic amp  (0-1.0)
+    , phase : 0.0 // phase offset for input signal
     , fftSize : fftSize
-    , bitDepth : BIT_DEPTH_MAX
-    , dither : 0.0
-    , antialiasing : 0
+    , bitDepth : BIT_DEPTH_MAX //quantization bit depth
+    , dither : 0.0 // amplitude of white noise added to signal before quantization
+    , antialiasing : 0 // antialiasing filter order
     , original: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
     , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4*soundTimeSeconds))
     , reconstructed: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
@@ -35,15 +38,14 @@ var settings =
     , quantNoiseFreq : fft.createComplexArray()
     , snd : undefined
     , maxVisibleFrequency : WEBAUDIO_MAX_SAMPLERATE / 2
-    , freqZoom : 1.0
-    , ampZoom : 1.0
-    , timeZoom: 1.0
+    , freqZoom : 1.0 //X axis zoom for frequency panels
+    , ampZoom : 1.0 // Y axis zoom for all panels
+    , timeZoom: 1.0 // X axis zoom for signal panels
     };
 
 p.setup = function () {
   p.createCanvas(p.windowWidth, p.windowHeight);
   p.textAlign(p.CENTER);
-
   panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, settings));
   sliders.forEach(slider => slider.setup(p, settings));
   buttonSetup();
@@ -126,18 +128,35 @@ function buttonSetup() {
   });
 }
 
+function calcHarmonics(){
+  let harmInc = 1; harmAmp =1; harmScale =1; harmonic = 1;
+  if (settings.harmType =="Odd" || settings.harmType == "Even"){ harmInc=2;}
+  while (harmonic<=settings.numHarm){
+    if (settings.harmSlope == "lin") {  harmAmp = 1 - (harmonic-1)/(settings.numHarm)}
+     else if (settings.harmSlope == "1/x") {harmAmp = 1/harmScale}
+     else if (settings.harmSlope == "flat") {harmAmp = 1};
+    settings.harmonicFreqs[harmonic-1] = harmScale*settings.fundFreq;
+    settings.harmonicAmps[harmonic-1] = harmAmp;
+    // console.log(settings.harmonicFreqs[harmonic], settings.harmonicAmps[harmonic]);
+
+    (harmonic ==1 && settings.harmType != "Odd")? harmScale++ : harmScale +=harmInc;
+    harmonic++;
+  }
+}
 function renderWaves() {
   // render original wave
+  calcHarmonics();
   settings.original.fill(0);
-  let harmInc = 1;  let harmonic= 1;
-  if (settings.harmType =="Odd" || settings.harmType == "Even"){ harmInc=2;}
+
   settings.original.forEach( (_, i, arr) => {
-    harmonic =1; omegaScale=1;
+    let harmonic =1;
     //Always calculate number of harmonics. omegaScale is the frequency scalar for each
     while (harmonic<=settings.numHarm){
-      let omega = settings.fundFreq * omegaScale/WEBAUDIO_MAX_SAMPLERATE;
-      arr[i] += settings.amplitude * Math.sin(2*Math.PI*omega * i +Math.PI/180*settings.phase*harmonic) / omegaScale;
-      (harmonic ==1 && settings.harmType != "Odd")? omegaScale++ : omegaScale +=harmInc;
+      let freq = 2*Math.PI*settings.harmonicFreqs[harmonic-1]/WEBAUDIO_MAX_SAMPLERATE;
+      let amp = settings.harmonicAmps[harmonic-1];
+      //scale to radians, adjust harmonic phases
+      let phase = Math.PI/180*settings.phase*settings.harmonicFreqs[harmonic-1]/settings.harmonicFreqs[0];
+      arr[i] += settings.amplitude * Math.sin(freq * i + phase )*amp;
       harmonic++;
   }
 });
