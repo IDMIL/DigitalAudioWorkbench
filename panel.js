@@ -169,14 +169,14 @@ function drawVerticalTick(panel, text, x, tick_length = 5) {
 function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
   for (let i = 1; i <= num_ticks; ++i) {
     let tick_amp_pixels = i * pixel_max / num_ticks/panel.settings.ampZoom;
-    let tick_amp_db = linToDB(tick_amp_pixels, pixel_max);
+    // let tick_amp_db = linToDB(tick_amp_pixels, pixel_max);
     drawHorizontalTick(panel, (tick_amp_pixels/pixel_max).toFixed(2), panel.halfh - tick_amp_pixels*panel.settings.ampZoom,5,"right");
     drawHorizontalTick(panel, (-tick_amp_pixels/pixel_max).toFixed(2), panel.halfh + tick_amp_pixels*panel.settings.ampZoom,5,"right");
-    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh - tick_amp_pixels*panel.settings.ampZoom);
-    drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh + tick_amp_pixels*panel.settings.ampZoom);
+    // drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh - tick_amp_pixels*panel.settings.ampZoom);
+    // drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh + tick_amp_pixels*panel.settings.ampZoom);
 
   }
-  drawHorizontalTick(panel, '-inf dB', panel.halfh);
+  // drawHorizontalTick(panel, '-inf dB', panel.halfh);
   drawHorizontalTick(panel, '0', panel.halfh, 5, "right");
 
 }
