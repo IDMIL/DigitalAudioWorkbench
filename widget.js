@@ -27,6 +27,7 @@ var settings =
     , phase : 0.0 // phase offset for input signal
     , fftSize : fftSize
     , bitDepth : BIT_DEPTH_MAX //quantization bit depth
+    , quantType : "midRise" // type of quantization
     , dither : 0.0 // amplitude of white noise added to signal before quantization
     , antialiasing : 0 // antialiasing filter order
     , original: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
@@ -134,10 +135,10 @@ function calcHarmonics(){
   while (harmonic<=settings.numHarm){
     if (settings.harmSlope == "lin") {  harmAmp = 1 - (harmonic-1)/(settings.numHarm)}
      else if (settings.harmSlope == "1/x") {harmAmp = 1/harmScale}
+     else if (settings.harmSlope == "1/x2") {harmAmp = 1/harmScale/harmScale}
      else if (settings.harmSlope == "flat") {harmAmp = 1};
     settings.harmonicFreqs[harmonic-1] = harmScale*settings.fundFreq;
     settings.harmonicAmps[harmonic-1] = harmAmp;
-    // console.log(settings.harmonicFreqs[harmonic], settings.harmonicAmps[harmonic]);
 
     (harmonic ==1 && settings.harmType != "Odd")? harmScale++ : harmScale +=harmInc;
     harmonic++;
@@ -145,7 +146,7 @@ function calcHarmonics(){
 }
 function renderWaves() {
   // render original wave
-  calcHarmonics();
+    calcHarmonics();
   settings.original.fill(0);
 
   settings.original.forEach( (_, i, arr) => {
@@ -184,6 +185,9 @@ function renderWaves() {
   settings.reconstructed.fill(0);
   settings.quantNoise.fill(0);
   settings.downsampled = new Float32Array(p.round(WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor));
+  let maxInt = p.pow(2, settings.bitDepth)-1;
+  let stepSize = (settings.quantType == "midTread")?  2/(maxInt-1) : 2/(maxInt);
+
   settings.downsampled.forEach( (_, i, arr) => {
     let y = original[i * settings.downsamplingFactor];
     if (settings.bitDepth == BIT_DEPTH_MAX) {
@@ -191,15 +195,21 @@ function renderWaves() {
       settings.reconstructed[i * settings.downsamplingFactor] = y;
       return
     }
-    let maxInt = p.pow(2, settings.bitDepth - 1);
     let dither = (2 * Math.random() - 1) * settings.dither;
-    let rectified = (dither + y) * 0.5 + 0.5;
-    let quantized = p.round(rectified * maxInt);
-    let renormalized = quantized / maxInt;
-    let centered = 2 * renormalized - 1;
-    arr[i] = centered;
-    settings.reconstructed[i * settings.downsamplingFactor] = centered;
-    settings.quantNoise[i] = centered -y;
+
+    let quantized;
+    //Add dither signal and quantized. constrain so we dont clip after dither
+    switch(settings.quantType){
+      case "midTread" :
+         quantized = stepSize*p.floor(p.constrain((y+dither),-1,.99)/stepSize + 0.5);
+        break;
+        case "midRise" :
+           quantized = stepSize*(p.floor(p.constrain((y+dither),-1,.99)/stepSize) + 0.5);
+          break;
+    }
+    arr[i] = quantized;
+    settings.reconstructed[i * settings.downsamplingFactor] = quantized;
+    settings.quantNoise[i] = quantized -y;
   });
 
   // render reconstructed wave low pass filtering the zero stuffed array
@@ -229,6 +239,7 @@ function playWave(wave, sampleRate, audioctx) {
   source.connect(audioctx.destination);
   source.start();
 }
+
 
 };
 return new p5(sketch); } // end function new_widget() { var sketch = p => {
