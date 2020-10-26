@@ -45,9 +45,10 @@ class Panel {
   }
 
   drawStem(x,y,startHeight,ellipseSize =this.ellipseSize){
+    let actual_y = y;
     y = (y<this.plotTop)? y=this.plotTop : (y>this.plotBottom)? y= this.plotBottom : y;
     this.buffer.line(x, startHeight, x, y);
-    ellipseSize= (y==this.plotTop || y==this.plotBottom)? 0: ellipseSize;
+    ellipseSize= (actual_y<this.plotTop || actual_y>this.plotBottom)? 0: ellipseSize;
     this.buffer.ellipse(x, y, ellipseSize);
   };
 
@@ -174,10 +175,45 @@ function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
     drawHorizontalTick(panel, (-tick_amp_pixels/pixel_max).toFixed(2), panel.halfh + tick_amp_pixels*panel.settings.ampZoom,5,"right");
     // drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh - tick_amp_pixels*panel.settings.ampZoom);
     // drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh + tick_amp_pixels*panel.settings.ampZoom);
-
   }
   // drawHorizontalTick(panel, '-inf dB', panel.halfh);
   drawHorizontalTick(panel, '0', panel.halfh, 5, "right");
+
+}
+function drawSignalBinaryScaling(panel,pixel_max, num_ticks, settings){
+  let maxInt = Math.pow(2, settings.bitDepth)-1;
+  let stepSize = (settings.quantType == "midTread")?  2/(maxInt-1) : 2/(maxInt);
+  let numTicks = Math.min(num_ticks,maxInt+1);
+  let tickScale =(maxInt+1)/numTicks;
+  let pixel_per_fullscale = pixel_max * panel.settings.ampZoom;
+  // let stepSize = (settings.quantType == "midRise")?  2/(numTicks-1) : 2/(numTicks);
+
+  let val=-1; let tick; let plotVal;
+  for ( tick =0; tick<numTicks;tick++){
+    switch(settings.quantType){
+      case "midTread" :
+         val = stepSize*Math.floor(val/stepSize + 0.5);
+        break;
+        case "midRise" :
+           val = stepSize*(Math.floor(val/stepSize) + 0.5);
+          break;
+        }
+        let tick_amp_pixels = val * pixel_max / num_ticks/panel.settings.ampZoom;
+        let pixel_amp = pixel_per_fullscale * val;
+        let y = panel.halfh - pixel_amp;
+
+        if (y >= panel.plotTop-.1 && y <=panel.plotBottom+.1) {
+        // console.log(val,tick)
+        if (maxInt<255){
+          drawHorizontalTick(panel, (Math.round(tick*tickScale)).toString(2).padStart(settings.bitDepth,"0"), y,5,"left");
+        }
+          panel.buffer.stroke("gray");
+          panel.buffer.drawingContext.setLineDash([5,5]);
+          panel.buffer.line(panel.plotLeft, y, panel.plotRight, y);
+          panel.buffer.drawingContext.setLineDash([]);    // drawHorizontalTick(panel, tick.toString(2), y,5,"left");
+    }
+    val = val + stepSize*tickScale;
+  }
 
 }
 
@@ -389,6 +425,8 @@ class sampledInputPanel extends Panel{
     drawMidLine(this);
     drawName(this);
     drawSignalAmplitudeTicks(this, this.plotHeight/2, 4);
+    drawSignalBinaryScaling(this, this.plotHeight/2, 16,this.settings);
+
     drawTimeTicks(this, this.numTimeTicks/this.settings.timeZoom, 1/(this.settings.timeZoom*this.settings.sampleRate));
     this.drawBorder();
   }
