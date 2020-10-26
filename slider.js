@@ -94,6 +94,7 @@ class numHarmSlider extends slider{
 
     this.slopeSel = p.createSelect();
     this.slopeSel.option("1/x");
+    this.slopeSel.option("1/x2");
     this.slopeSel.option("lin");
     this.slopeSel.option("flat");
     this.slopeSel.selected(this.settings.harmSlope);
@@ -239,7 +240,7 @@ class ampZoomSlider extends zoomSlider{
     this.settings = settings;
     this.name ="Amp. Zoom (%)";
     this.propName="ampZoom";
-    this.min = .25;
+    this.min = .1;
     this.max = 4.0;
     this.initial =1.0;
     this.step = .01;
