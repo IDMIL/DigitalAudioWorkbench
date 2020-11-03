@@ -73,6 +73,7 @@ class freqPanel extends Panel{
   }
 
   drawPeak(x,height,base,colour="black"){
+    height = Math.abs(height);
     this.buffer.fill(colour);
     this.buffer.stroke(colour);
     this.buffer.beginShape();

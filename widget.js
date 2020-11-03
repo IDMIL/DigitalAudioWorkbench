@@ -130,17 +130,22 @@ function buttonSetup() {
 }
 
 function calcHarmonics(){
-  let harmInc = 1; harmAmp =1; harmScale =1; harmonic = 1;
+  let harmInc = 1; harmAmp =1; harmScale =1; harmonic = 1; let inv= 1;
   if (settings.harmType =="Odd" || settings.harmType == "Even"){ harmInc=2;}
   while (harmonic<=settings.numHarm){
     if (settings.harmSlope == "lin") {  harmAmp = 1 - (harmonic-1)/(settings.numHarm)}
      else if (settings.harmSlope == "1/x") {harmAmp = 1/harmScale}
      else if (settings.harmSlope == "1/x2") {harmAmp = 1/harmScale/harmScale}
      else if (settings.harmSlope == "flat") {harmAmp = 1};
+     if (settings.harmSlope =="1/x2" && settings.harmType == "Odd"){
+       harmAmp = harmAmp *inv;
+       inv *= -1;
+     }
     settings.harmonicFreqs[harmonic-1] = harmScale*settings.fundFreq;
     settings.harmonicAmps[harmonic-1] = harmAmp;
 
     (harmonic ==1 && settings.harmType != "Odd")? harmScale++ : harmScale +=harmInc;
+
     harmonic++;
   }
 }
