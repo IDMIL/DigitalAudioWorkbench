@@ -206,7 +206,12 @@ function drawSignalBinaryScaling(panel,pixel_max, num_ticks, settings){
         if (y >= panel.plotTop-.1 && y <=panel.plotBottom+.1) {
         // console.log(val,tick)
         if (maxInt<255){
+          //if under 8 bits, we can write out binary values
           drawHorizontalTick(panel, (Math.round(tick*tickScale)).toString(2).padStart(settings.bitDepth,"0"), y,5,"left");
+        }
+        else {
+          //draw axis labels in hex because of limited space
+          drawHorizontalTick(panel, "0x" + (tick*tickScale).toString(16).padStart(4,"0"), y,5,"left");
         }
           panel.buffer.stroke("gray");
           panel.buffer.drawingContext.setLineDash([5,5]);
