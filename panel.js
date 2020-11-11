@@ -260,7 +260,7 @@ function getColor(num){
 }
 
 class inputSigPanel extends Panel {
-  constructor(){super(); this.name="Input Signal"}
+  constructor(){super(); this.name="Input Signal Time Domain"}
 
   drawPanel(){
     this.buffer.background(this.background);
@@ -274,7 +274,7 @@ class inputSigPanel extends Panel {
 }
 
 class reconstructedSigPanel extends Panel {
-  constructor(){super(); this.name="Reconstructed Signal";};
+  constructor(){super(); this.name="Reconstructed Signa Time Domainl";};
 
   drawPanel(){
     this.buffer.background(this.background);
@@ -370,7 +370,7 @@ class impulsePanel extends Panel {
     super()
     this.strokeWeight=1;
     this.ellipseSize=5;
-    this.name ="Sampling Signal";
+    this.name ="Sampling Signal Time Domain";
   }
   drawPanel(){
     let base = this.plotBottom;
@@ -422,7 +422,7 @@ class sampledInputPanel extends Panel{
     super()
     this.strokeWeight=1;
     this.ellipseSize=5;
-    this.name="Sampled Signal";
+    this.name="Sampled Signal Time Domain";
   }
 
   drawPanel(){
@@ -499,7 +499,7 @@ class quantNoisePanel extends Panel{
     super()
     this.strokeWeight=1;
     this.ellipseSize=5;
-    this.name ="Quantization Noise";
+    this.name ="Quantization Noise Time Domain";
   }
   drawPanel(){
     this.buffer.background(this.background);
@@ -527,7 +527,7 @@ class quantNoiseFreqPanel extends Panel{
 class inputPlusSampledPanel extends Panel {
   constructor() {
     super();
-    this.name = "Input with Sampled Signal";
+    this.name = "Input with Sampled Signal Time Domain";
     this.ellipseSize = 5;
 
   }
@@ -547,7 +547,7 @@ class inputPlusSampledPanel extends Panel {
 class allSignalsPanel extends Panel {
   constructor() {
     super();
-    this.name = "Input (solid), Sampled (lollipop), Reconstructed (dotted)";
+    this.name = "Input (solid), Sampled (lollipop), Reconstructed (dotted), Time Domain";
     this.ellipseSize = 5;
 
   }
