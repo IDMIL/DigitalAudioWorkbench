@@ -459,8 +459,11 @@ class sampledInputFreqPanel extends freqPanel{
     let base = this.plotBottom;
     let sampleRate = this.settings.sampleRate / this.settings.downsamplingFactor;
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
-    let numPeaks = Math.round(this.settings.maxVisibleFrequency / sampleRate);
 
+    let numPeaks = this.settings.numHarm; // This makes sure we always draw the images even if we zoom in and the associated peak is not visible.
+    // This works because any peak offscreen is just not rendered.
+    let numPeaks//Math.ceil(this.settings.maxVisibleFrequency* this.settings.freqZoom / sampleRate);
+    console.log(this.settings.maxVisibleFrequency, numPeaks)
     drawPassBand(this);
 
     for (let peak = 0; peak <= numPeaks; peak++) {
