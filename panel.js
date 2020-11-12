@@ -11,6 +11,8 @@ class Panel {
     this.tickTextSize = 9;
     this.numTimeTicks = 8;
     this.numFreqTicks = 4;
+    this.name = "Base Panel Class";
+    this.description = "This is the base class that other panels inherit from. If you  can see this and you are not reading the source code right now there is probably a problem. Please open an issue or otherwise contact the project maintainers."
   }
 
   setup(p, height, width, settings) {
@@ -255,7 +257,10 @@ function getColor(num){
 }
 
 class inputSigPanel extends Panel {
-  constructor(){super(); this.name="Input Signal"}
+  constructor(){
+    super(); 
+    this.name="Input Signal";
+   }
 
   drawPanel(){
     this.buffer.background(this.background);
