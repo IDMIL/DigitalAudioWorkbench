@@ -208,7 +208,12 @@ function drawSignalBinaryScaling(panel,pixel_max, num_ticks, settings){
         if (y >= panel.plotTop-.1 && y <=panel.plotBottom+.1) {
         // console.log(val,tick)
         if (maxInt<255){
+          //if under 8 bits, we can write out binary values
           drawHorizontalTick(panel, (Math.round(tick*tickScale)).toString(2).padStart(settings.bitDepth,"0"), y,5,"left");
+        }
+        else {
+          //draw axis labels in hex because of limited space
+          drawHorizontalTick(panel, "0x" + (tick*tickScale).toString(16).padStart(4,"0"), y,5,"left");
         }
           panel.buffer.stroke("gray");
           panel.buffer.drawingContext.setLineDash([5,5]);
@@ -259,7 +264,7 @@ function getColor(num){
 class inputSigPanel extends Panel {
   constructor(){
     super(); 
-    this.name="Input Signal";
+    this.name="Input Signal Time Domain";
    }
 
   drawPanel(){
@@ -274,7 +279,7 @@ class inputSigPanel extends Panel {
 }
 
 class reconstructedSigPanel extends Panel {
-  constructor(){super(); this.name="Reconstructed Signal";};
+  constructor(){super(); this.name="Reconstructed Signa Time Domainl";};
 
   drawPanel(){
     this.buffer.background(this.background);
@@ -370,7 +375,7 @@ class impulsePanel extends Panel {
     super()
     this.strokeWeight=1;
     this.ellipseSize=5;
-    this.name ="Sampling Signal";
+    this.name ="Sampling Signal Time Domain";
   }
   drawPanel(){
     let base = this.plotBottom;
@@ -422,7 +427,7 @@ class sampledInputPanel extends Panel{
     super()
     this.strokeWeight=1;
     this.ellipseSize=5;
-    this.name="Sampled Signal";
+    this.name="Sampled Signal Time Domain";
   }
 
   drawPanel(){
@@ -459,8 +464,11 @@ class sampledInputFreqPanel extends freqPanel{
     let base = this.plotBottom;
     let sampleRate = this.settings.sampleRate / this.settings.downsamplingFactor;
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
-    let numPeaks = Math.round(this.settings.maxVisibleFrequency / sampleRate);
 
+    let numPeaks = this.settings.numHarm; // This makes sure we always draw the images even if we zoom in and the associated peak is not visible.
+    // This works because any peak offscreen is just not rendered.
+    let numPeaks//Math.ceil(this.settings.maxVisibleFrequency* this.settings.freqZoom / sampleRate);
+    console.log(this.settings.maxVisibleFrequency, numPeaks)
     drawPassBand(this);
 
     for (let peak = 0; peak <= numPeaks; peak++) {
@@ -499,7 +507,7 @@ class quantNoisePanel extends Panel{
     super()
     this.strokeWeight=1;
     this.ellipseSize=5;
-    this.name ="Quantization Noise";
+    this.name ="Quantization Noise Time Domain";
   }
   drawPanel(){
     this.buffer.background(this.background);
@@ -527,7 +535,7 @@ class quantNoiseFreqPanel extends Panel{
 class inputPlusSampledPanel extends Panel {
   constructor() {
     super();
-    this.name = "Input with Sampled Signal";
+    this.name = "Input with Sampled Signal Time Domain";
     this.ellipseSize = 5;
 
   }
@@ -547,7 +555,7 @@ class inputPlusSampledPanel extends Panel {
 class allSignalsPanel extends Panel {
   constructor() {
     super();
-    this.name = "Input (solid), Sampled (lollipop), Reconstructed (dotted)";
+    this.name = "Input (solid), Sampled (lollipop), Reconstructed (dotted), Time Domain";
     this.ellipseSize = 5;
 
   }
