@@ -1,53 +1,56 @@
-// --------------------- The Digtal Audio Workbench ---------------------------
-// ----------------------- Implementation Details -----------------------------
+/*
+# The Digtal Audio Workbench
+### Implementation Details
 
-// The purpose of the digital audio workbench is to illustrate key concepts in
-// digital audio theory with interactive visualizations of each stage of the
-// analog-to-digial conversion (ADC) and digital-to-analog conversion (DAC)
-// processes.  These visualizations are inspired by demonstrations using
-// oscilloscopes and spectrum analyzers to compare the analog signal input into
-// the ADC process with the analog signal output by the DAC process, e.g.
-// https://youtu.be/cIQ9IXSUzuM
+The purpose of the digital audio workbench is to illustrate key concepts in
+digital audio theory with interactive visualizations of each stage of the
+analog-to-digial conversion (ADC) and digital-to-analog conversion (DAC)
+processes.  These visualizations are inspired by demonstrations using
+oscilloscopes and spectrum analyzers to compare the analog signal input into
+the ADC process with the analog signal output by the DAC process, e.g.
+https://youtu.be/cIQ9IXSUzuM
 
-// Since our demonstration takes place purely in the digital domain, we
-// unfortunately cannot use real continuous time analog inputs and outputs.
-// Instead, we simulate the ADC-DAC processes in the discrete time domain.  The
-// analog input and output are represented as discrete time signals with a high
-// sampling rate; at the time of writing, the maximum sampling rate supported
-// by WebAudio is 96 kHz. 
+Since our demonstration takes place purely in the digital domain, we
+unfortunately cannot use real continuous time analog inputs and outputs.
+Instead, we simulate the ADC-DAC processes in the discrete time domain.  The
+analog input and output are represented as discrete time signals with a high
+sampling rate; at the time of writing, the maximum sampling rate supported
+by WebAudio is 96 kHz. 
 
-// The ADC process consists of several steps, including antialiasing, sampling,
-// and quantization. All of these are simulated in our model: antialiasing is
-// achieved with a windowed sinc FIR lowpass filter of order specified by the
-// user; sampling is approximated by downsampling the input signal by an
-// integer factor; and quantization is achieved by multiplying the sampled
-// signal by the maximum integer value possible given the requested bit depth,
-// and then rounding every sample to the nearest integer.  The DAC process is
-// simulated in turn by zero stuffing and lowpass filtering the sampled and
-// quantized output of the ADC simultion.  
+The ADC process consists of several steps, including antialiasing, sampling,
+and quantization. All of these are simulated in our model: antialiasing is
+achieved with a windowed sinc FIR lowpass filter of order specified by the
+user; sampling is approximated by downsampling the input signal by an
+integer factor; and quantization is achieved by multiplying the sampled
+signal by the maximum integer value possible given the requested bit depth,
+and then rounding every sample to the nearest integer.  The DAC process is
+simulated in turn by zero stuffing and lowpass filtering the sampled and
+quantized output of the ADC simultion.  
 
-// In summary, the continuous time input is simulated by a 96 kHz discrete time
-// signal, the sampled output of the ADC process is simulated by a downsampled
-// and quantized signal, and the continuous time reconstruction output by the
-// DAC is simulated by upsampling the "sampled" signal back to 96 kHz.  In our
-// tests we have found this model to be reasonable; many key concepts, such as
-// critical sampling, aliasing, and quantization noise are well represented in
-// our simulation.
+In summary, the continuous time input is simulated by a 96 kHz discrete time
+signal, the sampled output of the ADC process is simulated by a downsampled
+and quantized signal, and the continuous time reconstruction output by the
+DAC is simulated by upsampling the "sampled" signal back to 96 kHz.  In our
+tests we have found this model to be reasonable; many key concepts, such as
+critical sampling, aliasing, and quantization noise are well represented in
+our simulation.
 
-// For more details, the reader is encouraged to peruse the rest of the source
-// code in this document.  Many comments have been included to aid readers who
-// are unfamiliar with javascript.  Any questions you may have about the
-// implementation of the simulation can only be definitively answered by
-// understanding the source code, but please feel free to contact the project
-// maintainers if you have any questions.
+For more details, the reader is encouraged to peruse the rest of the source
+code in this document.  Many comments have been included to aid readers who
+are unfamiliar with javascript.  Any questions you may have about the
+implementation of the simulation can only be definitively answered by
+understanding the source code, but please feel free to contact the project
+maintainers if you have any questions.
 
-// ----------------------------------------------------------------------------
+---
 
-// `renderWavesImpl` returns an anonymous function that is bound in the widget
-// constructor. This is done in order to seperate the implementation of the
-// simulation from the other implementation details so that this documentation
-// can be more easily accessed. 
+`renderWavesImpl` returns an anonymous function that is bound in the widget
+constructor. This is done in order to seperate the implementation of the
+simulation from the other implementation details so that this documentation
+can be more easily accessed. 
 
+```javascript
+*/
 function renderWavesImpl(settings, fft, p) { return () => {
 
   // calculate harmonics ------------------------------------------------------
@@ -263,3 +266,4 @@ function renderWavesImpl(settings, fft, p) { return () => {
   fft.completeSpectrum(settings.quantNoiseFreq); 
 
 }}
+```
