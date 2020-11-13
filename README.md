@@ -1,1 +1,265 @@
-waves.js
+// --------------------- The Digtal Audio Workbench ---------------------------
+// ----------------------- Implementation Details -----------------------------
+
+// The purpose of the digital audio workbench is to illustrate key concepts in
+// digital audio theory with interactive visualizations of each stage of the
+// analog-to-digial conversion (ADC) and digital-to-analog conversion (DAC)
+// processes.  These visualizations are inspired by demonstrations using
+// oscilloscopes and spectrum analyzers to compare the analog signal input into
+// the ADC process with the analog signal output by the DAC process, e.g.
+// https://youtu.be/cIQ9IXSUzuM
+
+// Since our demonstration takes place purely in the digital domain, we
+// unfortunately cannot use real continuous time analog inputs and outputs.
+// Instead, we simulate the ADC-DAC processes in the discrete time domain.  The
+// analog input and output are represented as discrete time signals with a high
+// sampling rate; at the time of writing, the maximum sampling rate supported
+// by WebAudio is 96 kHz. 
+
+// The ADC process consists of several steps, including antialiasing, sampling,
+// and quantization. All of these are simulated in our model: antialiasing is
+// achieved with a windowed sinc FIR lowpass filter of order specified by the
+// user; sampling is approximated by downsampling the input signal by an
+// integer factor; and quantization is achieved by multiplying the sampled
+// signal by the maximum integer value possible given the requested bit depth,
+// and then rounding every sample to the nearest integer.  The DAC process is
+// simulated in turn by zero stuffing and lowpass filtering the sampled and
+// quantized output of the ADC simultion.  
+
+// In summary, the continuous time input is simulated by a 96 kHz discrete time
+// signal, the sampled output of the ADC process is simulated by a downsampled
+// and quantized signal, and the continuous time reconstruction output by the
+// DAC is simulated by upsampling the "sampled" signal back to 96 kHz.  In our
+// tests we have found this model to be reasonable; many key concepts, such as
+// critical sampling, aliasing, and quantization noise are well represented in
+// our simulation.
+
+// For more details, the reader is encouraged to peruse the rest of the source
+// code in this document.  Many comments have been included to aid readers who
+// are unfamiliar with javascript.  Any questions you may have about the
+// implementation of the simulation can only be definitively answered by
+// understanding the source code, but please feel free to contact the project
+// maintainers if you have any questions.
+
+// ----------------------------------------------------------------------------
+
+// `renderWavesImpl` returns an anonymous function that is bound in the widget
+// constructor. This is done in order to seperate the implementation of the
+// simulation from the other implementation details so that this documentation
+// can be more easily accessed. 
+
+function renderWavesImpl(settings, fft, p) { return () => {
+
+  // calculate harmonics ------------------------------------------------------
+
+  // The signal is generated using simple additive synthesis. Because of this,
+  // the exact frequency content of the signal can be determined a priori based
+  // on the settings. We generate this information here so that it can be used
+  // not only by the synthesis process below, but also by several of the graphs
+  // used to illustrate the frequency domain content of the signal.
+
+  let harmonic_number = 1; 
+  let harmonic_amplitude = 1; 
+  let invert = 1;
+  let harmInc = (settings.harmType =="Odd" || settings.harmType == "Even") ? 2 : 1;
+
+  for (let i = 0; i < settings.numHarm; i++) {
+
+    // the amplitude of each harmonic depends on the harmonic slope setting
+    if (settings.harmSlope == "lin") harmonic_amplitude = 1 - i/settings.numHarm;
+    else if (settings.harmSlope == "1/x") harmonic_amplitude = 1/harmonic_number;
+    else if (settings.harmSlope == "1/x2") harmonic_amplitude = 1/harmonic_number/harmonic_number;
+    else if (settings.harmSlope == "flat") harmonic_amplitude = 1;
+
+    // In case the harmonic slope is 1/x^2 and the harmonic type is "odd",
+    // by inverting every other harmonic we generate a nice triangle wave.
+    if (settings.harmSlope =="1/x2" && settings.harmType == "Odd") {
+      harmonic_amplitude = harmonic_amplitude * invert;
+      invert *= -1;
+    }
+
+    // the frequency of each partial is a multiple of the fundamental frequency
+    settings.harmonicFreqs[i] = harmonic_number*settings.fundFreq;
+
+    // The harmonic amplitude is calculated above according to the harmonic
+    // slope setting, taking into account the special case for generating a
+    // triangle.
+    settings.harmonicAmps[i] = harmonic_amplitude;
+
+    // With harmonic type set to "even" we want the fundamental and even
+    // harmonics. To achieve this, we increment the harmonic number by 1 after
+    // the fundamental and by 2 after every other partial.
+    if (i == 0 && settings.harmType == "Even") harmonic_number += 1;
+    else harmonic_number += harmInc;
+  }
+
+  // render original wave -----------------------------------------------------
+
+  // initialize the signal buffer with all zeros (silence)
+  settings.original.fill(0);
+
+  // For the sample at time `n` in the signal buffer `settings.original`, 
+  // generate the sum of all the partials based on the previously calculated
+  // frequency and amplitude values.
+  settings.original.forEach( (_, n, arr) => {
+    for (let harmonic = 0; harmonic < settings.numHarm; harmonic++) {
+
+      let fundamental_frequency = settings.harmonicFreqs[0];
+      let frequency = settings.harmonicFreqs[harmonic];
+
+      // combine overall amplitude adjustment and harmonic amplitude
+      let amplitude = settings.amplitude * settings.harmonicAmps[harmonic];
+
+      // convert phase offset specified in degrees to radians
+      let phase_offset = Math.PI / 180 * settings.phase;
+
+      // adjust phase offset so that harmonics are shifted appropriately
+      let phase_offset_adjusted = phase_offset * frequency / fundamental_frequency;
+
+      let radian_frequency = 2 * Math.PI * frequency;
+      let phase_increment = radian_frequency / WEBAUDIO_MAX_SAMPLERATE;
+      let phase = phase_increment * n + phase_offset;
+
+      // accumulate the amplitude contribution from the current harmonic
+      arr[n] += amplitude * Math.sin( phase );
+    }
+  });
+
+  // apply antialiasing filter if applicable ----------------------------------
+
+  // The antialiasing and reconstruction filters are generated using Fili.js.
+  let firCalculator = new Fili.FirCoeffs();
+  // Fili uses the windowed sinc method to generate FIR lowpass filters.
+  // Like real antialiasing and reconstruction filters, the filters used in the
+  // simulation are not ideal brick wall filters, but approximations.
+
+  // apply antialiasing only if the filter order is set
+  if (settings.antialiasing > 1) { 
+
+    // specify the filter parameters; Fs = sampling rate, Fc = cutoff frequency
+
+    // The cutoff for the antialiasing filter is set to the Nyquist frequency
+    // of the simulated sampling process. The sampling rate of the "sampled"
+    // signal is WEBAUDIO_MAX_SAMPLERATE / the downsampling factor. This is
+    // divided by 2 to get the Nyquist frequency.
+    var filterCoeffs = firCalculator.lowpass(
+        { order: settings.antialiasing
+        , Fs: WEBAUDIO_MAX_SAMPLERATE
+        , Fc: (WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor) / 2
+        });
+
+    // generate the filter
+    var filter = new Fili.FirFilter(filterCoeffs);
+
+    // apply the filter
+    settings.original = settings.original.map( x => filter.singleStep(x) );
+
+    // time shift the signal by half the filter order to compensate for the
+    // delay introduced by the FIR filter
+    settings.original.forEach( (x, i, arr) => arr[i - settings.antialiasing/2] = x );
+  }
+
+  // downsample original wave -------------------------------------------------
+
+  // zero initialize the reconstruction and quantization noise buffers
+  settings.reconstructed.fill(0);
+  settings.quantNoise.fill(0);
+
+  // generate a new signal buffer for the downsampled signal whose size is
+  // initialized according to the currently set downsampling factor
+  settings.downsampled = new Float32Array(p.round(WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor));
+
+  // calculate the maximum integer value representable with the given bit depth
+  let maxInt = p.pow(2, settings.bitDepth) - 1;
+
+  let stepSize = (settings.quantType == "midTread") ? 2/(maxInt-1) : 2/(maxInt);
+
+  // generate the output of the simulated ADC process by "sampling" (actually
+  // just downsampling), and quantizing with dither. During this process, we
+  // also load the buffer for the reconstructed signal with the sampled values;
+  // this allows us to skip an explicit zero-stuffing step later
+
+  settings.downsampled.forEach( (_, n, arr) => {
+
+    // keep only every kth sample where k is the integer downsampling factor
+    let y = settings.original[n * settings.downsamplingFactor];
+
+    // if the bit depth is set to the maximum, we skip quantization and dither
+    if (settings.bitDepth == BIT_DEPTH_MAX) {
+
+      // record the sampled output of the ADC process
+      arr[n] = y;
+
+      // sparsely fill the reconstruction buffer to avoid having to zero-stuff
+      settings.reconstructed[n * settings.downsamplingFactor] = y;
+      return
+    }
+
+    // generate dither noise
+    let dither = (2 * Math.random() - 1) * settings.dither;
+
+    let quantized;
+    // Add dither signal and quantize. Constrain so we dont clip after dither
+    switch(settings.quantType) {
+      case "midTread" :
+        quantized = stepSize*p.floor(p.constrain((y+dither),-1,0.99)/stepSize + 0.5);
+        break;
+      case "midRise" :
+        quantized = stepSize*(p.floor(p.constrain((y+dither),-1,0.99)/stepSize) + 0.5);
+        break;
+    }
+
+    // record the sampled and quantized output of the ADC process
+    arr[n] = quantized;
+
+    // sparsely fill the reconstruction buffer to avoid having to zero-stuff
+    settings.reconstructed[n * settings.downsamplingFactor] = quantized;
+
+    // record the quantization error
+    settings.quantNoise[n] = quantized - y;
+  });
+
+  // render reconstructed wave by low pass filtering the zero stuffed array----
+
+  // specify filter parameters; as before, the cutoff is set to the Nyquist
+  var filterCoeffs = firCalculator.lowpass(
+      { order:  200
+      , Fs: WEBAUDIO_MAX_SAMPLERATE
+      , Fc: (WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor) / 2
+      });
+
+  // generate the filter
+  var filter = new Fili.FirFilter(filterCoeffs);
+
+  // apply the filter
+  settings.reconstructed.forEach( (x, n, arr) => {
+    let y = filter.singleStep(x);
+
+    // To retain the correct amplitude, we must multiply the output of the
+    // filter by the downsampling factor.
+    arr[n] = y * settings.downsamplingFactor;
+  });
+
+  // time shift the signal by half the filter order to compensate for the delay
+  // introduced by the FIR filter
+  settings.reconstructed.forEach( (x, n, arr) => arr[n - 100] = x );
+
+  // render FFTs --------------------------------------------------------------
+  // TODO: apply windows?
+
+  // The FFTs of the signals at the various stages of the process are generated
+  // using fft.js. The call to `realTransform()` performs the FFT, and the call
+  // to `completeSpectrum` fills the upper half of the spectrum, which is
+  // otherwise not calculated since it is a redundant reflection of the lower
+  // half of the spectrum.
+
+  fft.realTransform(settings.originalFreq, settings.original);
+  fft.completeSpectrum(settings.originalFreq);
+
+  fft.realTransform(settings.reconstructedFreq, settings.reconstructed)
+  fft.completeSpectrum(settings.reconstructedFreq);
+
+  fft.realTransform(settings.quantNoiseFreq, settings.quantNoise)
+  fft.completeSpectrum(settings.quantNoiseFreq); 
+
+}}
