@@ -159,6 +159,7 @@ function renderWavesImpl(settings, fft, p) { return () => {
   // apply antialiasing filter if applicable ----------------------------------
 
   // The antialiasing and reconstruction filters are generated using Fili.js.
+  // (https://github.com/markert/fili.js/)
   let firCalculator = new Fili.FirCoeffs();
   // Fili uses the windowed sinc method to generate FIR lowpass filters.
   // Like real antialiasing and reconstruction filters, the filters used in the
@@ -279,10 +280,10 @@ function renderWavesImpl(settings, fft, p) { return () => {
   // TODO: apply windows?
 
   // The FFTs of the signals at the various stages of the process are generated
-  // using fft.js. The call to `realTransform()` performs the FFT, and the call
-  // to `completeSpectrum` fills the upper half of the spectrum, which is
-  // otherwise not calculated since it is a redundant reflection of the lower
-  // half of the spectrum.
+  // using fft.js (https://github.com/indutny/fft.js). The call to
+  // `realTransform()` performs the FFT, and the call to `completeSpectrum`
+  // fills the upper half of the spectrum, which is otherwise not calculated
+  // since it is a redundant reflection of the lower half of the spectrum.
 
   fft.realTransform(settings.originalFreq, settings.original);
   fft.completeSpectrum(settings.originalFreq);
