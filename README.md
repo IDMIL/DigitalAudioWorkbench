@@ -199,7 +199,7 @@ function renderWavesImpl(settings, fft, p) { return () => {
 
   // generate a new signal buffer for the downsampled signal whose size is
   // initialized according to the currently set downsampling factor
-  settings.downsampled = new Float32Array(p.round(WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor));
+  settings.downsampled = new Float32Array(p.round(settings.original.length / settings.downsamplingFactor));
 
   // calculate the maximum integer value representable with the given bit depth
   let maxInt = p.pow(2, settings.bitDepth) - 1;

@@ -10,8 +10,9 @@ var numSliders = sliders.length;
 let panelHeight, panelWidth, sliderWidth, sliderHeight, numColumns;
 resize(1080, 1920);
 
-// set fftSize to the largest power of two that will approximately fill the panel
-let fftSize = p.pow(2, p.round(p.log(panelWidth) / p.log(2)));
+// set display and fftSize to ensure there is enough data to fill the panels when zoomed all the way out
+let fftSize = p.pow(2, p.round(p.log(panelWidth/minFreqZoom) / p.log(2)));
+let displaySignalSize = p.max(fftSize, panelWidth/minTimeZoom) * 1.1; // 1.1 for 10% extra safety margin
 let fft = new FFTJS(fftSize);
 var settings =
     { amplitude : 1.0
@@ -29,10 +30,13 @@ var settings =
     , quantType : "midRise" // type of quantization
     , dither : 0.0 // amplitude of white noise added to signal before quantization
     , antialiasing : 0 // antialiasing filter order
-    , original: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
-    , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4*soundTimeSeconds))
-    , reconstructed: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
-    , quantNoise: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
+    , original: new Float32Array(displaySignalSize)
+    , downsampled: new Float32Array(1) // this gets re-inited when rendering waves
+    , reconstructed: new Float32Array(displaySignalSize)
+    , quantNoise: new Float32Array(displaySignalSize)
+    , original_pb: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
+    , reconstructed_pb: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
+    , quantNoise_pb: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
     , originalFreq : fft.createComplexArray()
     , reconstructedFreq : fft.createComplexArray()
     , quantNoiseFreq : fft.createComplexArray()

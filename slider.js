@@ -247,12 +247,14 @@ class ampZoomSlider extends zoomSlider{
     this.makeSlider(p);
 }
 }
+
+const minTimeZoom = .25;
 class timeZoomSlider extends zoomSlider{
   setup(p,settings){
     this.settings = settings;
     this.propName ="timeZoom";
     this.name = "Time zoom (%)"
-    this.min = .25;
+    this.min = minTimeZoom;
     this.max =  3;
     this.initial = 1.0;
     this.step = .01;
@@ -260,11 +262,13 @@ class timeZoomSlider extends zoomSlider{
 }
 
 }
+
+const minFreqZoom = 0.5;
 class freqZoomSlider extends zoomSlider{
   setup(p,settings){
     this.settings = settings;
     this.propName ="freqZoom";
-    this.min = .5;
+    this.min = minFreqZoom;
     this.max =  3;
     this.initial = 1.0;
     this.step = .01;
