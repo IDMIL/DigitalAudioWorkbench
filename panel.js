@@ -589,10 +589,12 @@ class inputPlusSampledPanel extends Panel {
   drawPanel() {
     this.buffer.background(this.background);
     drawDiscreteSignal(this,this.settings.downsampled)
+    this.buffer.stroke("gray");
     drawSignal(this, this.settings.original);
     drawMidLine(this);
     drawName(this);
     drawSignalAmplitudeTicks(this, this.plotHeight/2, 4);
+    drawSignalBinaryScaling(this, this.plotHeight/2, 16,this.settings);
     drawTimeTicks(this, this.numTimeTicks/this.settings.timeZoom, 1/(this.settings.timeZoom*this.settings.sampleRate));
     this.drawBorder();
   }
