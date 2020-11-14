@@ -80,6 +80,7 @@ maintainers if you have any questions.
 // can be more easily accessed. 
 
 const soundTimeSeconds = 1.5;
+const fadeTimeSeconds = 0.125;
 function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
   // if we are not rendering for playback, we are rendering for simulation
@@ -313,6 +314,24 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
     fft.realTransform(settings.quantNoiseFreq, quantNoise)
     fft.completeSpectrum(settings.quantNoiseFreq); 
   }
+
+  // fade in and out ----------------------------------------------------------
+
+  // Audio output is windowed to prevent pops. The envelope is a simple linear
+  // ramp up at the beginning and linear ramp down at the end.
+
+  if (playback) {
+    let fadeTimeSamps = fadeTimeSeconds * WEBAUDIO_MAX_SAMPLERATE;
+    let fade = (_, n, arr) => {
+      if (n < fadeTimeSamps) arr[n] = (n / fadeTimeSamps) * arr[n];
+      else if (n > arr.length - fadeTimeSamps) 
+        arr[n] = ((arr.length - n) / fadeTimeSamps) * arr[n];
+    };
+    original.forEach(fade);
+    reconstructed.forEach(fade);
+    quantNoise.forEach(fade);
+  }
+
 
 }}
 /*
