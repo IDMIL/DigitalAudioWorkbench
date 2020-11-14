@@ -67,7 +67,7 @@ class freqSlider extends slider{
     this.propName = "fundFreq";
     this.min = 0;
     this.max = this.settings.sampleRate / 4 ;
-    this.initial = 100;
+    this.initial = 440;
     this.step = 1.0;
     this.displayVal = this.initial;
     this.makeSlider(p);
