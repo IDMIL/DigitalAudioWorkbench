@@ -79,7 +79,17 @@ maintainers if you have any questions.
 // simulation from the other implementation details so that this documentation
 // can be more easily accessed. 
 
-function renderWavesImpl(settings, fft, p) { return () => {
+const soundTimeSeconds = 1.5;
+function renderWavesImpl(settings, fft, p) { return (playback = false) => {
+
+  // if we are not rendering for playback, we are rendering for simulation
+  let simulation = !playback; 
+
+  // select the buffer to render to; playback buffer, or simulation buffer
+  var original = playback ? settings.original_pb : settings.original;
+  var downsampled   = playback ? settings.downsampled_pb   : settings.downsampled;
+  var reconstructed = playback ? settings.reconstructed_pb : settings.reconstructed;
+  var quantNoise    = playback ? settings.quantNoise_pb    : settings.quantNoise;
 
   // calculate harmonics ------------------------------------------------------
 
@@ -89,50 +99,55 @@ function renderWavesImpl(settings, fft, p) { return () => {
   // not only by the synthesis process below, but also by several of the graphs
   // used to illustrate the frequency domain content of the signal.
 
-  let harmonic_number = 1; 
-  let harmonic_amplitude = 1; 
-  let invert = 1;
-  let harmInc = (settings.harmType =="Odd" || settings.harmType == "Even") ? 2 : 1;
+  // We only calculate the harmonics for the simulation; it is assumed they will
+  // already have been calculated earlier when rendering for playback
 
-  for (let i = 0; i < settings.numHarm; i++) {
-
-    // the amplitude of each harmonic depends on the harmonic slope setting
-    if (settings.harmSlope == "lin") harmonic_amplitude = 1 - i/settings.numHarm;
-    else if (settings.harmSlope == "1/x") harmonic_amplitude = 1/harmonic_number;
-    else if (settings.harmSlope == "1/x2") harmonic_amplitude = 1/harmonic_number/harmonic_number;
-    else if (settings.harmSlope == "flat") harmonic_amplitude = 1;
-
-    // In case the harmonic slope is 1/x^2 and the harmonic type is "odd",
-    // by inverting every other harmonic we generate a nice triangle wave.
-    if (settings.harmSlope =="1/x2" && settings.harmType == "Odd") {
-      harmonic_amplitude = harmonic_amplitude * invert;
-      invert *= -1;
+  if (simulation) {
+    let harmonic_number = 1; 
+    let harmonic_amplitude = 1; 
+    let invert = 1;
+    let harmInc = (settings.harmType =="Odd" || settings.harmType == "Even") ? 2 : 1;
+  
+    for (let i = 0; simulation && i < settings.numHarm; i++) {
+  
+      // the amplitude of each harmonic depends on the harmonic slope setting
+      if (settings.harmSlope == "lin") harmonic_amplitude = 1 - i/settings.numHarm;
+      else if (settings.harmSlope == "1/x") harmonic_amplitude = 1/harmonic_number;
+      else if (settings.harmSlope == "1/x2") harmonic_amplitude = 1/harmonic_number/harmonic_number;
+      else if (settings.harmSlope == "flat") harmonic_amplitude = 1;
+  
+      // In case the harmonic slope is 1/x^2 and the harmonic type is "odd",
+      // by inverting every other harmonic we generate a nice triangle wave.
+      if (settings.harmSlope =="1/x2" && settings.harmType == "Odd") {
+        harmonic_amplitude = harmonic_amplitude * invert;
+        invert *= -1;
+      }
+  
+      // the frequency of each partial is a multiple of the fundamental frequency
+      settings.harmonicFreqs[i] = harmonic_number*settings.fundFreq;
+  
+      // The harmonic amplitude is calculated above according to the harmonic
+      // slope setting, taking into account the special case for generating a
+      // triangle.
+      settings.harmonicAmps[i] = harmonic_amplitude;
+  
+      // With harmonic type set to "even" we want the fundamental and even
+      // harmonics. To achieve this, we increment the harmonic number by 1 after
+      // the fundamental and by 2 after every other partial.
+      if (i == 0 && settings.harmType == "Even") harmonic_number += 1;
+      else harmonic_number += harmInc;
     }
-
-    // the frequency of each partial is a multiple of the fundamental frequency
-    settings.harmonicFreqs[i] = harmonic_number*settings.fundFreq;
-
-    // The harmonic amplitude is calculated above according to the harmonic
-    // slope setting, taking into account the special case for generating a
-    // triangle.
-    settings.harmonicAmps[i] = harmonic_amplitude;
-
-    // With harmonic type set to "even" we want the fundamental and even
-    // harmonics. To achieve this, we increment the harmonic number by 1 after
-    // the fundamental and by 2 after every other partial.
-    if (i == 0 && settings.harmType == "Even") harmonic_number += 1;
-    else harmonic_number += harmInc;
   }
 
   // render original wave -----------------------------------------------------
 
   // initialize the signal buffer with all zeros (silence)
-  settings.original.fill(0);
+  original.fill(0);
 
-  // For the sample at time `n` in the signal buffer `settings.original`, 
+  // For the sample at time `n` in the signal buffer `original`, 
   // generate the sum of all the partials based on the previously calculated
   // frequency and amplitude values.
-  settings.original.forEach( (_, n, arr) => {
+  original.forEach( (_, n, arr) => {
     for (let harmonic = 0; harmonic < settings.numHarm; harmonic++) {
 
       let fundamental_frequency = settings.harmonicFreqs[0];
@@ -184,22 +199,22 @@ function renderWavesImpl(settings, fft, p) { return () => {
     var filter = new Fili.FirFilter(filterCoeffs);
 
     // apply the filter
-    settings.original = settings.original.map( x => filter.singleStep(x) );
+    original = original.map( x => filter.singleStep(x) );
 
     // time shift the signal by half the filter order to compensate for the
     // delay introduced by the FIR filter
-    settings.original.forEach( (x, i, arr) => arr[i - settings.antialiasing/2] = x );
+    original.forEach( (x, i, arr) => arr[i - settings.antialiasing/2] = x );
   }
 
   // downsample original wave -------------------------------------------------
 
   // zero initialize the reconstruction and quantization noise buffers
-  settings.reconstructed.fill(0);
-  settings.quantNoise.fill(0);
+  reconstructed.fill(0);
+  quantNoise.fill(0);
 
   // generate a new signal buffer for the downsampled signal whose size is
   // initialized according to the currently set downsampling factor
-  settings.downsampled = new Float32Array(p.round(settings.original.length / settings.downsamplingFactor));
+  downsampled = new Float32Array(p.round(settings.original.length / settings.downsamplingFactor));
 
   // calculate the maximum integer value representable with the given bit depth
   let maxInt = p.pow(2, settings.bitDepth) - 1;
@@ -211,10 +226,10 @@ function renderWavesImpl(settings, fft, p) { return () => {
   // also load the buffer for the reconstructed signal with the sampled values;
   // this allows us to skip an explicit zero-stuffing step later
 
-  settings.downsampled.forEach( (_, n, arr) => {
+  downsampled.forEach( (_, n, arr) => {
 
     // keep only every kth sample where k is the integer downsampling factor
-    let y = settings.original[n * settings.downsamplingFactor];
+    let y = original[n * settings.downsamplingFactor];
 
     // if the bit depth is set to the maximum, we skip quantization and dither
     if (settings.bitDepth == BIT_DEPTH_MAX) {
@@ -223,7 +238,7 @@ function renderWavesImpl(settings, fft, p) { return () => {
       arr[n] = y;
 
       // sparsely fill the reconstruction buffer to avoid having to zero-stuff
-      settings.reconstructed[n * settings.downsamplingFactor] = y;
+      reconstructed[n * settings.downsamplingFactor] = y;
       return
     }
 
@@ -245,10 +260,10 @@ function renderWavesImpl(settings, fft, p) { return () => {
     arr[n] = quantized;
 
     // sparsely fill the reconstruction buffer to avoid having to zero-stuff
-    settings.reconstructed[n * settings.downsamplingFactor] = quantized;
+    reconstructed[n * settings.downsamplingFactor] = quantized;
 
     // record the quantization error
-    settings.quantNoise[n] = quantized - y;
+    quantNoise[n] = quantized - y;
   });
 
   // render reconstructed wave by low pass filtering the zero stuffed array----
@@ -264,7 +279,7 @@ function renderWavesImpl(settings, fft, p) { return () => {
   var filter = new Fili.FirFilter(filterCoeffs);
 
   // apply the filter
-  settings.reconstructed.forEach( (x, n, arr) => {
+  reconstructed.forEach( (x, n, arr) => {
     let y = filter.singleStep(x);
 
     // To retain the correct amplitude, we must multiply the output of the
@@ -274,7 +289,7 @@ function renderWavesImpl(settings, fft, p) { return () => {
 
   // time shift the signal by half the filter order to compensate for the delay
   // introduced by the FIR filter
-  settings.reconstructed.forEach( (x, n, arr) => arr[n - 100] = x );
+  reconstructed.forEach( (x, n, arr) => arr[n - 100] = x );
 
   // render FFTs --------------------------------------------------------------
   // TODO: apply windows?
@@ -285,14 +300,16 @@ function renderWavesImpl(settings, fft, p) { return () => {
   // fills the upper half of the spectrum, which is otherwise not calculated
   // since it is a redundant reflection of the lower half of the spectrum.
 
-  fft.realTransform(settings.originalFreq, settings.original);
-  fft.completeSpectrum(settings.originalFreq);
+  if (simulation) {
+    fft.realTransform(settings.originalFreq, original);
+    fft.completeSpectrum(settings.originalFreq);
 
-  fft.realTransform(settings.reconstructedFreq, settings.reconstructed)
-  fft.completeSpectrum(settings.reconstructedFreq);
+    fft.realTransform(settings.reconstructedFreq, reconstructed)
+    fft.completeSpectrum(settings.reconstructedFreq);
 
-  fft.realTransform(settings.quantNoiseFreq, settings.quantNoise)
-  fft.completeSpectrum(settings.quantNoiseFreq); 
+    fft.realTransform(settings.quantNoiseFreq, quantNoise)
+    fft.completeSpectrum(settings.quantNoiseFreq); 
+  }
 
 }}
 /*
