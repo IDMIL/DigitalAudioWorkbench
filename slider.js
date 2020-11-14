@@ -189,7 +189,7 @@ class amplitudeSlider extends slider {
     this.propName ="amplitude";
     this.name = "Amplitude";
     this.min = 0.0;
-    this.max =  1.0;
+    this.max =  5;
     this.initial = 1.0;
     this.step = 0.01;
     this.makeSlider(p);
