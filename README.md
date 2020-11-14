@@ -199,7 +199,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
     var filter = new Fili.FirFilter(filterCoeffs);
 
     // apply the filter
-    original = original.map( x => filter.singleStep(x) );
+    original.forEach( (x, n, y) => y[n] = filter.singleStep(x) );
 
     // time shift the signal by half the filter order to compensate for the
     // delay introduced by the FIR filter
