@@ -1,3 +1,4 @@
+// Canned documentation blurbs
 //Panel class. should be extended with a drawPanel method
 const log10 = Math.log(10);
 class Panel {
@@ -11,6 +12,8 @@ class Panel {
     this.tickTextSize = 9;
     this.numTimeTicks = 8;
     this.numFreqTicks = 4;
+    this.name = "Base Panel Class";
+    this.description = "This is the base class that other panels inherit from. If you  can see this and you are not reading the source code right now there is probably a problem. Please open an issue or otherwise contact the project maintainers."
   }
 
   setup(p, height, width, settings) {
@@ -95,6 +98,7 @@ function linToDB(a, a_0 = 1)
   return 20 * Math.log(a / a_0) / log10;
 }
 
+const midline_doc='The horizontal middle line represents an amplitude of zero. ';
 function drawMidLine(panel) {
   // panel.buffer.drawingContext.setLineDash([5,5]);
   panel.buffer.stroke("gray");
@@ -103,6 +107,7 @@ function drawMidLine(panel) {
   // panel.buffer.drawingContext.setLineDash([]);
 }
 
+const time_signal_doc='Because this signal approximates a continuous analog signal in our simulation, the signal value is drawn with a simple interpolation scheme. There are currently bugs with this interpolation when zooming in (time zoom > 100%). In addition, visual aliasing may occur when viewing high frequency signals due to the limited number of pixels on the screen acting as a kind of spatial sampling process. This may appear as amplitude modulation in the plot that is not actually present in the signal. Finally, note that the amplitude of the signal is clipped to the size of the panel viewport. This visual clipping happens regardless of whether the signal itself actually exhibits clipping. ';
 function drawSignal(panel, signal, zoom = 1)
 {
   let pixel_max = panel.plotHeight/2;
@@ -120,6 +125,7 @@ function drawSignal(panel, signal, zoom = 1)
   panel.buffer.endShape();
 }
 
+const lollipop_doc='Because this signal represents the discrete time output of the analog-to-digital conversion process, it is drawn with a lollipop plot where each stem represents a single sample. ';
 function drawDiscreteSignal(panel,signal){
   let gain = panel.plotHeight/2;
   let visibleSamples = Math.floor(panel.plotWidth / panel.settings.downsamplingFactor/panel.settings.timeZoom+1);
@@ -168,6 +174,7 @@ function drawVerticalTick(panel, text, x, tick_length = 5) {
   panel.buffer.line(x, panel.plotBottom, x, panel.plotBottom + tick_length);
 }
 
+const amp_ticks_doc='Amplitude is plotted on the y-axis. Ticks on the left label the linear amplitude where +/- 1.0 is equal to the maximum amplitude. ';
 function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
   for (let i = 1; i <= num_ticks; ++i) {
     let tick_amp_pixels = i * pixel_max / num_ticks/panel.settings.ampZoom;
@@ -181,6 +188,8 @@ function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
   drawHorizontalTick(panel, '0', panel.halfh, 5, "right");
 
 }
+
+const bin_amp_ticks_doc='Ticks on the right side of this plot label the numerical value assigned to a given amplitude by the simulated analog-to-digital conversion. The labels are written in hexadecimal unless the bit depth is 7 bits or lower, in which case the labels are in binary. ';
 function drawSignalBinaryScaling(panel,pixel_max, num_ticks, settings){
   let maxInt = Math.pow(2, settings.bitDepth)-1;
   let stepSize = (settings.quantType == "midTread")?  2/(maxInt-1) : 2/(maxInt);
@@ -204,7 +213,6 @@ function drawSignalBinaryScaling(panel,pixel_max, num_ticks, settings){
         let y = panel.halfh - pixel_amp;
 
         if (y >= panel.plotTop-.1 && y <=panel.plotBottom+.1) {
-        // console.log(val,tick)
         if (maxInt<255){
           //if under 8 bits, we can write out binary values
           drawHorizontalTick(panel, (Math.round(tick*tickScale)).toString(2).padStart(settings.bitDepth,"0"), y,5,"left");
@@ -223,6 +231,7 @@ function drawSignalBinaryScaling(panel,pixel_max, num_ticks, settings){
 
 }
 
+const time_ticks_doc='Time is plotted on the x-axis. ';
 function drawTimeTicks(panel, num_ticks, seconds_per_pixel) {
   let tick_jump = Math.floor((panel.plotWidth) / num_ticks);
   for (let i = 0; i < num_ticks; ++i) {
@@ -232,6 +241,7 @@ function drawTimeTicks(panel, num_ticks, seconds_per_pixel) {
   }
 }
 
+const freq_ticks_doc='Frequency is plotted on the x-axis. ';
 function drawFreqTicks(panel, num_ticks, pixels_per_hz) {
   let hz_per_pixel = 1/pixels_per_hz;
   let tick_jump = Math.floor((panel.plotWidth) / num_ticks);
@@ -260,7 +270,12 @@ function getColor(num){
 }
 
 class inputSigPanel extends Panel {
-  constructor(){super(); this.name="Input Signal Time Domain"}
+  constructor(){
+    super(); 
+    this.name="Input Signal Time Domain";
+    this.description='This is a straightforward time domain plot of the input signal before "sampling", quantization, and "reconstruction". This signal corresponds with the authentic "analog" input to the simulated analog-to-digital conversion process. ' 
+      + time_signal_doc + time_ticks_doc + amp_ticks_doc + midline_doc;
+  }
 
   drawPanel(){
     this.buffer.background(this.background);
@@ -274,7 +289,12 @@ class inputSigPanel extends Panel {
 }
 
 class reconstructedSigPanel extends Panel {
-  constructor(){super(); this.name="Reconstructed Signa Time Domainl";};
+  constructor(){
+    super(); 
+    this.name="Reconstructed Signal Time Domain";
+    this.description='This is a straightforward time domain plot of the signal output from the simulated digital-to-analog conversion process. '
+      + time_signal_doc + time_ticks_doc + amp_ticks_doc + midline_doc;
+  }
 
   drawPanel(){
     this.buffer.background(this.background);
@@ -287,8 +307,15 @@ class reconstructedSigPanel extends Panel {
   }
 }
 
+const analytic_frequency_doc='Spikes are drawn at the appropriate frequency and amplitude based on the analytic definition of the signal determined by the frequency, number of harmonics, and harmonic amplitude scaling settings. As such, this plot should accurately reflect the frequency content of the signal without any influence of windowing or other considerations that would affect a discrete time fourier transform. ';
 class inputSigFreqPanel extends freqPanel {
-  constructor(){super(); this.name="Input Signal Frequency Domain";}
+  constructor(){
+    super(); 
+    this.name="Input Signal Frequency Domain";
+    this.description='This is a frequency domain representation of the simulated "continuous time" input signal. '
+        + analytic_frequency_doc + freq_ticks_doc + passband_doc;
+  }
+
   drawPanel(){
     this.buffer.background(this.background);
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
@@ -321,6 +348,7 @@ function magnitude(real, cplx) {
   return Math.sqrt(real * real + cplx * cplx);
 }
 
+const fft_doc='Because the FFT is used here, there are visual artifacts introduced by the windowing process, and the frequency resolution of the plot is inherently limited by the size of the FFT. Note that the resolution is not increased when zooming in with the frequency zoom slider. ';
 function drawFFT(panel, fft) {
   let gain = panel.plotHeight;
   let offset = 100;
@@ -351,7 +379,11 @@ function drawFFT(panel, fft) {
 }
 
 class inputSigFFTPanel extends freqPanel {
-  constructor(){super(); this.name = "Input Signal FFT";}
+  constructor(){
+    super(); 
+    this.name = "Input Signal FFT";
+    this.description='This plot shows the FFT of the input signal. ' + fft_doc + 'This plot clearly reveals one of the compromises inherent in the simulation; since everything must be represented by the computer, the ideal continuous time input signal must be approximated by a discrete time signal with a sufficiently high sampling rate. ';
+  }
 
   drawPanel() {
     drawFFT(this, this.settings.originalFreq);
@@ -359,7 +391,11 @@ class inputSigFFTPanel extends freqPanel {
 }
 
 class sampledSigFFTPanel extends freqPanel {
-  constructor(){super(); this.name="Reconstructed Signal FFT";}
+  constructor(){
+    super();
+    this.name="Reconstructed Signal FFT";
+    this.description='This plot shows the FFT of the signal output by the simulated digital-to-analog conversion. ' + fft_doc + 'This plot clearly reveals one of the compromises inherent in the simulation; since everything must be represented by the computer, the ideal continuous time output signal must be approximated by a discrete time signal with a sufficiently high sampling rate. ';
+  }
   drawPanel() {
     drawFFT(this, this.settings.reconstructedFreq);
   }
@@ -370,7 +406,9 @@ class impulsePanel extends Panel {
     super()
     this.strokeWeight=1;
     this.ellipseSize=5;
-    this.name ="Sampling Signal Time Domain";
+    this.name = "Sampling Signal Time Domain";
+    this.description = 'This is a time domain plot of the dirac comb used to sample the input signal. Before quantization, the input signal is multiplied with this dirac comb; this is the "sampling" part of the analog-to-digital conversion process. '
+        + time_ticks_doc;
   }
   drawPanel(){
     let base = this.plotBottom;
@@ -395,7 +433,11 @@ class impulsePanel extends Panel {
 }
 
 class impulseFreqPanel extends freqPanel {
-  constructor(){super(); this.name="Sampling Signal Frequency Domain";}
+  constructor(){
+    super();
+    this.name="Sampling Signal Frequency Domain";
+    this.description = 'This is a frequency domain plot of the dirac comb used to sample the input signal. The sampling process causes the frequency content of the input signal to be convolved with the frequency response of the dirac comb, resulting in periodic images of the input signal frequency at mulitples of the sampling frequency. ';
+  }
   drawPanel(){
     this.bufferInit();
     let base = this.plotBottom;
@@ -423,6 +465,7 @@ class sampledInputPanel extends Panel{
     this.strokeWeight=1;
     this.ellipseSize=5;
     this.name="Sampled Signal Time Domain";
+    this.description = lollipop_doc + time_ticks_doc + amp_ticks_doc + bin_amp_ticks_doc + midline_doc;
   }
 
   drawPanel(){
@@ -438,6 +481,7 @@ class sampledInputPanel extends Panel{
   }
 }
 
+const passband_doc='The frequency range below the nyquist frequency is highlighted by a light grey background. ';
 function drawPassBand(panel) {
   let sampleRate = panel.settings.sampleRate/panel.settings.downsamplingFactor;
   let pixels_per_hz = panel.plotWidth / panel.settings.maxVisibleFrequency;
@@ -451,7 +495,12 @@ function drawPassBand(panel) {
 }
 
 class sampledInputFreqPanel extends freqPanel{
-  constructor(){ super(); this.name = "Sampled Signal Frequency Domain";}
+  constructor(){ 
+    super(); 
+    this.name = "Sampled Signal Frequency Domain";
+    this.description='This is a frequency domain representation of the output from the simulated analog-to-digital conversion process. ' + analytic_frequency_doc + 'Notice that periodic images of the input signal are present at multiples of the sampling frequency. These are later removed by the digital-to-analog conversion process, leaving only the frequency content below the Nyquist frequency (whether that content was present in the original signal or introduced by one of the period aliases at multiples of the sampling frequency, i.e. aliasing). '
+      + freq_ticks_doc + passband_doc;
+  }
 
   drawPanel(){
     this.buffer.background(this.background);
@@ -462,8 +511,6 @@ class sampledInputFreqPanel extends freqPanel{
 
     let numPeaks = this.settings.numHarm; // This makes sure we always draw the images even if we zoom in and the associated peak is not visible.
     // This works because any peak offscreen is just not rendered.
-    let numPeaks//Math.ceil(this.settings.maxVisibleFrequency* this.settings.freqZoom / sampleRate);
-    console.log(this.settings.maxVisibleFrequency, numPeaks)
     drawPassBand(this);
 
     for (let peak = 0; peak <= numPeaks; peak++) {
@@ -503,6 +550,8 @@ class quantNoisePanel extends Panel{
     this.strokeWeight=1;
     this.ellipseSize=5;
     this.name ="Quantization Noise Time Domain";
+    this.description = 'This plot shows the difference between the sampled signal before and after quantization, representing the error introduced by the quantization process. '
+        + time_ticks_doc + amp_ticks_doc + midline_doc;
   }
   drawPanel(){
     this.buffer.background(this.background);
@@ -517,8 +566,10 @@ class quantNoisePanel extends Panel{
 
 class quantNoiseFreqPanel extends Panel{
   constructor(){
-    super()
+    super();
     this.name ="Quantization Noise FFT";
+    this.description = 'This plot shows the frequency content of the error introduced by the quantization process. '
+        + fft_doc + freq_ticks_doc + passband_doc;
     this.ellipseSize=2;
     this.xAxis = "Frequency";
   }
@@ -531,17 +582,19 @@ class inputPlusSampledPanel extends Panel {
   constructor() {
     super();
     this.name = "Input with Sampled Signal Time Domain";
+    this.description = 'This plot shows the input signal with the sampled signal overlayed on top. See the documentation for the input signal time domain and sampled signal time domain for more information. ';
     this.ellipseSize = 5;
-
   }
 
   drawPanel() {
     this.buffer.background(this.background);
     drawDiscreteSignal(this,this.settings.downsampled)
+    this.buffer.stroke("gray");
     drawSignal(this, this.settings.original);
     drawMidLine(this);
     drawName(this);
     drawSignalAmplitudeTicks(this, this.plotHeight/2, 4);
+    drawSignalBinaryScaling(this, this.plotHeight/2, 16,this.settings);
     drawTimeTicks(this, this.numTimeTicks/this.settings.timeZoom, 1/(this.settings.timeZoom*this.settings.sampleRate));
     this.drawBorder();
   }
@@ -551,6 +604,7 @@ class allSignalsPanel extends Panel {
   constructor() {
     super();
     this.name = "Input (solid), Sampled (lollipop), Reconstructed (dotted), Time Domain";
+    this.description = 'This plot combines the input signal, sampled signal, and reconstructed signal time domain plots. See the documentation for each individual plot for more information. ';
     this.ellipseSize = 5;
 
   }

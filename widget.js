@@ -1,7 +1,6 @@
 const BIT_DEPTH_MAX = 16;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
-const soundTimeSeconds = .5;
 const MAX_HARMONICS = 20;
 function new_widget(panels, sliders) { const sketch = p => {
 
@@ -10,10 +9,10 @@ var numSliders = sliders.length;
 let panelHeight, panelWidth, sliderWidth, sliderHeight, numColumns;
 resize(1080, 1920);
 
-// set fftSize to the largest power of two that will approximately fill the panel
-let fftSize = p.pow(2, p.round(p.log(panelWidth) / p.log(2)));
+// set display and fftSize to ensure there is enough data to fill the panels when zoomed all the way out
+let fftSize = p.pow(2, p.round(p.log(panelWidth/minFreqZoom) / p.log(2)));
+let displaySignalSize = p.max(fftSize, panelWidth/minTimeZoom) * 1.1; // 1.1 for 10% extra safety margin
 let fft = new FFTJS(fftSize);
-let firCalculator = new Fili.FirCoeffs();
 var settings =
     { amplitude : 1.0
     , fundFreq : 1250 // input signal fundamental freq
@@ -30,10 +29,13 @@ var settings =
     , quantType : "midRise" // type of quantization
     , dither : 0.0 // amplitude of white noise added to signal before quantization
     , antialiasing : 0 // antialiasing filter order
-    , original: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
-    , downsampled: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE/4*soundTimeSeconds))
-    , reconstructed: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
-    , quantNoise: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
+    , original: new Float32Array(displaySignalSize)
+    , downsampled: new Float32Array(1) // this gets re-inited when rendering waves
+    , reconstructed: new Float32Array(displaySignalSize)
+    , quantNoise: new Float32Array(displaySignalSize)
+    , original_pb: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
+    , reconstructed_pb: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
+    , quantNoise_pb: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
     , originalFreq : fft.createComplexArray()
     , reconstructedFreq : fft.createComplexArray()
     , quantNoiseFreq : fft.createComplexArray()
@@ -111,130 +113,28 @@ function buttonSetup() {
   originalButton = p.createButton("play original");
   originalButton.position(p.width/2 + 10, p.height - p.height / numPanels + 90);
   originalButton.mousePressed( () => {
+    renderWaves(true);
     if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.original, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
+    playWave(settings.original_pb, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
 
   reconstructedButton = p.createButton("play reconstructed");
   reconstructedButton.position(originalButton.x + originalButton.width * 1.1, originalButton.y);
   reconstructedButton.mousePressed( () => {
+    renderWaves(true);
     if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.reconstructed, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
+    playWave(settings.reconstructed_pb, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
   quantNoiseButton = p.createButton("play quantization noise");
   quantNoiseButton.position(reconstructedButton.x + reconstructedButton.width * 1.1, reconstructedButton.y);
   quantNoiseButton.mousePressed( () => {
+    renderWaves(true);
     if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.quantNoise, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
+    playWave(settings.quantNoise_pb, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
 }
 
-function calcHarmonics(){
-  let harmInc = 1; harmAmp =1; harmScale =1; harmonic = 1; let inv= 1;
-  if (settings.harmType =="Odd" || settings.harmType == "Even"){ harmInc=2;}
-  while (harmonic<=settings.numHarm){
-    if (settings.harmSlope == "lin") {  harmAmp = 1 - (harmonic-1)/(settings.numHarm)}
-     else if (settings.harmSlope == "1/x") {harmAmp = 1/harmScale}
-     else if (settings.harmSlope == "1/x2") {harmAmp = 1/harmScale/harmScale}
-     else if (settings.harmSlope == "flat") {harmAmp = 1};
-     if (settings.harmSlope =="1/x2" && settings.harmType == "Odd"){
-       harmAmp = harmAmp *inv;
-       inv *= -1;
-     }
-    settings.harmonicFreqs[harmonic-1] = harmScale*settings.fundFreq;
-    settings.harmonicAmps[harmonic-1] = harmAmp;
-
-    (harmonic ==1 && settings.harmType != "Odd")? harmScale++ : harmScale +=harmInc;
-
-    harmonic++;
-  }
-}
-function renderWaves() {
-  // render original wave
-    calcHarmonics();
-  settings.original.fill(0);
-
-  settings.original.forEach( (_, i, arr) => {
-    let harmonic =1;
-    //Always calculate number of harmonics. omegaScale is the frequency scalar for each
-    while (harmonic<=settings.numHarm){
-      let freq = 2*Math.PI*settings.harmonicFreqs[harmonic-1]/WEBAUDIO_MAX_SAMPLERATE;
-      let amp = settings.harmonicAmps[harmonic-1];
-      //scale to radians, adjust harmonic phases
-      let phase = Math.PI/180*settings.phase*settings.harmonicFreqs[harmonic-1]/settings.harmonicFreqs[0];
-      arr[i] += settings.amplitude * Math.sin(freq * i + phase )*amp;
-      harmonic++;
-  }
-});
-
-  // render original wave FFT
-  // TODO: window the input
-  fft.realTransform(settings.originalFreq, settings.original);
-  fft.completeSpectrum(settings.originalFreq);
-
-
-  // apply antialiasing filter if applicable
-  var original = settings.original;
-  if (settings.antialiasing > 1) {
-    var filterCoeffs = firCalculator.lowpass(
-        { order: settings.antialiasing
-        , Fs: WEBAUDIO_MAX_SAMPLERATE
-        , Fc: (WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor) / 2
-        });
-    var filter = new Fili.FirFilter(filterCoeffs);
-    original = settings.original.map( x => filter.singleStep(x) );
-    original.forEach( (x, i, arr) => arr[i - settings.antialiasing/2] = x );
-  }
-
-  // downsample original wave
-  settings.reconstructed.fill(0);
-  settings.quantNoise.fill(0);
-  settings.downsampled = new Float32Array(p.round(WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor));
-  let maxInt = p.pow(2, settings.bitDepth)-1;
-  let stepSize = (settings.quantType == "midTread")?  2/(maxInt-1) : 2/(maxInt);
-
-  settings.downsampled.forEach( (_, i, arr) => {
-    let y = original[i * settings.downsamplingFactor];
-    if (settings.bitDepth == BIT_DEPTH_MAX) {
-      arr[i] = y;
-      settings.reconstructed[i * settings.downsamplingFactor] = y;
-      return
-    }
-    let dither = (2 * Math.random() - 1) * settings.dither;
-
-    let quantized;
-    //Add dither signal and quantized. constrain so we dont clip after dither
-    switch(settings.quantType){
-      case "midTread" :
-         quantized = stepSize*p.floor(p.constrain((y+dither),-1,.99)/stepSize + 0.5);
-        break;
-        case "midRise" :
-           quantized = stepSize*(p.floor(p.constrain((y+dither),-1,.99)/stepSize) + 0.5);
-          break;
-    }
-    arr[i] = quantized;
-    settings.reconstructed[i * settings.downsamplingFactor] = quantized;
-    settings.quantNoise[i] = quantized -y;
-  });
-
-  // render reconstructed wave low pass filtering the zero stuffed array
-  var filterCoeffs = firCalculator.lowpass(
-      { order:  200
-      , Fs: WEBAUDIO_MAX_SAMPLERATE
-      , Fc: (WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor) / 2
-      });
-  var filter = new Fili.FirFilter(filterCoeffs);
-  settings.reconstructed.forEach( (x, i, arr) => {
-    let y = filter.singleStep(x);
-    arr[i] = y * settings.downsamplingFactor;
-  });
-  settings.reconstructed.forEach( (x, i, arr) => arr[i - 100] = x );
-
-  fft.realTransform(settings.reconstructedFreq, settings.reconstructed)
-  fft.completeSpectrum(settings.reconstructedFreq);
-  fft.realTransform(settings.quantNoiseFreq, settings.quantNoise)
-  fft.completeSpectrum(settings.quantNoiseFreq);
-}
+var renderWaves = renderWavesImpl(settings, fft, p);
 
 function playWave(wave, sampleRate, audioctx) {
   var buffer = audioctx.createBuffer(1, wave.length, sampleRate);
