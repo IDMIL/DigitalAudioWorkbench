@@ -87,7 +87,6 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
   // select the buffer to render to; playback buffer, or simulation buffer
   var original = playback ? settings.original_pb : settings.original;
-  var downsampled   = playback ? settings.downsampled_pb   : settings.downsampled;
   var reconstructed = playback ? settings.reconstructed_pb : settings.reconstructed;
   var quantNoise    = playback ? settings.quantNoise_pb    : settings.quantNoise;
 
@@ -214,7 +213,11 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
   // generate a new signal buffer for the downsampled signal whose size is
   // initialized according to the currently set downsampling factor
-  downsampled = new Float32Array(p.round(original.length / settings.downsamplingFactor));
+  if (playback) {
+    settings.downsampled_pb = new Float32Array(p.round(original.length / settings.downsamplingFactor));
+  } else
+    settings.downsampled = new Float32Array(p.round(original.length / settings.downsamplingFactor));
+  var downsampled = playback ? settings.downsampled_pb : settings.downsampled;
 
   // calculate the maximum integer value representable with the given bit depth
   let maxInt = p.pow(2, settings.bitDepth) - 1;
