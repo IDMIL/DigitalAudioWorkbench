@@ -1,7 +1,7 @@
 /*
 <!-- note to maintainers:
 
-This document serves as both the README for the project as well as the source
+This document serves as both the README for the project and as the source
 code for the heart of the simulation. This is done since certain aspects of the
 documentation of the project can only be adequately precise by including source
 code inline; rather than duplicate the code across the documentation page and
