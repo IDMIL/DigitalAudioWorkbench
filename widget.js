@@ -1,7 +1,6 @@
 const BIT_DEPTH_MAX = 16;
 const WEBAUDIO_MAX_SAMPLERATE = 96000;
 const NUM_COLUMNS = 2;
-const soundTimeSeconds = .5;
 const MAX_HARMONICS = 20;
 function new_widget(panels, sliders) { const sketch = p => {
 
@@ -114,21 +113,24 @@ function buttonSetup() {
   originalButton = p.createButton("play original");
   originalButton.position(p.width/2 + 10, p.height - p.height / numPanels + 90);
   originalButton.mousePressed( () => {
+    renderWaves(true);
     if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.original, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
+    playWave(settings.original_pb, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
 
   reconstructedButton = p.createButton("play reconstructed");
   reconstructedButton.position(originalButton.x + originalButton.width * 1.1, originalButton.y);
   reconstructedButton.mousePressed( () => {
+    renderWaves(true);
     if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.reconstructed, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
+    playWave(settings.reconstructed_pb, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
   quantNoiseButton = p.createButton("play quantization noise");
   quantNoiseButton.position(reconstructedButton.x + reconstructedButton.width * 1.1, reconstructedButton.y);
   quantNoiseButton.mousePressed( () => {
+    renderWaves(true);
     if (!settings.snd) settings.snd = new (window.AudioContext || window.webkitAudioContext)();
-    playWave(settings.quantNoise, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
+    playWave(settings.quantNoise_pb, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
 }
 
