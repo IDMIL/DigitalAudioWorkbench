@@ -152,9 +152,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
       let fundamental_frequency = settings.harmonicFreqs[0];
       let frequency = settings.harmonicFreqs[harmonic];
-
-      // combine overall amplitude adjustment and harmonic amplitude
-      let amplitude = settings.amplitude * settings.harmonicAmps[harmonic];
+      let amplitude = settings.harmonicAmps[harmonic];
 
       // convert phase offset specified in degrees to radians
       let phase_offset = Math.PI / 180 * settings.phase;
@@ -170,6 +168,13 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
       arr[n] += amplitude * Math.sin( phase );
     }
   });
+
+  // linearly search for the maximum amplitude value (easy but not efficient)
+  let max = 0;
+  original.forEach( (x, n, y) => {if (x > max) max = x} );
+
+  // normlize and apply amplitude scaling
+  original.forEach( (x, n, y) => y[n] = settings.amplitude * x / max );
 
   // apply antialiasing filter if applicable ----------------------------------
 
@@ -234,6 +239,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
     // keep only every kth sample where k is the integer downsampling factor
     let y = original[n * settings.downsamplingFactor];
+    y = y > 1.0 ? 1.0 : y < -1.0 ? -1.0 : y; // apply clipping
 
     // if the bit depth is set to the maximum, we skip quantization and dither
     if (settings.bitDepth == BIT_DEPTH_MAX) {
@@ -260,8 +266,9 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
         break;
     }
 
-    // record the sampled and quantized output of the ADC process
+    // record the sampled and quantized output of the ADC process with clipping
     arr[n] = quantized;
+
 
     // sparsely fill the reconstruction buffer to avoid having to zero-stuff
     reconstructed[n * settings.downsamplingFactor] = quantized;
@@ -315,17 +322,22 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
     fft.completeSpectrum(settings.quantNoiseFreq); 
   }
 
-  // fade in and out ----------------------------------------------------------
+  // fade in and out and suppress clipping distortions ------------------------
 
   // Audio output is windowed to prevent pops. The envelope is a simple linear
-  // ramp up at the beginning and linear ramp down at the end.
+  // ramp up at the beginning and linear ramp down at the end. While applying
+  // the window we also ensure that the rendering of the input signal is not
+  // clipped, and the output signal is only clipped if it should be based on
+  // the simulation.
 
   if (playback) {
+    let normalize = settings.amplitude > 1.0 ? settings.amplitude : 1.0;
     let fadeTimeSamps = fadeTimeSeconds * WEBAUDIO_MAX_SAMPLERATE;
     let fade = (_, n, arr) => {
-      if (n < fadeTimeSamps) arr[n] = (n / fadeTimeSamps) * arr[n];
+      if (n < fadeTimeSamps) arr[n] = (n / fadeTimeSamps) * arr[n] / normalize;
       else if (n > arr.length - fadeTimeSamps) 
-        arr[n] = ((arr.length - n) / fadeTimeSamps) * arr[n];
+        arr[n] = ((arr.length - n) / fadeTimeSamps) * arr[n] / normalize;
+      else arr[n] = arr[n] / normalize;
     };
     original.forEach(fade);
     reconstructed.forEach(fade);
