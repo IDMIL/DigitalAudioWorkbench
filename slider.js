@@ -7,6 +7,7 @@ class slider{
   setup(p, settings){
     // should be overridden to set up the slider
   }
+
   updateValue(p){
   this.settings[this.propName] = this.slider.value();
   this.displayVal = this.calcDisplayVal();
@@ -14,18 +15,24 @@ class slider{
   this.textLabel.html(this.name+': ');
   }
 
+  onEdit(){
+    this.updateValue();
+    this.settings.render();
+    this.settings.p5.draw();
+  }
+
   makeSlider(p){
     this.slider = p.createSlider(this.min, this.max, this.initial, this.step);
     this.textLabel = p.createP();
-    this.slider.input(p.draw);
-    this.slider.mousePressed(p.draw);
-    this.slider.mouseReleased(p.draw);
+    this.slider.input(this.onEdit.bind(this));
+    this.slider.mousePressed(this.onEdit.bind(this));
+    this.slider.mouseReleased(this.onEdit.bind(this));
     this.textBox = p.createInput();
     this.textBox.size(300);
     this.button = p.createButton("Update");
     // this.button.size(200)
     this.button.mousePressed(this.buttonPressed.bind(this));
-    this.button.mouseReleased(p.draw);
+    this.button.mouseReleased(this.onEdit.bind(this));
   }
 
   resize(x, y, w, p){

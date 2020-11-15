@@ -44,13 +44,27 @@ var settings =
     , freqZoom : 1.0 //X axis zoom for frequency panels
     , ampZoom : 1.0 // Y axis zoom for all panels
     , timeZoom: 1.0 // X axis zoom for signal panels
+
+    , p5: undefined
+    , render : undefined
+    , play : undefined
     };
 
+p.settings = settings;
+
+var renderWaves = renderWavesImpl(settings, fft, p);
+
 p.setup = function () {
+  settings.p5 = p;
+  settings.render = renderWaves;
+  settings.play = playWave;
+
   p.createCanvas(p.windowWidth, p.windowHeight);
   p.textAlign(p.CENTER);
   panels.forEach(panel => panel.setup(p, panelHeight, panelWidth, settings));
   sliders.forEach(slider => slider.setup(p, settings));
+  sliders.forEach(slider => slider.updateValue(p));
+  renderWaves();
   buttonSetup();
   p.windowResized();
   p.noLoop();
@@ -58,12 +72,7 @@ p.setup = function () {
 };
 
 p.draw = function() {
-  sliders.forEach(slider => slider.updateValue(p)); // read sliders
-
-  renderWaves();
-
   panels.forEach(panel => panel.drawPanel());
-
   panels.forEach( (panel, index) => {
     let y = p.floor(index / numColumns) * panelHeight;
     let x = p.floor(index % numColumns) * panelWidth;
@@ -133,8 +142,6 @@ function buttonSetup() {
     playWave(settings.quantNoise_pb, WEBAUDIO_MAX_SAMPLERATE, settings.snd);
   });
 }
-
-var renderWaves = renderWavesImpl(settings, fft, p);
 
 function playWave(wave, sampleRate, audioctx) {
   var buffer = audioctx.createBuffer(1, wave.length, sampleRate);
