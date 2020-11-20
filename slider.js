@@ -9,10 +9,10 @@ class slider{
   }
 
   updateValue(p){
-  this.settings[this.propName] = this.slider.value();
-  this.displayVal = this.calcDisplayVal();
-  this.textBox.value(this.displayVal);
-  this.textLabel.html(this.name+': ');
+    this.settings[this.propName] = this.slider.value();
+    this.displayVal = this.calcDisplayVal();
+    this.textBox.value(this.displayVal);
+    this.textLabel.html(this.name+': ');
   }
 
   onEdit(){
@@ -155,7 +155,7 @@ class sampleRateSlider extends slider{
   }
 
   updateValue(p){
-    this.settings.downsamplingFactor = p.round(WEBAUDIO_MAX_SAMPLERATE/p.pow(2, this.slider.value()));
+    this.settings.downsamplingFactor = Math.round(WEBAUDIO_MAX_SAMPLERATE/Math.pow(2, this.slider.value()));
     this.displayVal = this.calcDisplayVal();
     this.textBox.value(this.displayVal);//
     this.textLabel.html(this.name);// + p.round(this.settings.sampleRate / this.settings.downsamplingFactor / 1000, 3) + " kHz")
