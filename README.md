@@ -89,6 +89,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
   // select the buffer to render to; playback buffer, or simulation buffer
   var original = playback ? settings.original_pb : settings.original;
   var reconstructed = playback ? settings.reconstructed_pb : settings.reconstructed;
+  var stuffed = settings.stuffed;
   var quantNoise    = playback ? settings.quantNoise_pb    : settings.quantNoise;
 
   // calculate harmonics ------------------------------------------------------
@@ -213,8 +214,9 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
   // downsample original wave -------------------------------------------------
 
-  // zero initialize the reconstruction and quantization noise buffers
+  // zero initialize the reconstruction, zero stuffed, and quantization noise buffers
   reconstructed.fill(0);
+  stuffed.fill(0);
   quantNoise.fill(0);
 
   // generate a new signal buffer for the downsampled signal whose size is
@@ -247,8 +249,10 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
       // record the sampled output of the ADC process
       arr[n] = y;
 
-      // sparsely fill the reconstruction buffer to avoid having to zero-stuff
+      // sparsely fill the reconstruction and zero stuffed buffers to avoid
+      // having to explicitly zero-stuff
       reconstructed[n * settings.downsamplingFactor] = y;
+      stuffed[n * settings.downsamplingFactor] = y * settings.downsamplingFactor;
       return
     }
 
@@ -272,6 +276,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
     // sparsely fill the reconstruction buffer to avoid having to zero-stuff
     reconstructed[n * settings.downsamplingFactor] = quantized;
+      stuffed[n * settings.downsamplingFactor] = quantized * settings.downsamplingFactor;
 
     // record the quantization error
     quantNoise[n] = quantized - y;
@@ -314,6 +319,9 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
   if (simulation) {
     fft.realTransform(settings.originalFreq, original);
     fft.completeSpectrum(settings.originalFreq);
+
+    fft.realTransform(settings.stuffedFreq, stuffed)
+    fft.completeSpectrum(settings.reconstructedFreq);
 
     fft.realTransform(settings.reconstructedFreq, reconstructed)
     fft.completeSpectrum(settings.reconstructedFreq);

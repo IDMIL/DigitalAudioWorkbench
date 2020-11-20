@@ -307,7 +307,7 @@ class reconstructedSigPanel extends Panel {
   }
 }
 
-const analytic_frequency_doc='Spikes are drawn at the appropriate frequency and amplitude based on the analytic definition of the signal determined by the frequency, number of harmonics, and harmonic amplitude scaling settings. As such, this plot should accurately reflect the frequency content of the signal without any influence of windowing or other considerations that would affect a discrete time fourier transform. ';
+const analytic_frequency_doc='Spikes are drawn at the appropriate frequency and amplitude based on the analytic definition of the signal determined by the frequency, number of harmonics, and harmonic amplitude scaling settings. As such, this plot should accurately reflect the frequency content of the signal without any influence of windowing or other considerations that would affect a discrete time fourier transform. Unfortunately, this approach does not reflect non-linear effects such as quantization and clipping, where applicable. ';
 class inputSigFreqPanel extends freqPanel {
   constructor(){
     super(); 
@@ -390,7 +390,18 @@ class inputSigFFTPanel extends freqPanel {
   }
 }
 
-class sampledSigFFTPanel extends freqPanel {
+class sampledInputFFTPanel extends freqPanel {
+  constructor(){
+    super();
+    this.name="Sampled Signal FFT";
+    this.description='This plot shows the FFT of the signal output by the simulated analog-to-digital conversion. ' + fft_doc;
+  }
+  drawPanel() {
+    drawFFT(this, this.settings.stuffedFreq);
+  }
+}
+
+class reconstructedSigFFTPanel extends freqPanel {
   constructor(){
     super();
     this.name="Reconstructed Signal FFT";
@@ -564,7 +575,7 @@ class quantNoisePanel extends Panel{
   }
 }
 
-class quantNoiseFreqPanel extends Panel{
+class quantNoiseFFTPanel extends Panel{
   constructor(){
     super();
     this.name ="Quantization Noise FFT";
