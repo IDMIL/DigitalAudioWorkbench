@@ -162,7 +162,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
       let radian_frequency = 2 * Math.PI * frequency;
       let phase_increment = radian_frequency / WEBAUDIO_MAX_SAMPLERATE;
-      let phase = phase_increment * n + phase_offset;
+      let phase = phase_increment * n + phase_offset_adjusted;
 
       // accumulate the amplitude contribution from the current harmonic
       arr[n] += amplitude * Math.sin( phase );
