@@ -349,7 +349,7 @@ function magnitude(real, cplx) {
 }
 
 const fft_doc='Because the FFT is used here, there are visual artifacts introduced by the windowing process, and the frequency resolution of the plot is inherently limited by the size of the FFT. Note that the resolution is not increased when zooming in with the frequency zoom slider. ';
-function drawFFT(panel, fft) {
+function drawFFT(panel, fft, tick='freq') {
   let gain = panel.plotHeight;
   let offset = 100;
   let hz_per_bin = panel.settings.sampleRate / (fft.length / 2);
@@ -361,6 +361,7 @@ function drawFFT(panel, fft) {
   let normalize = 4/fft.length;
 
   panel.buffer.background(panel.background);
+  panel.buffer.stroke(panel.stroke);
   drawPassBand(panel);
   panel.buffer.beginShape();
   panel.buffer.vertex(panel.plotLeft, panel.plotBottom);
@@ -374,8 +375,11 @@ function drawFFT(panel, fft) {
   panel.buffer.strokeWeight(panel.strokeWeight);
   panel.buffer.stroke(panel.stroke);
   panel.drawBorder();
-  drawFreqTicks(panel, panel.numFreqTicks, pixels_per_hz);
   drawName(panel);
+  if (tick == 'dirac')
+    drawDiracDashes(panel);
+  else
+    drawFreqTicks(panel, panel.numFreqTicks, pixels_per_hz);
 }
 
 class inputSigFFTPanel extends freqPanel {
@@ -397,7 +401,7 @@ class sampledInputFFTPanel extends freqPanel {
     this.description='This plot shows the FFT of the signal output by the simulated analog-to-digital conversion. ' + fft_doc;
   }
   drawPanel() {
-    drawFFT(this, this.settings.stuffedFreq);
+    drawFFT(this, this.settings.stuffedFreq, 'dirac');
   }
 }
 
@@ -461,7 +465,7 @@ class impulseFreqPanel extends freqPanel {
       let xpos  = hz * pixels_per_hz + this.plotLeft;
       let color = getColor(peak);
       this.drawPeak(xpos, this.plotHeight, base, color)
-      let text = peak.toFixed(0) + ' FS';
+      let text = peak.toFixed(0) + ' fs';
       drawVerticalTick(this, text, xpos);
     }
 
@@ -505,6 +509,39 @@ function drawPassBand(panel) {
   panel.buffer.fill(panel.fill);
 }
 
+function calculateNumImages(settings) {
+  // calculate the number of spectral images to draw so that the highest frequency
+  // image's lowest negative harmonic is visible
+  let sampleRate = settings.sampleRate / settings.downsamplingFactor;
+  let max_harmonic = settings.harmonicFreqs[settings.harmonicFreqs.length - 1];
+  let numImages = 0;
+  while (numImages * sampleRate - max_harmonic < settings.maxVisibleFrequency)
+    numImages++; 
+  return numImages;
+}
+
+function drawDiracDashes(panel) {
+  let sampleRate = panel.settings.sampleRate / panel.settings.downsamplingFactor;
+  let pixels_per_hz = panel.plotWidth / panel.settings.maxVisibleFrequency;
+  let numImages = calculateNumImages(panel.settings);
+
+  for (let image = 0; image <= numImages; image++) {
+    let color = getColor(image);
+    let imagehz = image * sampleRate; // frequency of a dirac comb harmonic that the input spectrum is convolved with
+    let xpos = imagehz * pixels_per_hz + panel.plotLeft;
+
+    // draw the dotted line associated with this dirac comb image
+    panel.buffer.stroke(color);
+    panel.buffer.drawingContext.setLineDash([5,5]);
+    panel.buffer.line(xpos, panel.plotTop, xpos, panel.plotBottom);
+    panel.buffer.drawingContext.setLineDash([]);
+
+    // label the dotted line associated with this dirac comb image
+    let fstext = imagehz.toFixed(0) + ' Hz';
+    drawVerticalTick(panel, fstext, xpos);
+  }
+}
+
 class sampledInputFreqPanel extends freqPanel{
   constructor(){ 
     super(); 
@@ -516,33 +553,18 @@ class sampledInputFreqPanel extends freqPanel{
   drawPanel(){
     this.buffer.background(this.background);
     this.buffer.stroke(this.stroke);
+    drawPassBand(this);
+    drawDiracDashes(this);
+
     let base = this.plotBottom;
     let sampleRate = this.settings.sampleRate / this.settings.downsamplingFactor;
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
-
-    // calculate the number of images to draw so that the highest frequency
-    // image's lowest negative harmonic is visible
-    let max_harmonic = this.settings.harmonicFreqs[this.settings.harmonicFreqs.length - 1];
-    let numImages = 0;
-    while (numImages * sampleRate - max_harmonic < this.settings.maxVisibleFrequency)
-      numImages++; 
-
-    drawPassBand(this);
+    let numImages = calculateNumImages(this.settings);
 
     for (let image = 0; image <= numImages; image++) {
+
       let color = getColor(image);
       let imagehz = image * sampleRate; // frequency of a dirac comb harmonic that the input spectrum is convolved with
-      let xpos = imagehz * pixels_per_hz + this.plotLeft;
-
-      // draw the dotted line associated with this dirac comb image
-      this.buffer.stroke(color);
-      this.buffer.drawingContext.setLineDash([5,5]);
-      this.buffer.line(xpos, this.plotTop, xpos, this.plotBottom);
-      this.buffer.drawingContext.setLineDash([]);
-
-      // label the dotted line associated with this dirac comb image
-      let fstext = imagehz.toFixed(0) + ' Hz';
-      drawVerticalTick(this, fstext, xpos);
 
       for (let harm = 1; harm <= this.settings.numHarm; harm++) {
 
