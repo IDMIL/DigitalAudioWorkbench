@@ -520,24 +520,34 @@ class sampledInputFreqPanel extends freqPanel{
     let sampleRate = this.settings.sampleRate / this.settings.downsamplingFactor;
     let pixels_per_hz = this.plotWidth / this.settings.maxVisibleFrequency;
 
-    let numPeaks = this.settings.numHarm; // This makes sure we always draw the images even if we zoom in and the associated peak is not visible.
-    // This works because any peak offscreen is just not rendered.
+    // calculate the number of images to draw so that the highest frequency
+    // image's lowest negative harmonic is visible
+    let max_harmonic = this.settings.harmonicFreqs[this.settings.harmonicFreqs.length - 1];
+    let numImages = 0;
+    while (numImages * sampleRate - max_harmonic < this.settings.maxVisibleFrequency)
+      numImages++; 
+
     drawPassBand(this);
 
-    for (let peak = 0; peak <= numPeaks; peak++) {
-      let color = getColor(peak);
-      let peakhz = peak * sampleRate;
-      let xpos = peakhz * pixels_per_hz + this.plotLeft;
+    for (let image = 0; image <= numImages; image++) {
+      let color = getColor(image);
+      let imagehz = image * sampleRate; // frequency of a dirac comb harmonic that the input spectrum is convolved with
+      let xpos = imagehz * pixels_per_hz + this.plotLeft;
+
+      // draw the dotted line associated with this dirac comb image
       this.buffer.stroke(color);
       this.buffer.drawingContext.setLineDash([5,5]);
       this.buffer.line(xpos, this.plotTop, xpos, this.plotBottom);
       this.buffer.drawingContext.setLineDash([]);
-      let fstext = peakhz.toFixed(0) + ' Hz';
+
+      // label the dotted line associated with this dirac comb image
+      let fstext = imagehz.toFixed(0) + ' Hz';
       drawVerticalTick(this, fstext, xpos);
+
       for (let harm = 1; harm <= this.settings.numHarm; harm++) {
 
-        let hzNegative = peakhz - this.settings.harmonicFreqs[harm-1];
-        let hzPositive = peakhz + this.settings.harmonicFreqs[harm-1];
+        let hzNegative = imagehz - this.settings.harmonicFreqs[harm-1];
+        let hzPositive = imagehz + this.settings.harmonicFreqs[harm-1];
 
         if (hzNegative < 0) hzNegative = 0 + (0 - hzNegative); //Reflect at 0. TODO should technically use a new color.
         // don't reflect at sampleRate because we are already drawing the negative frequency images
@@ -550,6 +560,7 @@ class sampledInputFreqPanel extends freqPanel{
         if (xPositive < this.plotRight) this.drawPeak(xPositive, positiveHeight, base, color);
       }
     }
+
     this.drawBorder();
     drawName(this);
   }
