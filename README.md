@@ -90,7 +90,6 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
   var original = playback ? settings.original_pb : settings.original;
   var reconstructed = playback ? settings.reconstructed_pb : settings.reconstructed;
   var stuffed = settings.stuffed;
-  var quantNoise    = playback ? settings.quantNoise_pb    : settings.quantNoise;
 
   // calculate harmonics ------------------------------------------------------
 
@@ -214,18 +213,22 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
   // downsample original wave -------------------------------------------------
 
-  // zero initialize the reconstruction, zero stuffed, and quantization noise buffers
+  // zero initialize the reconstruction, and zero stuffed buffers
   reconstructed.fill(0);
   stuffed.fill(0);
-  quantNoise.fill(0);
 
-  // generate a new signal buffer for the downsampled signal whose size is
-  // initialized according to the currently set downsampling factor
+  // generate new signal buffers for the downsampled signal and quantization
+  // noise whose sizes are initialized according to the currently set
+  // downsampling factor
   if (playback) {
     settings.downsampled_pb = new Float32Array(p.round(original.length / settings.downsamplingFactor));
-  } else
+    settings.quantNoise_pb = new Float32Array(p.round(original.length / settings.downsamplingFactor));
+  } else {
     settings.downsampled = new Float32Array(p.round(original.length / settings.downsamplingFactor));
+    settings.quantNoise = new Float32Array(p.round(original.length / settings.downsamplingFactor));
+  }
   var downsampled = playback ? settings.downsampled_pb : settings.downsampled;
+  var quantNoise  = playback ? settings.quantNoise_pb  : settings.quantNoise;
 
   // calculate the maximum integer value representable with the given bit depth
   let maxInt = p.pow(2, settings.bitDepth) - 1;
@@ -333,20 +336,28 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
   // fade in and out and suppress clipping distortions ------------------------
 
   // Audio output is windowed to prevent pops. The envelope is a simple linear
-  // ramp up at the beginning and linear ramp down at the end. While applying
-  // the window we also ensure that the rendering of the input signal is not
-  // clipped, and the output signal is only clipped if it should be based on
-  // the simulation.
+  // ramp up at the beginning and linear ramp down at the end. 
 
   if (playback) {
+    // This normalization makes sure the original signal isn't clipped.
+    // The output is clipped during the simulation, so this may reduce its peak
+    // amplitude a bit, but since the clipping adds distortion the perceived
+    // loudness is relatively the same as the original signal in my testing.
     let normalize = settings.amplitude > 1.0 ? settings.amplitude : 1.0;
-    let fadeTimeSamps = fadeTimeSeconds * WEBAUDIO_MAX_SAMPLERATE;
+
+    // The conditional ensure there is a fade even if the fade time is longer than the signal
+    let fadeTimeSamps = Math.min(fadeTimeSeconds * WEBAUDIO_MAX_SAMPLERATE, arr.length / 2);
+
+    // Define the fade function
     let fade = (_, n, arr) => {
-      if (n < fadeTimeSamps) arr[n] = (n / fadeTimeSamps) * arr[n] / normalize;
+      if (n < fadeTimeSamps) 
+        arr[n] = (n / fadeTimeSamps) * arr[n] / normalize;
       else if (n > arr.length - fadeTimeSamps) 
         arr[n] = ((arr.length - n) / fadeTimeSamps) * arr[n] / normalize;
       else arr[n] = arr[n] / normalize;
     };
+
+    // Apply the fade function
     original.forEach(fade);
     reconstructed.forEach(fade);
     quantNoise.forEach(fade);
