@@ -350,7 +350,7 @@ function magnitude(real, cplx) {
 
 const fft_doc='Because the FFT is used here, there are visual artifacts introduced by the windowing process, and the frequency resolution of the plot is inherently limited by the size of the FFT. Note that the resolution is not increased when zooming in with the frequency zoom slider. ';
 function drawFFT(panel, fft, tick='freq') {
-  let gain = panel.plotHeight;
+  let gain = panel.plotHeight * panel.settings.ampZoom;
   let offset = 100;
   let hz_per_bin = panel.settings.sampleRate / (fft.length / 2);
   // fft.length / 2 because it is an interleaved complex array
@@ -367,7 +367,7 @@ function drawFFT(panel, fft, tick='freq') {
   panel.buffer.vertex(panel.plotLeft, panel.plotBottom);
   for (let bin = 0; bin <= num_bins; bin++) {
     let xpos = pixels_per_bin * bin + panel.plotLeft;
-    let ypos = panel.plotBottom - panel.plotHeight * normalize * magnitude(fft[2*bin], fft[2*bin+1]);
+    let ypos = panel.plotBottom - gain * normalize * magnitude(fft[2*bin], fft[2*bin+1]);
     panel.buffer.vertex(xpos, ypos);
   }
   panel.buffer.vertex(panel.plotRight, panel.plotBottom);
