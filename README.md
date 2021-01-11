@@ -345,11 +345,10 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
     // loudness is relatively the same as the original signal in my testing.
     let normalize = settings.amplitude > 1.0 ? settings.amplitude : 1.0;
 
-    // The conditional ensure there is a fade even if the fade time is longer than the signal
-    let fadeTimeSamps = Math.min(fadeTimeSeconds * WEBAUDIO_MAX_SAMPLERATE, arr.length / 2);
-
     // Define the fade function
     let fade = (_, n, arr) => {
+      let fadeTimeSamps = Math.min(fadeTimeSeconds * WEBAUDIO_MAX_SAMPLERATE, arr.length / 2);
+      // The conditional ensures there is a fade even if the fade time is longer than the signal
       if (n < fadeTimeSamps) 
         arr[n] = (n / fadeTimeSamps) * arr[n] / normalize;
       else if (n > arr.length - fadeTimeSamps) 
