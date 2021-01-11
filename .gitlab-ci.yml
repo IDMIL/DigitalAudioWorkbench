@@ -4,7 +4,8 @@ pages:
     script:
     - mkdir .public
     - cp -a all-panels .public
-    - cp -a example* .public
+    - cp -a sampling .public
+    - cp -a quantization .public
     - cp -a *.js .public
     - cp -a index.html .public
     - cp -a *.css .public
