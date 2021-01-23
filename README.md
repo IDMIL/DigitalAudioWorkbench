@@ -37,7 +37,7 @@ interactive interface allows the simulation to be explored freely; users can
 examine the signals both visually through numerous graphs, or by listening to
 the test signals directly.
 
-## Implemenation
+## Implementation
 
 Since our demonstration takes place purely in the digital domain, we
 unfortunately cannot use real continuous time analog inputs and outputs.
