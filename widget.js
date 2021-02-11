@@ -33,6 +33,7 @@ var settings =
     , downsampled: new Float32Array(1) // this gets re-inited when rendering waves
     , reconstructed: new Float32Array(displaySignalSize)
     , stuffed: new Float32Array(displaySignalSize)
+    , quantNoiseStuffed: new Float32Array(displaySignalSize)
     , quantNoise: new Float32Array(displaySignalSize)
     , original_pb: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))
     , reconstructed_pb: new Float32Array(p.floor(WEBAUDIO_MAX_SAMPLERATE*soundTimeSeconds))

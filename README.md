@@ -229,6 +229,8 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
   }
   var downsampled = playback ? settings.downsampled_pb : settings.downsampled;
   var quantNoise  = playback ? settings.quantNoise_pb  : settings.quantNoise;
+  var quantNoiseStuffed = settings.quantNoiseStuffed;
+  quantNoiseStuffed.fill(0);
 
   // calculate the maximum integer value representable with the given bit depth
   let maxInt = p.pow(2, settings.bitDepth) - 1;
@@ -256,7 +258,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
       // having to explicitly zero-stuff
       reconstructed[n * settings.downsamplingFactor] = y;
       stuffed[n * settings.downsamplingFactor] = y * settings.downsamplingFactor;
-      return
+      return;
     }
 
     // generate dither noise
@@ -283,6 +285,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
     // record the quantization error
     quantNoise[n] = quantized - y;
+    quantNoiseStuffed[n * settings.downsamplingFactor] = quantNoise[n];
   });
 
   // render reconstructed wave by low pass filtering the zero stuffed array----
@@ -329,7 +332,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
     fft.realTransform(settings.reconstructedFreq, reconstructed)
     fft.completeSpectrum(settings.reconstructedFreq);
 
-    fft.realTransform(settings.quantNoiseFreq, quantNoise)
+    fft.realTransform(settings.quantNoiseFreq, quantNoiseStuffed)
     fft.completeSpectrum(settings.quantNoiseFreq); 
   }
 
