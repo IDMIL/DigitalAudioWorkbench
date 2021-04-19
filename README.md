@@ -51,10 +51,11 @@ and quantization. All of these are simulated in our model: antialiasing is
 achieved with a windowed sinc FIR lowpass filter of order specified by the
 user; sampling is approximated by downsampling the input signal by an
 integer factor; and quantization is achieved by multiplying the sampled
-signal by the maximum integer value possible given the requested bit depth,
-and then rounding every sample to the nearest integer.  The DAC process is
-simulated in turn by zero stuffing and lowpass filtering the sampled and
-quantized output of the ADC simultion.  
+signal (which ranges from -1.0 to 1.0) by the maximum integer value possible
+given the requested bit depth (e.g. 255 for a bit depth of 8 bits), and then
+rounding every sample to the nearest integer.  The DAC process is simulated
+in turn by zero stuffing and lowpass filtering the sampled and quantized
+output of the ADC simultion.  
 
 In summary, the continuous time input is simulated by a 96 kHz discrete time
 signal, the sampled output of the ADC process is simulated by a downsampled
