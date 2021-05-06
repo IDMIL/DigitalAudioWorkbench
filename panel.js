@@ -324,7 +324,7 @@ class reconstructedSigPanel extends Panel {
   }
 }
 
-const analytic_frequency_doc='Spikes are drawn at the appropriate frequency and amplitude based on the analytic definition of the signal determined by the frequency, number of harmonics, and harmonic amplitude scaling settings. As such, this plot should accurately reflect the frequency content of the signal without any influence of windowing or other considerations that would affect a discrete time fourier transform. Unfortunately, this approach does not reflect non-linear effects such as quantization and clipping, where applicable. ';
+const analytic_frequency_doc='Spikes are drawn at the appropriate frequency and amplitude based on the analytic definition of the signal determined by the frequency, number of harmonics, and harmonic amplitude scaling settings. As such, this plot should accurately reflect the frequency content of the signal without any influence of windowing or other considerations that would affect a discrete time Fourier transform. Unfortunately, this approach does not reflect non-linear effects such as quantization and clipping, where applicable. ';
 class inputSigFreqPanel extends freqPanel {
   constructor(){
     super(); 
@@ -468,7 +468,7 @@ class impulseFreqPanel extends freqPanel {
   constructor(){
     super();
     this.name="Sampling Signal Frequency Domain";
-    this.description = 'This is a frequency domain plot of the dirac comb used to sample the input signal. The sampling process causes the frequency content of the input signal to be convolved with the frequency response of the dirac comb, resulting in periodic images of the input signal frequency at mulitples of the sampling frequency. ';
+    this.description = 'This is a frequency domain plot of the dirac comb used to sample the input signal. The sampling process causes the frequency content of the input signal to be convolved with the frequency response of the dirac comb, resulting in periodic images of the input signal frequency at multiples of the sampling frequency. ';
   }
   drawPanel(){
     this.bufferInit();
@@ -513,7 +513,7 @@ class sampledInputPanel extends Panel{
   }
 }
 
-const passband_doc='The frequency range below the nyquist frequency is highlighted by a light grey background. ';
+const passband_doc='The frequency range below the Nyquist frequency is highlighted by a light grey background. ';
 function drawPassBand(panel) {
   let sampleRate = panel.settings.sampleRate/panel.settings.downsamplingFactor;
   let pixels_per_hz = panel.plotWidth / panel.settings.maxVisibleFrequency;
