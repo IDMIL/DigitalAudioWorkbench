@@ -69,6 +69,23 @@ class Panel {
   }
 
   drawPanel(){}
+
+  /// Describe panel parameters exposed to accessibility tool as children DOM elements of canvas
+  describe(p){
+    p.textOutput();
+    p.gridOutput();
+    var _name = 'panel'+this.name;
+    _name = _name.replace(/ /g, ""); 
+    var _desc = this.description + ' ';
+    _desc += "Settings: ";
+    _desc += 'Height: ' + this.plotHeight + '. ';
+    _desc += 'Width: ' + this.plotWidth + '. ';
+    _desc += 'Left side x coordinate: ' + this.plotLeft + '. ';
+    _desc += 'Right side x coordinate: ' + this.plotRight + '. ';
+    _desc += 'Top side y coordinate: ' + this.plotTop + '. ';
+    _desc += 'Bottom side y coordinate: ' + this.plotBottom + '. ';
+    p.describeElement(_name,_desc,p.FALLBACK);
+  }
 }
 
 class freqPanel extends Panel{

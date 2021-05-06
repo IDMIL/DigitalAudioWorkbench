@@ -57,6 +57,30 @@ p.settings = settings;
 
 var renderWaves = renderWavesImpl(settings, fft, p);
 
+/// Describe widget parameters exposed to accessibility tool as children DOM elements of canvas
+function describe(p){
+  p.textOutput();
+  p.gridOutput();
+  var _desc = "Digital Audio Workbench Widget has";
+  _desc += " " + numPanels + " panels";
+  _desc += ", each of " + panelWidth + " pixels of width";
+  _desc += " and " + panelHeight + " pixels of height";
+  _desc += "; and " + numSliders + " sliders";
+  _desc += ", each of " + sliderWidth + " pixels of width";
+  _desc += " and " + sliderHeight + " pixels of height";
+  _desc += ". ";
+  _desc += "Settings: ";
+  _desc += "Max bit depth: " + BIT_DEPTH_MAX;
+  _desc += ". ";
+  _desc += "WebAudio max samplerate: " + WEBAUDIO_MAX_SAMPLERATE + "Hz";
+  _desc += ". ";
+  _desc += "Number of columns: " + NUM_COLUMNS;
+  _desc += ". ";
+  _desc += "Max harmonics: " + MAX_HARMONICS;
+  // _desc += ". "; /// p5.js will add a trailing dot at the end of the description
+  p.describe(_desc,p.FALLBACK);
+}
+
 p.setup = function () {
   settings.p5 = p;
   settings.render = renderWaves;
@@ -72,9 +96,14 @@ p.setup = function () {
   p.windowResized();
   p.noLoop();
   setTimeout(p.draw, 250);
+
+  /// Accessibility descriptions
+  /// move to p.draw() once described parameters change with display
+  describe(p);
 };
 
 p.draw = function() {
+  panels.forEach(panel => panel.describe(p));
   panels.forEach(panel => panel.drawPanel());
   panels.forEach( (panel, index) => {
     let y = p.floor(index / numColumns) * panelHeight;
