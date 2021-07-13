@@ -174,19 +174,26 @@ function drawVerticalTick(panel, text, x, tick_length = 5) {
   panel.buffer.line(x, panel.plotBottom, x, panel.plotBottom + tick_length);
 }
 
+const freq_amp_ticks_doc='Amplitude is plotted on the y-axis. Ticks on the left label the linear amplitude where 1.0 is equal to the maximum amplitude. ';
+function drawFreqAmplitudeTicks(panel, pixel_max, num_ticks) {
+  for (let i = 0; i <= num_ticks; ++i) {
+    let tick_amp_pixels = i * pixel_max / num_ticks / panel.settings.ampZoom;
+    drawHorizontalTick(panel, (tick_amp_pixels/pixel_max).toFixed(2), panel.plotBottom - tick_amp_pixels*panel.settings.ampZoom, 5, "right");
+  }
+}
+
 const amp_ticks_doc='Amplitude is plotted on the y-axis. Ticks on the left label the linear amplitude where +/- 1.0 is equal to the maximum amplitude. ';
 function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
   for (let i = 1; i <= num_ticks; ++i) {
-    let tick_amp_pixels = i * pixel_max / num_ticks/panel.settings.ampZoom;
+    let tick_amp_pixels = i * pixel_max / num_ticks / panel.settings.ampZoom;
     // let tick_amp_db = linToDB(tick_amp_pixels, pixel_max);
     drawHorizontalTick(panel, (tick_amp_pixels/pixel_max).toFixed(2), panel.halfh - tick_amp_pixels*panel.settings.ampZoom,5,"right");
     drawHorizontalTick(panel, (-tick_amp_pixels/pixel_max).toFixed(2), panel.halfh + tick_amp_pixels*panel.settings.ampZoom,5,"right");
-    // drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh - tick_amp_pixels*panel.settings.ampZoom);
-    // drawHorizontalTick(panel, tick_amp_db.toFixed(1) + ' dB', panel.halfh + tick_amp_pixels*panel.settings.ampZoom);
+    // drawHorizontalTick(panel, tick_amp_db.toFixed(1) + 'dBFS', panel.halfh - tick_amp_pixels*panel.settings.ampZoom,5, "right");
+    // drawHorizontalTick(panel, tick_amp_db.toFixed(1) + 'dBFS', panel.halfh + tick_amp_pixels*panel.settings.ampZoom,5, "right");
   }
-  // drawHorizontalTick(panel, '-inf dB', panel.halfh);
-  drawHorizontalTick(panel, '0', panel.halfh, 5, "right");
-
+  // drawHorizontalTick(panel, '-inf dBFS', panel.halfh, 5, "right");
+  drawHorizontalTick(panel, '0.00', panel.halfh, 5, "right");
 }
 
 const bin_amp_ticks_doc='Ticks on the right side of this plot label the numerical value assigned to a given amplitude by the simulated analog-to-digital conversion. The labels are written in hexadecimal unless the bit depth is 7 bits or lower, in which case the labels are in binary. ';
@@ -330,7 +337,7 @@ class inputSigFreqPanel extends freqPanel {
       if (xpos > this.plotRight|| xpos< this.plotLeft) break;
       // if (this.settings.harmSlope == "lin") {ampScale = 1 - (harm-1)/(this.settings.numHarm)};
       // if (this.settings.harmSlope == "1/x") {ampScale = 1/harmPeak};
-      let height = this.settings.amplitude * this.plotHeight *this.settings.harmonicAmps[harm-1];
+      let height = this.settings.ampZoom * this.settings.amplitude * this.plotHeight *this.settings.harmonicAmps[harm-1];
       this.drawPeak(xpos, height, this.plotBottom)
       harm+=1;
       // (harmPeak ==1 && this.settings.harmType != "Odd")? harmPeak++ : harmPeak +=harmInc;
@@ -339,6 +346,7 @@ class inputSigFreqPanel extends freqPanel {
 
     this.drawBorder();
     drawFreqTicks(this, this.numFreqTicks, pixels_per_hz);
+    drawFreqAmplitudeTicks(this, this.plotHeight, 9);
     drawName(this);
   }
 
@@ -380,6 +388,7 @@ function drawFFT(panel, fft, tick='freq') {
     drawDiracDashes(panel);
   else
     drawFreqTicks(panel, panel.numFreqTicks, pixels_per_hz);
+  drawFreqAmplitudeTicks(panel, panel.plotHeight, 9);
 }
 
 class inputSigFFTPanel extends freqPanel {
@@ -469,6 +478,7 @@ class impulseFreqPanel extends freqPanel {
       drawVerticalTick(this, text, xpos);
     }
 
+    drawFreqAmplitudeTicks(this, this.plotHeight, 9);
     this.drawBorder();
     drawName(this);
   }
@@ -574,8 +584,8 @@ class sampledInputFreqPanel extends freqPanel{
         if (hzNegative < 0) hzNegative = 0 + (0 - hzNegative); //Reflect at 0. TODO should technically use a new color.
         // don't reflect at sampleRate because we are already drawing the negative frequency images
 
-        let positiveHeight = this.settings.amplitude*this.plotHeight*this.settings.harmonicAmps[harm-1];
-        let negativeHeight = this.settings.amplitude*this.plotHeight*this.settings.harmonicAmps[harm-1];
+        let positiveHeight = this.settings.ampZoom * this.settings.amplitude*this.plotHeight*this.settings.harmonicAmps[harm-1];
+        let negativeHeight = this.settings.ampZoom * this.settings.amplitude*this.plotHeight*this.settings.harmonicAmps[harm-1];
         let xNegative = hzNegative * pixels_per_hz + this.plotLeft;
         let xPositive = hzPositive * pixels_per_hz + this.plotLeft;
         if (xNegative < this.plotRight) this.drawPeak(xNegative, negativeHeight, base, color);
@@ -584,6 +594,7 @@ class sampledInputFreqPanel extends freqPanel{
     }
 
     this.drawBorder();
+    drawFreqAmplitudeTicks(this, this.plotHeight, 9);
     drawName(this);
   }
 }
