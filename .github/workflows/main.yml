@@ -1,0 +1,31 @@
+name: Copy and Deploy
+on: 
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2.3.1
+
+      - name: Install and Build 🔧 # This example project is built using npm and outputs the result to the 'build' folder. Replace with the commands required to build your project, or remove this step entirely if your site is pre-built.
+        run: |
+          mkdir .public
+          cp -a all-panels .public
+          cp -a sampling .public
+          cp -a quantization .public
+          cp -a *.js .public
+          cp -a index.html .public
+          cp -a *.css .public
+          cp -a README.md .public
+          mv .public public
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@4.1.4
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: public # The folder the action should deploy.
