@@ -1,0 +1,20 @@
+body {
+  font-family: Cantarell, sans-serif;
+}
+
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+  text-align: center;
+}
+
+sup { vertical-align: top; position: relative; top: -0.5em; }
+
+footer{
+  font-family: Cantarell, sans-serif;
+  padding: 5px 10px 0px;
+  background : lightgrey;
+  font-size: 9pt;
+  color: grey;
+  text-align: center;
+}

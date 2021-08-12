@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="../styles.css" media="screen" />
+    <!-- p5.js begin -->
+    <!-- 1) use p5.min.js for optimizing size/transfer -->
+    <script src="../p5.min.js"></script>
+    <!-- 2) use p5.js for debugging -->
+    <!-- <script src="../p5.js"></script> -->
+    <!-- p5.js end-->
+    <script src="../fili.min.js"></script>
+    <script src="../panel.js"></script>
+    <script src="../slider.js"></script>
+    <script src="../fft.js"></script>
+    <script src="../waves.js"></script>
+    <script src="../widget.js"></script>
+  </head>
+  <body>
+    <main>
+      <script>
+        const widget = new_widget(
+                [ new inputSigPanel()
+                , new inputSigFreqPanel()
+                , new impulsePanel()
+                , new impulseFreqPanel()
+                , new sampledInputPanel()
+                , new sampledInputFreqPanel()
+                , new quantNoisePanel()
+                , new quantNoiseFFTPanel()
+                , new reconstructedSigPanel()
+                , new reconstructedSigFFTPanel()
+                , new inputPlusSampledPanel()
+                , new allSignalsPanel()
+                ],
+                [ new freqSlider()
+                , new numHarmSlider()
+                , new sampleRateSlider()
+                , new antialiasingSlider()
+                , new ditherSlider()
+                , new bitDepthSlider()
+                , new amplitudeSlider()
+                , new phaseSlider()
+                , new ampZoomSlider()
+                , new freqZoomSlider()
+                , new timeZoomSlider()
+                ]
+        );
+      </script>
+    </main>
+    <footer>
+      <div>Digital Audio Workbench </div>
+      <div>By Josh Rohs, Travis J. West & Marcelo M. Wanderley </div>
+      <div>with contributions by Eduardo Meneses, Christian Frisson, and Erivan Duarte</div>
+      <div>Copyright <a href="//www-new.idmil.org/">IDMIL</a>/McGill University, 2020 </div>
+    </footer>
+  </body>
+</html>
