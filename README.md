@@ -16,7 +16,7 @@ to only that which is essential for understanding the core of the simulation.
 
 -->
 
-# The Digtal Audio Workbench
+# The Digital Audio Workbench
 
 https://idmil.gitlab.io/course-materials/mumt203/interactive-demos 
 
