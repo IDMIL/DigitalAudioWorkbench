@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="styles_tutorial.css" media="screen" />
+    <!-- p5.js begin -->
+    <!-- 1) use p5.min.js for optimizing size/transfer -->
+    <script src="../p5.min.js"></script>
+    <!-- 2) use p5.js for debugging -->
+    <!-- <script src="../p5.js"></script> -->
+    <!-- p5.js end-->
+    <script src="../fili.min.js"></script>
+    <script src="panel_tutorial.js"></script>
+    <script src="slider_tutorial.js"></script>
+    <script src="../fft.js"></script>
+    <script src="waves_tutorial.js"></script>
+    <script src="widget_tutorial.js"></script>
+    
+  </head>
+  <body>
+    <div id="page-container">
+    <center>
+    <div  class="tab">
+      <a href="#" class="button_round">&laquo; Prev</a>
+      <a href="../index.html" class="button_round">Home </a>
+      <a href="tutorial2.html" class="button_round">Next &raquo;</a>
+    </div>
+    <div  class="tabs">
+      
+        <button class="button_round" onclick="samplingSection(event, 'Question')" id="defaultOpen">Question</button>
+        <button class="button_round" onclick="samplingSection(event, 'Answer')">Answer</button>
+      
+      
+    </div>
+
+    </center>
+    <div id = "content-wrap" class="title qs">
+      <H1>
+        Tutorial 1: Waveform building
+      </H1>
+      <hr> 
+    </div>
+    
+    <div id="Question" class="tabcontent active">
+      <div class = "qs">
+        <p>
+          In the left panel, you can see a sine wave with frequency 440 Hz. 
+          Click on the Play Original button at the bottom left to hear how it sounds. 
+        </p>
+        <p>
+          In the right panel, a vertical line at 440 Hz represents the sine wave frequency component. 
+          Remember that a sine (or a cosine) wave has only one frequency component, 
+          in other words, it represents a <u>simple harmonic motion</u> such as the motion of an ideal pendulum or a tuning fork. 
+        </p>
+      </div>
+        <div class = "tab_questions qs">
+          <button class="button_round ques" onclick="questionlist(event, 'q1')" onmouseover="questionlist(event, 'q1')" id="defaulthover">Question 1</button>
+          <button class="button_round ques" onclick="questionlist(event, 'q2')">Question 2</button>
+          <button class="button_round ques" onclick="questionlist(event, 'q3')">Question 3</button>
+          <button class="button_round ques" onclick="questionlist(event, 'q4')">Question 4</button>
+        </div>
+        <div id = "q1" class = "tab_questions_content qs">
+          Now use the top right slider. 
+          With the parameters loaded with the application 
+            (Odd harmonics, 1/x amplitude), 
+            add 10 components (harmonics) to the original sine wave. 
+            You can get the same effect by typing 10 in the top right
+            box and pressing the Update button. Describe what happens
+            in the left panel.
+        </div>
+        <div id = "q2" class = "tab_questions_content qs">
+          If you add more components (say, 20), what do you see happening in the left panel?
+        </div>
+        <div id = "q3" class = "tab_questions_content qs">
+          Now, what do you see when using 20 harmonics and changing the amplitude values to 1/x2?
+        </div>
+        <div id = "q4" class = "tab_questions_content qs">
+          If you go back to 1/x, change Odd to All, and press the Update button, what happens? Remember that now your highest frequency will be half of the one with only Odd harmonics. 
+          To get a similar maximum frequency value you’ll need to add 40 harmonics in this case.
+        </div>
+      
+      <main>
+        <script>
+          const widgetset = new_widget(
+                  [ new inputSigPanel()
+                  , new inputSigFreqPanel()
+                  ],
+                  [ new freqSlider()
+                  , new numHarmSlider()
+                  , new timeZoomSlider()
+                  , new freqZoomSlider_tutorial_1()
+                  ]
+                  , ["original"]
+                  ,"Question"
+                  ,"qs"
+                  , 120
+                  )
+        </script>
+        <br>
+      </main>
+    </div>
+    <div id="Answer" class="tabcontent">
+      <p>
+        You have just played with approximations of the most 
+        common waves used in analog syntehsizers: square, triangular, and sawtooth waves. 
+        
+      </p>
+      <center><img src="../images/SH_101.png"></center>
+      <p>
+        <ul>
+          <li>
+            Click again on the Play Original button at the bottom left to hear how they sound. Add and remove 
+            partials and check the resulting visuals and sounds.
+          </li>
+        </ul>
+      </p>
+      <p>
+        You can also play with these variable and see the results in both panels and hear the results. 
+      </p>
+      <p>
+        <ul>
+          <li>
+            For instance, describe what do you hear when using 20 Even harmonics with flat amplitude? 
+            Compare the sonic result to using 20 Odd harmonics and flat amplitude. 
+          </li>
+        </ul>
+      </p>
+    </div>
+    <div>
+      <footer id="footer">
+        <div>Digital Audio Workbench, by Josh Rohs, Travis J. West & Marcelo M. Wanderley </div>
+        <div>with contributions by Eduardo Meneses, Christian Frisson, Erivan Duarte and Maxwell Gentili-Morin</div>
+        <div>Copyright <a href="//www-new.idmil.org/">IDMIL</a>/McGill University, 2020 </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    function samplingSection(evt, cityName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("button_round");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(cityName).style.display = "block";
+      evt.currentTarget.className += " active";
+    }
+    
+    // Get the element with id="defaultOpen" and click on it
+    document.getElementById("defaultOpen").click();
+
+    function questionlist(evt, questions) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tab_questions_content");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("ques");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(questions).style.display = "block";
+      evt.currentTarget.className += " active";
+    }
+    document.getElementById("defaulthover").click();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,148 @@
+body {
+  font-family: Cantarell, sans-serif;
+  line-height: 1.5;
+
+}
+
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+  text-align: center;
+}
+
+sup { vertical-align: top; position: relative; top: -0.5em; }
+
+footer{
+  font-family: Cantarell, sans-serif;
+  padding: 5px 10px 0px;
+  background : lightgrey;
+  font-size: 9pt;
+  color: grey;
+  text-align: center;
+}
+.tab_questions {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+.tab_questions button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+.tab_questions_content {
+  
+  display: none;  
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+
+.previous:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.tabcontent {
+  margin-left: 120px;
+  margin-right: 200px;
+  display: none;
+}
+.title{
+  margin-left: 100px;
+}
+.intro_text{
+  margin-left: 100px;
+}
+.button {
+  text-decoration: none;
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: rgb(255, 255, 255);
+  color: black;
+  border: solid;
+  margin-right: 2px;
+  margin-top: 3px;
+  
+}
+.button:hover{
+  background-color: #ddd;
+  color: black;
+}
+.button_round{
+  text-decoration: none;
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: rgb(255, 255, 255);
+  color: black;
+  border: 2px solid black;
+  margin-right: 2px;
+  
+  margin-top: 3px;
+  border-radius: 20px;
+}
+.button_round:hover{
+  background-color: #ddd;
+  color: black;
+}
+.button_round.active {
+  background-color: #ddd;
+}
+
+.next:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.next {
+  text-decoration: none;
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: rgb(255, 255, 255);
+  color: black;
+  border: solid;
+  box-shadow: -3px -4px grey;
+}
+.home:hover {
+  background-color: #ddd;
+  color: black;
+}
+.home {
+  text-decoration: none;
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: rgb(255, 255, 255);
+  color: black;
+  border: solid;
+  box-shadow: -3px -4px grey;
+}
+#page-container {
+  position: relative;
+  min-height: 100vh;
+}
+
+#content-wrap {
+  padding-bottom: 2.5rem;    /* Footer height */
+}
+#content-wrap2 {
+  padding-bottom: 2.5rem;    /* Footer height */
+}
+#footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 2.5rem;            /* Footer height */
+  
+}
+#Question{
+  padding-bottom: 2.5rem; 
+}
+#Answer{
+  padding-bottom: 2.5rem;
+  margin-left: 100px;
+}
