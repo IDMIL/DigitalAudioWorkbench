@@ -47,8 +47,6 @@ class slider{
     let textboxX = x + sliderWidth + labelWidth;
 
     this.slider.style('width', Math.round(sliderWidth).toString() + "px");
-    console.log(Math.round(sliderWidth).toString() + "px");
-    console.log(this.slider.width)
     this.slider.position(x, y);
     // Use our computed widths rather than the resultant ones
     // Not sure what exactly the issue is.  Input the this.slider.width is "199px", but the actual width of this.slider.width is 198995
