@@ -35,7 +35,7 @@ class slider{
     this.button.mouseReleased(this.onEdit.bind(this));
   }
 
-  resize(x, y, w, p){
+  resize(x, y, w, p) {
     let width = w - 20;
     let labelWidth = 250;
     width -= labelWidth;
@@ -44,13 +44,20 @@ class slider{
     let textboxWidth = width * 0.5;
     width -= textboxWidth;
     let buttonWidth = width;
+    let textboxX = x + sliderWidth + labelWidth;
 
     this.slider.style('width', Math.round(sliderWidth).toString() + "px");
+    console.log(Math.round(sliderWidth).toString() + "px");
+    console.log(this.slider.width)
     this.slider.position(x, y);
-    this.textLabel.position(x + this.slider.width + 10, y - 15);
-    this.textBox.position(x+this.slider.width + labelWidth,y);
+    // Use our computed widths rather than the resultant ones
+    // Not sure what exactly the issue is.  Input the this.slider.width is "199px", but the actual width of this.slider.width is 198995
+    // Visually, they are not 200 thousand pixels wide, so I'm guessing that there's a weird float conversion issue
+    // This seems to affect Chrome but not Safari and is untested on Firefox
+    this.textLabel.position(x + sliderWidth + 10, y - 15);
+    this.textBox.position(textboxX, y);
     this.textBox.style('width', Math.round(textboxWidth).toString() + "px");
-    this.button.position(this.textBox.x+this.textBox.width+5,y);
+    this.button.position(textboxX + textboxWidth + 5, y);
     this.button.style('width', Math.round(buttonWidth).toString() + "px");
   }
   buttonPressed(){
@@ -120,17 +127,18 @@ class numHarmSlider extends slider{
     sliderWidth = sliderWidth * .75; // Slider
     let textboxWidth = width * 0.42;
     let buttonWidth = width*.4;
+    let textboxX = x + sliderWidth + 2 * dropDownWidth + labelWidth + 10;
 
     this.slider.style('width', Math.round(sliderWidth).toString() + "px");
     this.slider.position(x, y);
     this.oddEvenSel.style('width', Math.round(dropDownWidth).toString() + "px");
-    this.oddEvenSel.position(x+this.slider.width+10,y);
+    this.oddEvenSel.position(x + sliderWidth + 10,y);
     this.slopeSel.style('width', Math.round(dropDownWidth).toString() + "px");
-    this.slopeSel.position(x+this.slider.width+dropDownWidth+10,y);
-    this.textLabel.position(x + 2*dropDownWidth + this.slider.width + 20, y - 15);
-    this.textBox.position(x + this.slider.width + 2*dropDownWidth+ labelWidth+10,y);
+    this.slopeSel.position(x + sliderWidth + dropDownWidth+10,y);
+    this.textLabel.position(x + 2 * dropDownWidth + sliderWidth + 20, y - 15);
+    this.textBox.position(textboxX,y);
     this.textBox.style('width', Math.round(textboxWidth).toString() + "px");
-    this.button.position(this.textBox.x + this.textBox.width,y);
+    this.button.position(textboxX + textboxWidth, y);
     this.button.style('width', Math.round(buttonWidth).toString() + "px");
   }
   }
