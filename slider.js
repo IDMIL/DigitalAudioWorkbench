@@ -59,7 +59,8 @@ class slider{
     this.button.style('width', Math.round(buttonWidth).toString() + "px");
   }
   buttonPressed(){
-    this.slider.value(this.calcSliderVal());  }
+    this.slider.value(this.calcSliderVal());
+  }
 
   calcSliderVal(){
     // override this with any calculations needed to convert textbox val to slider val (%, etc)
@@ -139,7 +140,7 @@ class numHarmSlider extends slider{
     this.button.position(textboxX + textboxWidth, y);
     this.button.style('width', Math.round(buttonWidth).toString() + "px");
   }
-  }
+}
 
 
 class sampleRateSlider extends slider{
@@ -183,18 +184,61 @@ class ditherSlider extends slider {
 }
 
 class bitDepthSlider extends slider {
-  setup(p,settings){
+  setup(p, settings){
     this.settings = settings;
     this.name ="Bit Depth";
     this.propName = "bitDepth";
     this.min = 1;
     this.max =  BIT_DEPTH_MAX;
-    this.initial = BIT_DEPTH_MAX;
+    this.initial = 3;
+    this.step = 1;
+
+    this.encTypeSel = p.createSelect();
+    this.encTypeSel.option("Fixed Point");
+    this.encTypeSel.option("Floating Point");
+    this.encTypeSel.selected(this.settings.encType);
+    this.encTypeSel.changed(() => this.settings.encType = this.encTypeSel.value());
+
+    this.makeSlider(p);
+  }
+  resize(x, y, w, p){
+    let width = w - 20;
+    let labelWidth = 250;
+    width -= labelWidth;
+    let sliderWidth = width * 0.5; // slider + dropdowns
+    width -= sliderWidth;
+    let dropDownWidth = sliderWidth * 0.5 - 20; // Make slider + dropdown the same width as other sliders.
+    sliderWidth = sliderWidth * 0.75; // Slider
+    let textboxWidth = width * 0.42;
+    let buttonWidth = width * 0.4;
+    let textboxX = x + sliderWidth + dropDownWidth + labelWidth + 10;
+
+    this.slider.style('width', Math.round(sliderWidth).toString() + "px");
+    this.slider.position(x, y);
+    this.encTypeSel.style('width', Math.round(dropDownWidth).toString() + "px");
+    this.encTypeSel.position(x + sliderWidth + 10, y);
+    this.textLabel.position(x + dropDownWidth + sliderWidth + 20, y - 15);
+    this.textBox.position(textboxX, y);
+    this.textBox.style('width', Math.round(textboxWidth).toString() + "px");
+    this.button.position(textboxX + textboxWidth, y);
+    this.button.style('width', Math.round(buttonWidth).toString() + "px");
+  }
+}
+
+// https://www.ti.com/lit/an/spra948/spra948.pdf
+class blockSizeSlider extends slider {
+  setup(p, settings){
+    this.settings = settings;
+    this.propName ="blockSize";
+    this.name ="Block Size";
+    this.min = 1;
+    this.max =  16;
+    this.initial = 1;
     this.step = 1;
     this.makeSlider(p);
   }
-
 }
+
 
 class amplitudeSlider extends slider {
   setup(p,settings){

@@ -26,7 +26,10 @@ var settings =
     , phase : 0.0 // phase offset for input signal
     , fftSize : fftSize
     , bitDepth : BIT_DEPTH_MAX //quantization bit depth
+    , bitMin: 1 // minimum bit depth, changes to 3 if floating point encoding is selected
     , quantType : "midRise" // type of quantization
+    , encType : "Floating Point" // encoding type
+    , blockSize: 1 // block size for block float encoding
     , dither : 0.0 // amplitude of white noise added to signal before quantization
     , antialiasing : 0 // antialiasing filter order
     , original: new Float32Array(displaySignalSize)

@@ -197,45 +197,100 @@ function drawSignalAmplitudeTicks(panel, pixel_max, num_ticks) {
 }
 
 const bin_amp_ticks_doc='Ticks on the right side of this plot label the numerical value assigned to a given amplitude by the simulated analog-to-digital conversion. The labels are written in hexadecimal unless the bit depth is 7 bits or lower, in which case the labels are in binary. ';
-function drawSignalBinaryScaling(panel,pixel_max, num_ticks, settings){
-  let maxInt = Math.pow(2, settings.bitDepth)-1;
-  let stepSize = (settings.quantType == "midTread")?  2/(maxInt-1) : 2/(maxInt);
-  let numTicks = Math.min(num_ticks,maxInt+1);
-  let tickScale =(maxInt+1)/numTicks;
+function drawSignalBinaryScaling(panel, pixel_max, num_ticks, settings) {
+  let maxInt = Math.pow(2, settings.bitDepth) - 1;
+  let stepSize = (settings.quantType == "midTread") ? 2 / (maxInt - 1) : 2 / maxInt;
+  let numTicks = Math.min(num_ticks, maxInt + 1);
+  let tickScale = (maxInt + 1) / numTicks;
   let pixel_per_fullscale = pixel_max * panel.settings.ampZoom;
-  // let stepSize = (settings.quantType == "midRise")?  2/(numTicks-1) : 2/(numTicks);
 
-  let val=-1; let tick; let plotVal;
-  for ( tick =0; tick<numTicks;tick++){
-    switch(settings.quantType){
-      case "midTread" :
-         val = stepSize*Math.floor(val/stepSize + 0.5);
-        break;
-        case "midRise" :
-           val = stepSize*(Math.floor(val/stepSize) + 0.5);
+  let val = -1;
+  let tick;
+  // Initialize an array to store the tick values and y-coordinates
+  if (settings.encType === "Floating Point") {
+    let ticks = [];
+    for (tick = 0; tick <= numTicks; tick++) {
+      switch(settings.quantType){
+        case "midTread":
+          val = stepSize * Math.floor(val / stepSize + 0.5);
           break;
-        }
-        let tick_amp_pixels = val * pixel_max / num_ticks/panel.settings.ampZoom;
-        let pixel_amp = pixel_per_fullscale * val;
-        let y = panel.halfh - pixel_amp;
+        case "midRise":
+          val = stepSize * (Math.floor(val / stepSize) + 0.5);
+          break;
+      }
 
-        if (y >= panel.plotTop-.1 && y <=panel.plotBottom+.1) {
+      let pixel_amp = pixel_per_fullscale * val;
+      let y = panel.halfh - pixel_amp;
+
+      if (y >= panel.plotTop - 0.1 && y <= panel.plotBottom + 0.1) {
+        // Quantize the float to a fixed-point representation with the desired bit depth
+        let precision = Math.pow(2, settings.bitDepth - 1);
+        let quantizedVal = Math.round(val * precision) / precision;
+
+        // Convert the quantized value to an integer
+        tickVal = Math.round(quantizedVal * precision);
+
+        // Add the tick value and y-coordinate to the array
+        if (y >= panel.plotTop - 0.1 && y <= panel.plotBottom + 0.1) ticks.push({ val: tickVal, y: y });
+        val = val + stepSize * tickScale;
+      }
+    }
+
+    // Sort the array by the tick values
+    ticks.sort((a, b) => a.val - b.val);
+
+    // Draw the ticks in the sorted order
+    for (let { val, y } of ticks) {
+      if (maxInt < 255) {
+        //if under 8 bits, we can write out binary values
+        let binaryVal;
+        if (val < 0) {
+          // If the value is negative, manually construct the binary string
+          binaryVal = "1" + Math.abs(val).toString(2).padStart(settings.bitDepth, "0");
+        } else {
+          // If the value is positive, convert it to binary normally
+          binaryVal = "0" + val.toString(2).padStart(settings.bitDepth, "0");
+        }
+        drawHorizontalTick(panel, binaryVal, y, 5, "left");
+      } else {
+        // Convert the integer to hexadecimal
+        let hexVal = val.toString(16);
+        drawHorizontalTick(panel, "0x" + hexVal, y, 5, "left");
+      }
+      panel.buffer.stroke("gray");
+      panel.buffer.drawingContext.setLineDash([5, 5]);
+      panel.buffer.line(panel.plotLeft, y, panel.plotRight, y);
+      panel.buffer.drawingContext.setLineDash([]);
+    }
+  } else if (settings.encType === "Fixed Point") {
+    for (tick = 0; tick < numTicks; tick++) {
+      switch(settings.quantType) {
+        case "midTread":
+          val = stepSize * Math.floor(val / stepSize + 0.5);
+          break;
+        case "midRise":
+          val = stepSize * (Math.floor(val / stepSize) + 0.5);
+          break;
+      }
+      let pixel_amp = pixel_per_fullscale * val;
+      let y = panel.halfh - pixel_amp;
+
+      if (y >= panel.plotTop - 0.1 && y <= panel.plotBottom + 0.1) {
         if (maxInt<255){
           //if under 8 bits, we can write out binary values
-          drawHorizontalTick(panel, (Math.round(tick*tickScale)).toString(2).padStart(settings.bitDepth,"0"), y,5,"left");
-        }
-        else {
+          drawHorizontalTick(panel, (Math.round(tick * tickScale)).toString(2).padStart(settings.bitDepth, "0"), y,5,"left");
+        } else {
           //draw axis labels in hex because of limited space
-          drawHorizontalTick(panel, "0x" + (tick*tickScale).toString(16).padStart(4,"0"), y,5,"left");
+          drawHorizontalTick(panel, "0x" + (tick * tickScale).toString(16).padStart(4,"0"), y,5,"left");
         }
-          panel.buffer.stroke("gray");
-          panel.buffer.drawingContext.setLineDash([5,5]);
-          panel.buffer.line(panel.plotLeft, y, panel.plotRight, y);
-          panel.buffer.drawingContext.setLineDash([]);    // drawHorizontalTick(panel, tick.toString(2), y,5,"left");
+        panel.buffer.stroke("gray");
+        panel.buffer.drawingContext.setLineDash([5,5]);
+        panel.buffer.line(panel.plotLeft, y, panel.plotRight, y);
+        panel.buffer.drawingContext.setLineDash([]);    // drawHorizontalTick(panel, tick.toString(2), y,5,"left");
+      }
+      val = val + stepSize * tickScale;
     }
-    val = val + stepSize*tickScale;
   }
-
 }
 
 const time_ticks_doc='Time is plotted on the x-axis. ';
