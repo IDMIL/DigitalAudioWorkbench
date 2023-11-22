@@ -62,7 +62,7 @@ class nFloat {
     }
     if (this.bits === 3) {
       this.binaryValues = ["000", "001", "010", "011", "100", "101", "110", "111"];
-      this.decimalValues = [0, 1, Infinity, NaN, 0, -1, Infinity, NaN]
+      this.decimalValues = [0, 1, Infinity, NaN, 0, -1, Infinity, NaN];
     }
     
     // Generate all possible binary permutations of the given bit size
