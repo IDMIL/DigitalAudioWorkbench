@@ -6,8 +6,8 @@ class nFloat {
   exponentSize: number;
   mantissaSize: number;
   bias: number;
-  binaryValues: string[];
-  decimalValues: number[];
+  binaryValues: string[] = [];
+  decimalValues: number[] = [];
   
   constructor(bits: number) {
     this.bits = bits;
@@ -27,6 +27,7 @@ class nFloat {
         // Values -1, 1
         this.exponentSize = 0;
         this.mantissaSize = 0;
+        this.bias = 0;
         break;
       case 2:
         // Values -1, 0, 1
@@ -46,9 +47,6 @@ class nFloat {
         this.bias = Math.pow(2, this.exponentSize - 1) - 1;
     }
 
-    this.calculateValues();
-  }
-  calculateValues() {
     // Manualy define values for 1-3 bit floats
     if (this.bits === 1) {
       this.binaryValues = ["0", "1"];
@@ -87,10 +85,12 @@ class nFloat {
         } else {
           this.decimalValues.push(NaN);
         }
+        continue;
       }
       let exponent = parseInt(exponentStr, 2);
       if (exponent === 0 && mantissa === 0) {
         this.decimalValues.push(0);
+        continue; 
       }
 
       // Significand extension depends on if the number is normalized or subnormal
@@ -121,6 +121,7 @@ class nFloat {
         return (sign + this.binaryValues[i].substring(1), (sign === 0) ? this.decimalValues[i] : -this.decimalValues[i]);
       }
     }
+    throw new Error();
   }
   public getBinaryRepresentation(number: number) {
     let index = this.decimalValues.indexOf(number);
