@@ -1,4 +1,7 @@
 class nFloat {
+  // Custom floating point class to represent any n-bit float using IEEE standards
+  // 1-3 bit floats cannot fully follow IEEE standards, so they have custom definitions
+  // This class is used to simulate floating-point encoding
   bits: number;
   exponentSize: number;
   mantissaSize: number;
@@ -7,12 +10,10 @@ class nFloat {
   decimalValues: number[];
   
   constructor(bits: number) {
-    // https://en.wikipedia.org/wiki/Minifloat#4_bits_and_fewer
     this.bits = bits;
-
-    if (bits < 1) throw new Error("Invalid number of bits");
-
-    // One bit is always reserved for the sign
+    
+    // https://en.wikipedia.org/wiki/Minifloat#4_bits_and_fewer
+    // One bit is always reserved for the sign in this implementation (contrary to the above article)
     // Infinity values have the highest exponent with a mantissa of all 0s
     // NaN values have the highest exponent with a mantissa of all 1s
     // Subnormal values have the an exponent of all 0s with a non-zero mantissa
@@ -20,6 +21,7 @@ class nFloat {
     // These rules do not hold for < 3 bit floats, for example:
     // If we were following proper IEEE principles, we would have the 1-bit float consist of only the exponent, however, this only gives us values 0 and Inf
     // This implementation is just a signed number, but it is impossible to follow IEEE standards for a float of less than 4 bits
+    if (bits < 1) throw new Error("Invalid number of bits");
     switch (bits) {
       case 1:
         // Values -1, 1
@@ -53,10 +55,14 @@ class nFloat {
       this.decimalValues = [-1, 1];
       return;
     }
-    if (this.bits <= 3) {
+    if (this.bits === 2) {
       this.binaryValues = ["00", "01", "10", "11"];
       this.decimalValues = [0, 1, 0, -1];
       return;
+    }
+    if (this.bits === 3) {
+      this.binaryValues = ["000", "001", "010", "011", "100", "101", "110", "111"];
+      this.decimalValues = [0, 1, Infinity, NaN, 0, -1, Infinity, NaN]
     }
     
     // Generate all possible binary permutations of the given bit size
@@ -69,7 +75,7 @@ class nFloat {
       let exponentStr = binaryRepresentation.slice(1, this.exponentSize + 1);
       let mantissaStr = binaryRepresentation.slice(this.exponentSize + 1, this.exponentSize + this.mantissaSize + 1);
       let mantissa = parseInt(mantissaStr, 2);
-      let highestExponent;
+      let highestExponent = "";
       for (let i = 0; i < this.exponentSize; i++) {
         highestExponent += "1";
       }
