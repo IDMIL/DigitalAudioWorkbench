@@ -141,5 +141,3 @@ class nFloat {
         return this.decimalValues;
     }
 }
-let float = new nFloat(8);
-console.log(float.getQuantizationValue(2.1));
