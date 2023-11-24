@@ -94,31 +94,32 @@ class nFloat {
             this.decimalValues.push(Math.pow(-1, parseInt(binaryRepresentation[0])) * (extension + mantissa) * Math.pow(2, exponent - this.bias));
         }
     }
-    getQuantizationValue(number) {
-        if (number === 0)
+    getQuantizationValue(toQuantize) {
+        if (toQuantize === 0)
             return ["0".repeat(this.numBits), 0];
-        // Iterate from the bottom until we hit 0, adjust sign accordingly
-        let absNumber = Math.abs(number);
-        let sign = (number < 0) ? 1 : 0;
+        let closestIndices = [];
+        let smallestDifference = Math.abs(this.decimalValues[0] - toQuantize);
         for (let i = 0; i < this.decimalValues.length; i++) {
-            if (this.decimalValues[i] === absNumber) {
-                return [sign + this.binaryValues[i].substring(1), (sign === 0) ? this.decimalValues[i] : -this.decimalValues[i]];
+            let difference = Math.abs(this.decimalValues[i] - toQuantize);
+            if (difference < smallestDifference) {
+                smallestDifference = difference;
+                closestIndices = [i];
             }
-            if (this.decimalValues[i] in [Infinity, NaN]) {
-                continue;
-            }
-            // If the diff is negative, then the value is between the previous and current index
-            let diff = absNumber - this.decimalValues[i];
-            if (diff < 0) {
-                diff = -diff;
-                let previousDiff = this.decimalValues[i - 1] - absNumber;
-                // If the previous diff is smaller, then the previous index is closer to the number
-                if (previousDiff < diff)
-                    i--;
-                return [sign + this.binaryValues[i].substring(1), (sign === 0) ? this.decimalValues[i] : -this.decimalValues[i]];
+            else if (difference === smallestDifference) {
+                closestIndices.push(i);
             }
         }
-        throw new Error();
+        // If there are multiple values with the same difference, choose the one with the smallest exponent (IEEE standards)
+        let exponentSize = parseInt(this.binaryValues[closestIndices[0]].slice(1, this.exponentSize + 1), 2);
+        let index = closestIndices[0];
+        for (let i = 1; i < closestIndices.length; i++) {
+            let newExpSize = parseInt(this.binaryValues[closestIndices[i]].slice(1, this.exponentSize + 1), 2);
+            if (newExpSize < exponentSize) {
+                exponentSize = newExpSize;
+                index = closestIndices[i];
+            }
+        }
+        return [this.binaryValues[index], this.decimalValues[index]];
     }
     getBinaryRepresentation(number) {
         let index = this.decimalValues.indexOf(number);
