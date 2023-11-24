@@ -205,62 +205,28 @@ function drawSignalBinaryScaling(panel, pixel_max, num_ticks, settings) {
   let pixel_per_fullscale = pixel_max * panel.settings.ampZoom;
 
   let val = -1;
+  let floats = new nFloat(settings.bitDepth);
   let tick;
-  // Initialize an array to store the tick values and y-coordinates
+  let quantVals = floats.getQuantLevels();
   if (settings.encType === "Floating Point") {
-    let ticks = [];
-    for (tick = 0; tick <= numTicks; tick++) {
-      switch(settings.quantType){
-        case "midTread":
-          val = stepSize * Math.floor(val / stepSize + 0.5);
-          break;
-        case "midRise":
-          val = stepSize * (Math.floor(val / stepSize) + 0.5);
-          break;
-      }
-
-      let pixel_amp = pixel_per_fullscale * val;
+    for (let i = 0; i < quantVals.length; i++) {
+      let pixel_amp = pixel_per_fullscale * quantVals[i];
       let y = panel.halfh - pixel_amp;
+      quantVal = floats.getQuantizationValue(quantVals[i])[1];
 
       if (y >= panel.plotTop - 0.1 && y <= panel.plotBottom + 0.1) {
-        // Quantize the float to a fixed-point representation with the desired bit depth
-        let precision = Math.pow(2, settings.bitDepth - 1);
-        let quantizedVal = Math.round(val * precision) / precision;
-
-        // Convert the quantized value to an integer
-        tickVal = Math.round(quantizedVal * precision);
-
-        // Add the tick value and y-coordinate to the array
-        if (y >= panel.plotTop - 0.1 && y <= panel.plotBottom + 0.1) ticks.push({ val: tickVal, y: y });
-        val = val + stepSize * tickScale;
-      }
-    }
-
-    // Sort the array by the tick values
-    ticks.sort((a, b) => a.val - b.val);
-
-    // Draw the ticks in the sorted order
-    for (let { val, y } of ticks) {
-      if (maxInt < 255) {
-        //if under 8 bits, we can write out binary values
-        let binaryVal;
-        if (val < 0) {
-          // If the value is negative, manually construct the binary string
-          binaryVal = "1" + Math.abs(val).toString(2).padStart(settings.bitDepth, "0");
+        let binaryRepresentation = floats.getBinaryRepresentation(quantVal);
+        if (settings.bitDepth <= 7) {
+          drawHorizontalTick(panel, binaryRepresentation, y, 5, "left");
         } else {
-          // If the value is positive, convert it to binary normally
-          binaryVal = "0" + val.toString(2).padStart(settings.bitDepth, "0");
+          drawHorizontalTick(panel, "0x" + parseInt(binaryRepresentation, 2).toString(16).padStart(4,"0"), y, 5, "left");
         }
-        drawHorizontalTick(panel, binaryVal, y, 5, "left");
-      } else {
-        // Convert the integer to hexadecimal
-        let hexVal = val.toString(16);
-        drawHorizontalTick(panel, "0x" + hexVal, y, 5, "left");
+        
+          panel.buffer.stroke("gray");
+          panel.buffer.drawingContext.setLineDash([5, 5]);
+          panel.buffer.line(panel.plotLeft, y, panel.plotRight, y);
+          panel.buffer.drawingContext.setLineDash([]);
       }
-      panel.buffer.stroke("gray");
-      panel.buffer.drawingContext.setLineDash([5, 5]);
-      panel.buffer.line(panel.plotLeft, y, panel.plotRight, y);
-      panel.buffer.drawingContext.setLineDash([]);
     }
   } else if (settings.encType === "Fixed Point") {
     for (tick = 0; tick < numTicks; tick++) {

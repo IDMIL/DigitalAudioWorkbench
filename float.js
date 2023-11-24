@@ -60,6 +60,7 @@ class nFloat {
         if (this.numBits === 3) {
             this.binaryValues = ["000", "001", "010", "011", "100", "101", "110", "111"];
             this.decimalValues = [0, 1, Infinity, NaN, 0, -1, Infinity, NaN];
+            return;
         }
         // Generate all possible binary permutations of the given bit size
         this.binaryValues = [];
@@ -70,10 +71,7 @@ class nFloat {
             let exponentStr = binaryRepresentation.slice(1, this.exponentSize + 1);
             let mantissaStr = binaryRepresentation.slice(this.exponentSize + 1, this.exponentSize + this.mantissaSize + 1);
             let mantissa = parseInt(mantissaStr, 2);
-            let highestExponent = "";
-            for (let i = 0; i < this.exponentSize; i++) {
-                highestExponent += "1";
-            }
+            let highestExponent = "1".repeat(this.exponentSize);
             // Check for special values (Infinity, NaN, 0)
             if (exponentStr === highestExponent) {
                 if (mantissa === 0) {
@@ -110,9 +108,9 @@ class nFloat {
             }
         }
         // If there are multiple values with the same difference, choose the one with the smallest exponent (IEEE standards)
-        let exponentSize = parseInt(this.binaryValues[closestIndices[0]].slice(1, this.exponentSize + 1), 2);
+        let exponentSize = 0;
         let index = closestIndices[0];
-        for (let i = 1; i < closestIndices.length; i++) {
+        for (let i = 0; i < closestIndices.length; i++) {
             let newExpSize = parseInt(this.binaryValues[closestIndices[i]].slice(1, this.exponentSize + 1), 2);
             if (newExpSize < exponentSize) {
                 exponentSize = newExpSize;
@@ -134,6 +132,15 @@ class nFloat {
             throw new Error("Number not found");
         }
         return this.decimalValues[index];
+    }
+    getQuantLevels() {
+        let uniqueValues = [];
+        for (let i = 0; i < this.decimalValues.length; i++) {
+            if (typeof this.decimalValues[i] === 'number' && !uniqueValues.includes(this.decimalValues[i])) {
+                uniqueValues.push(this.decimalValues[i]);
+            }
+        }
+        return uniqueValues;
     }
     getBinaryValues() {
         return this.binaryValues;
