@@ -238,14 +238,15 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
   quantNoiseStuffed.fill(0);
 
   // calculate the maximum integer value representable with the given bit depth
+  // or generate a floating point quantizer
   let floats;
-  if (settings.encType == "Fixed Point") maxInt = p.pow(2, settings.bitDepth) - 1;
-  else if (settings.encType == "Floating Point") {
+  let stepSize;
+  if (settings.encType == "Fixed Point") {
+    maxInt = p.pow(2, settings.bitDepth) - 1;
+    stepSize = (settings.quantType == "midTread") ? 2 / (maxInt - 1) : 2 / maxInt;
+  } else if (settings.encType == "Floating Point") {
     floats = new nFloat(settings.bitDepth);
-    maxInt = floats.getQuantLevels().length;
   }
-
-  let stepSize = (settings.quantType == "midTread") ? 2/(maxInt-1) : 2/(maxInt);
 
   // generate the output of the simulated ADC process by "sampling" (actually
   // just downsampling), and quantizing with dither. During this process, we
@@ -279,14 +280,14 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
     if (settings.encType == "Fixed Point") { 
       switch(settings.quantType) {
         case "midTread" :
-          quantized = stepSize*p.floor(p.constrain((y+dither),-1,0.99)/stepSize + 0.5);
+          quantized = stepSize * p.floor(p.constrain((y + dither), -1, 0.99) / stepSize + 0.5);
           break;
         case "midRise" :
-          quantized = stepSize*(p.floor(p.constrain((y+dither),-1,0.99)/stepSize) + 0.5);
+          quantized = stepSize * (p.floor(p.constrain((y + dither), -1, 0.99) / stepSize) + 0.5);
           break;
       }
     } else if (settings.encType == "Floating Point") {
-      quantized = floats.getQuantizationValue(y + dither)[1];
+      quantized = floats.getQuantizationValue(p.constrain((y + dither), -1, 0.99))[1];
     }
 
     // record the sampled and quantized output of the ADC process with clipping

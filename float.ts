@@ -107,7 +107,6 @@ class nFloat {
     let index = closestIndices[0];
     for (let i = 0; i < closestIndices.length; i++) {
       let newExpSize = parseInt(this.binaryValues[closestIndices[i]].slice(1, this.exponentSize + 1), 2);
-      console.log(newExpSize)
       if (newExpSize < exponentSize) {
         exponentSize = newExpSize;
         index = closestIndices[i];
@@ -118,7 +117,6 @@ class nFloat {
   public getBinaryRepresentation(number: number): string {
     let index = this.decimalValues.indexOf(number);
     if (index === -1) {
-      console.log(number);
       throw new Error("Number not found");
     }
     return this.binaryValues[index];
