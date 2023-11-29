@@ -16,6 +16,7 @@ class nFloat {
     // One bit is always reserved for the sign in this implementation (contrary to the above article)
     // Infinity values have the highest exponent with a mantissa of all 0s
     // NaN values have the highest exponent with a mantissa of all 1s
+    // We ignore both Infinity and NaN values for performance reasons
     // Subnormal values have the an exponent of all 0s with a non-zero mantissa
     // Normal values have a non-zero exponent and non-zero mantissa
     // These rules do not hold for < 3 bit floats, for example:
@@ -59,37 +60,27 @@ class nFloat {
       return;
     }
     if (this.numBits === 3) {
-      this.binaryValues = ["000", "001", "010", "011", "100", "101", "110", "111"];
-      this.decimalValues = [0, 1, Infinity, NaN, 0, -1, Infinity, NaN];
+      this.binaryValues = ["000", "001", "100", "101"];
+      this.decimalValues = [0, 1, 0, -1];
       return;
     }
     
     // Generate all possible binary permutations of the given bit size
     this.binaryValues = [];
+    let highestExponent = "1".repeat(this.exponentSize);
     for (let i = 0; i < Math.pow(2, this.numBits); i++) {
       let binaryRepresentation = i.toString(2).padStart(this.numBits, "0");
-      this.binaryValues.push(binaryRepresentation);
-
+      
       // Convert the binary representation to a decimal value
       let exponentStr = binaryRepresentation.slice(1, this.exponentSize + 1);
       let mantissaStr = binaryRepresentation.slice(this.exponentSize + 1, this.exponentSize + this.mantissaSize + 1);
       let mantissa = parseInt(mantissaStr, 2);
-      let highestExponent = "1".repeat(this.exponentSize);
-
-      // Check for special values (Infinity, NaN, 0)
-      if (exponentStr === highestExponent) {
-        if (mantissa === 0) {
-          this.decimalValues.push(Infinity);
-        } else {
-          this.decimalValues.push(NaN);
-        }
-        continue;
-      }
       let exponent = parseInt(exponentStr, 2);
-      if (exponent === 0 && mantissa === 0) {
-        this.decimalValues.push(0);
-        continue;
-      }
+
+      // Check for special values (Infinity, NaN, 0) and ignore them
+      if (exponentStr === highestExponent || (exponent === 0 && mantissa === 0)) continue;
+      
+      this.binaryValues.push(binaryRepresentation);
       // Significand extension depends on if the number is normalized or subnormal
       let extension = (exponent === 0) ? 0 : 1;
       this.decimalValues.push(Math.pow(-1, parseInt(binaryRepresentation[0])) * (extension + mantissa) * Math.pow(2, exponent - this.bias));
