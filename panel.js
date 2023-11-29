@@ -227,8 +227,7 @@ function drawSignalBinaryScaling(panel, pixel_max, num_ticks, settings) {
       for (i = -1; i <= 1; i += 0.125) {
         let pixel_amp = pixel_per_fullscale * i;
         let y = panel.halfh - pixel_amp;
-        let binaryRepresentation = floats.getBinaryRepresentation(i);
-        drawHorizontalTick(panel, "0x" + parseInt(binaryRepresentation, 2).toString(16).padStart(4,"0"), y, 5, "left");
+        drawHorizontalTick(panel, "0x" + parseInt(floats.getBinaryRepresentation(i), 2).toString(16).padStart(4,"0"), y, 5, "left");
 
         panel.buffer.stroke("gray");
         panel.buffer.drawingContext.setLineDash([5, 5]);

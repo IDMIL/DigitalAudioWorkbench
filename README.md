@@ -221,20 +221,29 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
   // generate new signal buffers for the downsampled signal and quantization
   // noise whose sizes are initialized according to the currently set
   // downsampling factor
+  let downsampled;
+  let quantNoise;
   if (playback) {
     settings.downsampled_pb = new Float32Array(p.round(original.length / settings.downsamplingFactor));
     settings.quantNoise_pb = new Float32Array(p.round(original.length / settings.downsamplingFactor));
+    downsampled = settings.downsampled_pb;
+    quantNoise = settings.quantNoise_pb;
   } else {
     settings.downsampled = new Float32Array(p.round(original.length / settings.downsamplingFactor));
     settings.quantNoise = new Float32Array(p.round(original.length / settings.downsamplingFactor));
+    downsampled = settings.downsampled;
+    quantNoise = settings.quantNoise;
   }
-  var downsampled = playback ? settings.downsampled_pb : settings.downsampled;
-  var quantNoise  = playback ? settings.quantNoise_pb  : settings.quantNoise;
-  var quantNoiseStuffed = settings.quantNoiseStuffed;
+  let quantNoiseStuffed = settings.quantNoiseStuffed;
   quantNoiseStuffed.fill(0);
 
   // calculate the maximum integer value representable with the given bit depth
-  let maxInt = p.pow(2, settings.bitDepth) - 1;
+  let floats;
+  if (settings.encType == "Fixed Point") maxInt = p.pow(2, settings.bitDepth) - 1;
+  else if (settings.encType == "Floating Point") {
+    floats = new nFloat(settings.bitDepth);
+    maxInt = floats.getQuantLevels().length;
+  }
 
   let stepSize = (settings.quantType == "midTread") ? 2/(maxInt-1) : 2/(maxInt);
 
@@ -267,13 +276,17 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
     let quantized;
     // Add dither signal and quantize. Constrain so we dont clip after dither
-    switch(settings.quantType) {
-      case "midTread" :
-        quantized = stepSize*p.floor(p.constrain((y+dither),-1,0.99)/stepSize + 0.5);
-        break;
-      case "midRise" :
-        quantized = stepSize*(p.floor(p.constrain((y+dither),-1,0.99)/stepSize) + 0.5);
-        break;
+    if (settings.encType == "Fixed Point") { 
+      switch(settings.quantType) {
+        case "midTread" :
+          quantized = stepSize*p.floor(p.constrain((y+dither),-1,0.99)/stepSize + 0.5);
+          break;
+        case "midRise" :
+          quantized = stepSize*(p.floor(p.constrain((y+dither),-1,0.99)/stepSize) + 0.5);
+          break;
+      }
+    } else if (settings.encType == "Floating Point") {
+      quantized = floats.getQuantizationValue(y + dither)[1];
     }
 
     // record the sampled and quantized output of the ADC process with clipping

@@ -66,9 +66,10 @@ class nFloat {
     }
     
     // Generate all possible binary permutations of the given bit size
-    this.binaryValues = [];
+    this.binaryValues = ["0".repeat(this.numBits)];
+    this.decimalValues = [0];
     let highestExponent = "1".repeat(this.exponentSize);
-    for (let i = 0; i < Math.pow(2, this.numBits); i++) {
+    for (let i = 1; i < Math.pow(2, this.numBits); i++) {
       let binaryRepresentation = i.toString(2).padStart(this.numBits, "0");
       
       // Convert the binary representation to a decimal value
@@ -87,7 +88,7 @@ class nFloat {
     }
   }
   public getQuantizationValue(toQuantize: number): [string, number] {
-    if (toQuantize === 0) return ["0".repeat(this.numBits), 0];
+    if (toQuantize === 0 && this.decimalValues.indexOf(0) != -1) return ["0".repeat(this.numBits), 0];
     let closestIndices: number[] = [];
     let smallestDifference = Math.abs(this.decimalValues[0] - toQuantize);
 
@@ -106,6 +107,7 @@ class nFloat {
     let index = closestIndices[0];
     for (let i = 0; i < closestIndices.length; i++) {
       let newExpSize = parseInt(this.binaryValues[closestIndices[i]].slice(1, this.exponentSize + 1), 2);
+      console.log(newExpSize)
       if (newExpSize < exponentSize) {
         exponentSize = newExpSize;
         index = closestIndices[i];
@@ -116,6 +118,7 @@ class nFloat {
   public getBinaryRepresentation(number: number): string {
     let index = this.decimalValues.indexOf(number);
     if (index === -1) {
+      console.log(number);
       throw new Error("Number not found");
     }
     return this.binaryValues[index];
