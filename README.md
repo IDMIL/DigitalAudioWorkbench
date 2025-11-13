@@ -18,7 +18,7 @@ to only that which is essential for understanding the core of the simulation.
 
 # The Digital Audio Workbench
 
-https://idmil.gitlab.io/course-materials/mumt203/interactive-demos 
+https://idmil.gitlab.io/course-materials/mumt203/interactive-demos
 
 ## Introduction
 
@@ -44,7 +44,7 @@ unfortunately cannot use real continuous time analog inputs and outputs.
 Instead, we simulate the ADC-DAC processes in the discrete time domain.  The
 analog input and output are represented as discrete time signals with a high
 sampling rate; at the time of writing, the maximum sampling rate supported
-by WebAudio is 96 kHz. 
+by WebAudio is 96 kHz.
 
 The ADC process consists of several steps, including antialiasing, sampling,
 and quantization. All of these are simulated in our model: antialiasing is
@@ -55,7 +55,7 @@ signal (which ranges from -1.0 to 1.0) by the maximum integer value possible
 given the requested bit depth (e.g. 255 for a bit depth of 8 bits), and then
 rounding every sample to the nearest integer.  The DAC process is simulated
 in turn by zero stuffing and lowpass filtering the sampled and quantized
-output of the ADC simultion.  
+output of the ADC simultion.
 
 In summary, the continuous time input is simulated by a 96 kHz discrete time
 signal, the sampled output of the ADC process is simulated by a downsampled
@@ -85,7 +85,7 @@ const fadeTimeSeconds = 0.125;
 function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
   // if we are not rendering for playback, we are rendering for simulation
-  let simulation = !playback; 
+  let simulation = !playback;
 
   // select the buffer to render to; playback buffer, or simulation buffer
   var original = playback ? settings.original_pb : settings.original;
@@ -104,34 +104,34 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
   // already have been calculated earlier when rendering for playback
 
   if (simulation) {
-    let harmonic_number = 1; 
-    let harmonic_amplitude = 1; 
+    let harmonic_number = 1;
+    let harmonic_amplitude = 1;
     let invert = 1;
     let harmInc = (settings.harmType =="Odd" || settings.harmType == "Even") ? 2 : 1;
-  
+
     for (let i = 0; simulation && i < settings.numHarm; i++) {
-  
+
       // the amplitude of each harmonic depends on the harmonic slope setting
       if (settings.harmSlope == "lin") harmonic_amplitude = 1 - i/settings.numHarm;
       else if (settings.harmSlope == "1/x") harmonic_amplitude = 1/harmonic_number;
       else if (settings.harmSlope == "1/x2") harmonic_amplitude = 1/harmonic_number/harmonic_number;
       else if (settings.harmSlope == "flat") harmonic_amplitude = 1;
-  
+
       // In case the harmonic slope is 1/x^2 and the harmonic type is "odd",
       // by inverting every other harmonic we generate a nice triangle wave.
       if (settings.harmSlope =="1/x2" && settings.harmType == "Odd") {
         harmonic_amplitude = harmonic_amplitude * invert;
         invert *= -1;
       }
-  
+
       // the frequency of each partial is a multiple of the fundamental frequency
       settings.harmonicFreqs[i] = harmonic_number*settings.fundFreq;
-  
+
       // The harmonic amplitude is calculated above according to the harmonic
       // slope setting, taking into account the special case for generating a
       // triangle.
       settings.harmonicAmps[i] = harmonic_amplitude;
-  
+
       // With harmonic type set to "even" we want the fundamental and even
       // harmonics. To achieve this, we increment the harmonic number by 1 after
       // the fundamental and by 2 after every other partial.
@@ -187,7 +187,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
   // simulation are not ideal brick wall filters, but approximations.
 
   // apply antialiasing only if the filter order is set
-  if (settings.antialiasing > 1) { 
+  if (settings.antialiasing > 1) {
 
     // specify the filter parameters; Fs = sampling rate, Fc = cutoff frequency
 
@@ -196,10 +196,10 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
     // signal is WEBAUDIO_MAX_SAMPLERATE / the downsampling factor. This is
     // divided by 2 to get the Nyquist frequency.
     var filterCoeffs = firCalculator.lowpass(
-        { order: settings.antialiasing
+      { order: settings.antialiasing
         , Fs: WEBAUDIO_MAX_SAMPLERATE
         , Fc: (WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor) / 2
-        });
+      });
 
     // generate the filter
     var filter = new Fili.FirFilter(filterCoeffs);
@@ -282,7 +282,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
     // sparsely fill the reconstruction buffer to avoid having to zero-stuff
     reconstructed[n * settings.downsamplingFactor] = quantized;
-      stuffed[n * settings.downsamplingFactor] = quantized * settings.downsamplingFactor;
+    stuffed[n * settings.downsamplingFactor] = quantized * settings.downsamplingFactor;
 
     // record the quantization error
     quantNoise[n] = quantized - y;
@@ -293,10 +293,10 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
 
   // specify filter parameters; as before, the cutoff is set to the Nyquist
   var filterCoeffs = firCalculator.lowpass(
-      { order:  200
+    { order:  settings.antiimaging
       , Fs: WEBAUDIO_MAX_SAMPLERATE
       , Fc: (WEBAUDIO_MAX_SAMPLERATE / settings.downsamplingFactor) / 2
-      });
+    });
 
   // generate the filter
   var filter = new Fili.FirFilter(filterCoeffs);
@@ -334,7 +334,7 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
     fft.completeSpectrum(settings.reconstructedFreq);
 
     fft.realTransform(settings.quantNoiseFreq, quantNoiseStuffed)
-    fft.completeSpectrum(settings.quantNoiseFreq); 
+    fft.completeSpectrum(settings.quantNoiseFreq);
   }
 
   // fade in and out and suppress clipping distortions ------------------------
@@ -353,9 +353,9 @@ function renderWavesImpl(settings, fft, p) { return (playback = false) => {
     let fade = (_, n, arr) => {
       let fadeTimeSamps = Math.min(fadeTimeSeconds * WEBAUDIO_MAX_SAMPLERATE, arr.length / 2);
       // The conditional ensures there is a fade even if the fade time is longer than the signal
-      if (n < fadeTimeSamps) 
+      if (n < fadeTimeSamps)
         arr[n] = (n / fadeTimeSamps) * arr[n] / normalize;
-      else if (n > arr.length - fadeTimeSamps) 
+      else if (n > arr.length - fadeTimeSamps)
         arr[n] = ((arr.length - n) / fadeTimeSamps) * arr[n] / normalize;
       else arr[n] = arr[n] / normalize;
     };

@@ -217,6 +217,19 @@ class antialiasingSlider extends slider {
   }
 }
 
+class antiimagingSlider extends slider {
+  setup(p, settings) {
+    this.settings = settings;
+    this.propName ="antiimaging";
+    this.name = "Anti-imaging filter order";
+    this.min = 0.0;
+    this.max =  200;
+    this.initial = 200;
+    this.step = 10;
+    this.makeSlider(p);
+  }
+}
+
 class phaseSlider extends slider{
   setup(p,settings){
     this.settings = settings;
