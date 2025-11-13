@@ -225,7 +225,7 @@ class antiimagingSlider extends slider {
     this.min = 0.0;
     this.max =  200;
     this.initial = 200;
-    this.step = 10;
+    this.step = 1;
     this.makeSlider(p);
   }
 }
