@@ -21,7 +21,7 @@ jobs:
           cp -a *.js .public
           cp -a index.html .public
           cp -a *.css .public
-          cp -a README.md .public
+          cp -a README.md .public/waves.js
           mv .public public
 
       - name: Deploy 🚀
